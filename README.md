@@ -52,6 +52,20 @@ law sold_is_final(t: Trace[hold], n: SeatNo) =
 | examples, properties, laws | test suites for the interpreter and every backend |
 | budgets and deadlines | layout choices, monitors, deploy configuration |
 
+## The point: a shorter dev cycle
+
+| Today | Designed here |
+|---|---|
+| spread a rule over schema, service, route, client, job, tests | write it once |
+| compile, boot, migrate, seed, click | run the logic; nothing is started |
+| `sleep`, poll, retry flaky tests | simulated time; same seed, same result |
+| agents queue for one database, one compiler, one port | every test has its own world, on any core, in any order |
+| "something failed in CI" | the stage says whose fault it is: logic, backend or world |
+| an error message | the failing input and a checked edit |
+| format, lint, guard scripts | one format; most rules are types |
+
+Fewer lines is the means. None of this has been timed: the design goal is feedback in milliseconds for a module, and a model's own thinking time will still be most of the wait. Real databases, devices and screens are tested after the logic is green, and stay as slow as they are ([06](docs/idea/06-logic-and-tests.md), [22](docs/idea/22-lifecycle.md)).
+
 **The short analogy:** TypeScript is a front end whose back end is JavaScript. spec-lang is meant to be a front end with many back ends, frameworks included, and the logic and tests live in the front end. The difference that makes it harder: TypeScript's meaning is JavaScript's, while every spec-lang backend has to match spec-lang's meaning and is tested against it.
 
 ## Examples

@@ -312,6 +312,46 @@ Where the later expectations are finite or solvable, the runtime works backwards
 
 This splits the work by strength. A strong model or a person writes types, guards, laws and tests and leaves holes. A small, cheap model fills them: each is one expression, with a type, allowed effects, live values, the required result, and an error that carries the edit ([07](07-agent-loop.md)). Filling is an ordinary edit, the filler's role cannot touch laws or tests ([08](08-approval-and-anti-cheating.md)), and the compiler never calls a model. Whether it pays is an arm of the experiments ([19](19-density-and-experiments.md)).
 
+## Nothing to wait for
+
+A logic test touches no database, file, network, browser, port or real clock. The world is values in memory, so what usually makes a suite slow or flaky is absent.
+
+| Cost today | Here |
+|---|---|
+| start a database, migrate, truncate between tests | the world is a value; each test gets its own copy at no cost |
+| one shared fixture, so tests take turns | nothing shared: any number of cores, any order |
+| several agents on one checkout clear each other's data | each has its own worlds; no lock, no port, no build folder |
+| `sleep(2)` and poll until it happens | `clock.advance(7d)` happens at once |
+| timeouts tuned for a slow machine | time moves only when the test says |
+| a failure that comes and goes | same seed, same order, same result; retrying tells nothing new |
+| start a browser or an engine | not needed until the parity stage ([22](22-lifecycle.md)) |
+| compile and link first | the interpreter reads source |
+
+```slg
+@given(invited)
+test a_week_passes = {
+  clock.advance(7d);
+  accept(bob, id: i1) -> fail Gone;
+  clock.advance(400d);
+  assert invites[i1].state == Expired;
+}
+```
+
+Over a year of simulated time, no waiting.
+
+**Linting mostly disappears.** There is one format, so nothing to argue about. Unused names, missing cases, unit mistakes, unlisted effects, floats for money and writes to another module's state are type errors. House rules are notes in a vocabulary, checked in the same pass as types, per declaration and in parallel.
+
+| Check | Runs on | Parallel by |
+|---|---|---|
+| format | one file | file |
+| names, types, effects, house rules | one declaration and the contracts it uses | declaration |
+| tests | one world each | test |
+| property cases | seeds | seed range |
+| bounded search | starting states | state range |
+| proof | one claim | claim |
+
+A failing case found by any core is the same case on every core, because results do not depend on which finished first: the smallest by a fixed order is reported.
+
 ## Run almost nothing
 
 Goal, unmeasured: verdicts in milliseconds for a module. The mechanism is not a fast evaluator:
@@ -340,6 +380,9 @@ A test yields an observation: replies plus effects. It is lowered to each target
 
 ## Limits
 
+- **Fast checks do not make the model faster.** Most of an agent's time is its own turns ([07](07-agent-loop.md)). Instant tests help by allowing more tries per turn and by never queueing agents behind one another; how much is unmeasured.
+- **What is simulated can be wrong.** A real database locks, a real disk lies, a real network stalls. Those bugs wait for the parity stage, which keeps its database, files and browser, and stays slow.
+- **Search grows faster than cores.** Interleavings multiply; twelve cores buy about one more step of depth, not a different class of answer.
 - **Same author, same blind spot.** Law, test and logic can share one missing idea. [08](08-approval-and-anti-cheating.md) raises ambiguity; nothing invents the requirement nobody asked for.
 - Exploring all orders explodes. Traces are bounded, and reported as `bounded(k)` or `sampled`. Starting from every allowed world finds more bugs and more false alarms: expect to write state laws that only describe where a module can be.
 - Working backwards through a hole is a solver problem: expect `unknown` beyond small state.
