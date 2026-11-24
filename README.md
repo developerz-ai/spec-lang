@@ -16,6 +16,23 @@
 
 > **If you are a coding agent**, read the [language card](docs/idea/01-language-card.md) first: the whole language on one page.
 
+## Why
+
+Coding agents should work on logic. Most of their time and machine goes to the environment around it.
+
+- Every project needs compilers, interpreters, a file system, a network and databases before one rule can be checked. So agent machines need a lot of memory and fast processors, for work that is mostly not the idea.
+- Checking a rule means running lint, types, builds, test suites and CI. Well-tuned projects on good frameworks still wait.
+- Agents rebuild the same wheels: another retry, another permission check, another invite flow, another way to page a list.
+
+**spec-lang virtualises the world.** A virtual machine stands in for hardware; here the engine stands in for the database, disk, network, clock and everyone else, in memory. Logic is written and checked there, and meets the real world once, on the way to production:
+
+```text
+idea (human or AI) -> logic in spec-lang, checked in memory -> CI compiles it and tests the real thing -> production
+      think              meant for many times a minute                  once per landing
+```
+
+Wheels are shared as ideas that carry their own tests ([packages](docs/idea/35-packages.md)), so an agent picks one up and does not rebuild it.
+
 ## What it is
 
 Every program is logic: something is true, something happens, something else becomes true. Around it sits plumbing: schemas, routes, clients, retries, wiring, and the same check repeated in five layers. spec-lang keeps the logic and derives the rest.
