@@ -2,20 +2,21 @@
 
 > **Design.** Nothing here runs yet. What a vocabulary package is, how it stays total and hygienic, and how two vocabularies share one declaration.
 
-**Rule: a vocabulary adds kinds and notes, nothing else.** No grammar, no parser hook, no build script, no runtime of its own. Every kind is shorthand for ordinary declarations; every note is one typed policy slot. `spec-lang view --as expanded` shows the shorthand written out.
+**Rule: a vocabulary adds kinds, notes, handlers and an app shape, nothing else.** No grammar, no parser hook, no build script, no runtime of its own. Every kind is shorthand for ordinary declarations; every note is one typed policy slot. `spec-lang view --as expanded` shows the shorthand written out.
 
-## The eight parts
+## The parts
 
-A vocabulary is a module of ordinary declarations. Each part uses a form from the [language card](01-language-card.md).
+A vocabulary is a module of ordinary declarations: the `vocab.slg` of a library `libs/<name>/`, beside its `contract.slg` and `pretend.slg` ([card, Libraries](01-language-card.md#libraries); [008](../decisions/008-libraries-ship-their-spec.md)). Each part uses a form from the [language card](01-language-card.md).
 
 | Part | Written as | The compiler uses it for |
 |---|---|---|
 | Kinds | `kind` | new declaration words: `entity`, `query`, `system`, `layout` |
-| Notes | `note` | new policy slots: `@page`, `@index`, `@replicas` |
+| Notes | `note` | new policy slots: `@page`, `@index`, `@replicas`; with `@allows(on)`, a trigger: `@on(cli("add"))` |
 | Typing | parameter types on the kind or note, plus `@allows` | rejecting a misplaced or ill-typed use before expansion |
 | Expansion | a pure `fn` from the declaration to lower declarations | the meaning; what the interpreter runs |
 | Laws | `law` | proof facts, rewrite rules and parity tests, from one statement |
-| Effects | effect names plus a simulated `handler` | the model the interpreter and tests run against |
+| Effects | `handler out { rule line(text: Text); test text -> Text; }`, and in `pretend.slg` a `handler` whose arms implement each operation | the model the interpreter and tests run against; an operation's kind says who may use it (`rule`: rules, `fn`: any body, `test`: tests) |
+| App shape | `app Game(start: rule, @on(tick) tick: rule, ...)` | the parameters an `app` takes in a module that uses the vocabulary, and the trigger a named rule must carry |
 | Suite | `test` | what every backend claiming the kind must pass ([11](11-backends-and-parity.md)) |
 | Explanation | `@explain` | the human projection of each use ([10](10-compiler-and-ir.md)) |
 
@@ -176,6 +177,7 @@ Not early: a general UI vocabulary. Presentation code is large and was not shown
 
 ## Limits
 
+- **Only part of this runs.** The toolchain loads `libs/<name>/` and checks notes on an `app`, triggers, handlers with their pretends, and an app shape. Kinds, expansion, laws and suites in a vocabulary, footprints, bridges and versions are design.
 - **Footprints are coarse.** Eight aspects will produce false overlaps, and two vocabularies can still interfere through shared runtime state that no aspect names. The both-orders check catches only expansion-time interference.
 - **Bridges can multiply.** Worst case is one per pair of writers on an aspect. The mitigation is that most vocabularies only read; whether that holds is unknown until several exist.
 - **A wrong expansion is a wrong meaning** that every test agrees with. The suite is written by the same authors as the expansion; independent review of vocabularies matters more than of application code.

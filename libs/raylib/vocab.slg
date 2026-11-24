@@ -1,0 +1,5 @@
+// raylib adds no note, trigger or app shape: it is calls only, in contract.slg. It offers game's two handlers, so a
+// module that uses raylib can state the effects its calls have.
+
+use game.screen;
+use game.keys;

@@ -16,6 +16,7 @@ spec-lang-ir = { path = "crates/ir" }
 spec-lang-engine = { path = "crates/engine" }
 spec-lang-testing = { path = "crates/testing" }
 spec-lang-check = { path = "crates/check" }
+spec-lang-lir = { path = "crates/lir" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

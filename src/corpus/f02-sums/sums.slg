@@ -1,0 +1,109 @@
+// f02-sums pins: sums with and without data, construction positional and by
+// name, `match` with literal, binding, wildcard and nested patterns, first
+// matching arm wins, `.is(pattern)`, arms that are blocks, sums inside sums.
+
+type Dim = 0..=1000;
+type Shape = Dot | Circle(r: Dim) | Rect(w: Dim, h: Dim) | Tagged(name: Text, inner: Shape);
+type Light = Red | Amber | Green;
+type Reading = Missing | Value(n: Int, unit: Text);
+
+@cases(
+  Dot -> 0,
+  Circle(2) -> 12,
+  Circle(0) -> 0,
+  Rect(3, h: 4) -> 12,
+  Rect(h: 5, w: 2) -> 10,
+  Tagged("a", inner: Rect(2, h: 2)) -> 4,
+  Tagged("a", inner: Tagged("b", inner: Circle(1))) -> 3,
+)
+pub fn area(s: Shape) -> Int = match s {
+  Dot => 0;
+  Circle(r) => 3 * r * r;
+  Rect(w, h) => w * h;
+  Tagged(_, inner) => area(inner);
+}
+
+@cases(Red -> Green, Green -> Amber, Amber -> Red)
+pub fn next(l: Light) -> Light = match l {
+  Red => Green;
+  Green => Amber;
+  Amber => Red;
+}
+
+@cases(
+  Circle(0) -> "nothing",
+  Circle(1) -> "unit",
+  Circle(7) -> "circle 7",
+  Rect(0, h: 9) -> "flat",
+  Rect(9, h: 0) -> "flat",
+  Rect(2, h: 2) -> "square 2",
+  Rect(2, h: 3) -> "rect 2x3",
+  Dot -> "other",
+  Tagged("x", inner: Dot) -> "other",
+)
+pub fn describe(s: Shape) -> Text = match s {
+  Circle(0) => "nothing";
+  Circle(1) => "unit";
+  Circle(r) => "circle {r}";
+  Rect(0, _) => "flat";
+  Rect(_, 0) => "flat";
+  Rect(w, h) => if w == h then "square {w}" else "rect {w}x{h}";
+  _ => "other";
+}
+
+@cases(
+  Tagged("a", inner: Dot) -> 1,
+  Tagged("a", inner: Tagged("b", inner: Tagged("c", inner: Circle(1)))) -> 3,
+  Rect(1, h: 1) -> 0,
+)
+pub fn depth(s: Shape) -> Int = match s {
+  Tagged(_, Tagged(_, inner)) => 2 + depth(inner);
+  Tagged(_, _) => 1;
+  _ => 0;
+}
+
+@cases(Missing -> "-", Value(3, unit: "kg") -> "3 kg", Value(-1, unit: "") -> "-1 ")
+pub fn show(r: Reading) -> Text = match r {
+  Missing => "-";
+  Value(n, unit) => "{n} {unit}";
+}
+
+@cases(Value(5, unit: "m") -> 5, Value(-5, unit: "m") -> 0, Missing -> -1)
+pub fn positive(r: Reading) -> Int = match r {
+  Value(n, _) => {
+    if n < 0 { return 0; }
+    return n;
+  }
+  Missing => -1;
+}
+
+test is_matches_without_binding = {
+  assert Circle(3).is(Circle(_));
+  assert Circle(3).is(Circle(3));
+  assert not Circle(3).is(Circle(4));
+  assert not Circle(3).is(Rect(_, _));
+  assert Dot.is(Dot);
+  assert not Dot.is(Circle(_));
+  assert Rect(2, h: 5).is(Rect(_, 5));
+  assert Tagged("a", inner: Circle(1)).is(Tagged(_, Circle(_)));
+  assert not Tagged("a", inner: Circle(1)).is(Tagged("b", _));
+}
+
+test variants_with_equal_data_are_equal = {
+  assert Rect(1, h: 2) == Rect(w: 1, h: 2);
+  assert Rect(1, h: 2) != Rect(2, h: 1);
+  assert Circle(1) != Rect(1, h: 1);
+  assert Tagged("a", inner: Dot) == Tagged("a", inner: Dot);
+  assert Tagged("a", inner: Dot) != Tagged("a", inner: Circle(0));
+  assert Value(1, unit: "s").n == 1 and Value(1, unit: "s").unit == "s";
+}
+
+test three_steps_come_back(l: Light) = {
+  assert next(next(next(l))) == l;
+  assert next(l) != l;
+}
+
+test tagging_keeps_the_area(s: Shape) = {
+  assert area(Tagged("t", inner: s)) == area(s);
+  assert depth(Tagged("t", inner: s)) >= 1;
+}

@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+# Projected by hand from the gate of the Ruby backend (docs/contract.md section 6). Stand-in for spec-lang build output; change the spec, not this file.
+
+source "https://rubygems.org"
+
+ruby ">= 4.0"
+
+# Run time: the foreign function interface. Fiddle has no struct type for arguments; ffi passes structs by value.
+gem "ffi", "1.17.4"
+
+group :development do
+  gem "minitest", "6.0.0"
+  gem "rubocop", "1.92.3", require: false
+  gem "rubocop-minitest", "0.41.0", require: false
+end

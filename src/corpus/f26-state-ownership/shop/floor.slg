@@ -1,0 +1,32 @@
+// f26-state-ownership pins (module shop.floor): a second module with its own
+// state. Its rules write `served` and `tips` here and change the till only
+// through `till.ring` and `till.pay_out`; they read `till.cash` directly.
+
+use shop.till;
+use shop.till.Coin;
+
+type Owed = Int where self >= 0;
+
+state served: Int = 0;
+state tips: Map[Text, Owed];
+
+@why("serving a customer rings the sale and counts the visit, as one move")
+@uses(served.write, tips.write, till.cash.write, till.sales.write, till.opened.read)
+pub rule serve(waiter: Text, price: Coin, tip: 0..=50) -> Int = {
+  served = served + 1;
+  tips[waiter] = (tips[waiter] else 0) + tip;
+  return till.ring(price);
+}
+
+@why("tips are paid from the drawer, and only what the drawer holds")
+@uses(tips.write, till.cash.write, till.opened.read)
+@guard(waiter in tips else NoTips, tips[waiter] > 0 else NoTips)
+pub rule cash_out(waiter: Text) -> Int = {
+  let owed = tips[waiter];
+  tips.remove(waiter);
+  till.pay_out(owed);
+  return owed;
+}
+
+@why("how full the drawer is, read across the module line")
+pub fn drawer_covers_tips() -> Bool = tips.values.sum() <= till.cash;

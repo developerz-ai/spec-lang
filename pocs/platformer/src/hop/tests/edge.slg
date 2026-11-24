@@ -1,0 +1,10 @@
+// hop.tests.edge: the game's own geometry against the C library's.
+
+use hop.geom;
+use hop.geom.Box;
+use hop.screen;
+
+@why("the game's touch and raylib's are one test; only a backend linked to raylib can run the right-hand side")
+test touch_matches_raylib(a: Box, b: Box) = {
+  assert geom.touches(a, b: b) == screen.check_collision_boxes(a, b: b);
+}

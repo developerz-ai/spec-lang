@@ -1,0 +1,110 @@
+// hop.physics: how bodies move in one tick. Pure: every function takes what it reads.
+
+use hop.geom;
+use hop.geom.Vec3;
+use hop.geom.Box;
+use hop.model.Pad;
+use hop.model.Solid;
+use hop.model.Mover;
+use hop.model.Crawler;
+
+@why("half the width, the full height and half the depth of the hero: 0.5 m by 0.75 m by 0.5 m")
+pub const body_half: Vec3 = Vec3(64, y: 192, z: 64);
+pub const crawler_half: Vec3 = Vec3(96, y: 128, z: 96);
+pub const gem_half: Int = 64;
+pub const goal_half: Vec3 = Vec3(64, y: 768, z: 64);
+
+@why("3.75 m/s flat out; about the same speed on a diagonal, so a diagonal is not a shortcut")
+pub const run_speed: Int = 16;
+pub const diagonal_speed: Int = 11;
+pub const ground_accel: Int = 2;
+pub const air_accel: Int = 1;
+pub const gravity: Int = 2;
+@why("never more than 48 sub-metres in a tick, less than the thinnest solid, so nothing passes through a floor")
+pub const max_fall: Int = 48;
+pub const jump_speed: Int = 40;
+@why("letting go of jump early cuts the rise: a short hop")
+pub const hop_cut: Int = 16;
+@why("a jump still counts for a few ticks after running off an edge")
+pub const coyote_ticks: Int = 6;
+pub const stomp_bounce: Int = 24;
+@why("a stomp lands on the upper half of a crawler")
+pub const stomp_line: Int = 64;
+pub const kill_y: Int = -2048;
+
+pub type Axis(pos: Int, vel: Int);
+pub type Fall(y: Int, vel: Int, grounded: Bool, riding: Option[Int]);
+pub type Placed(no: Int, box: Box);
+
+pub fn body(at: Vec3) -> Box = geom.around_feet(at, half: body_half);
+
+pub fn crawler_box(c: Crawler) -> Box = geom.around_feet(c.at, half: crawler_half);
+
+pub fn mover_box(m: Mover, t: Int) -> Box = geom.shifted(m.home, by: geom.scaled(m.step, k: geom.triangle(t, n: m.span)));
+
+@why("a rider moves exactly as far as its mover did this tick")
+pub fn mover_shift(m: Mover, t: Int) -> Vec3 = geom.minus(mover_box(m, t: t).lo, b: mover_box(m, t: t - 1).lo);
+
+fn axis(neg: Bool, pos: Bool) -> Int = (if pos then 1 else 0) - (if neg then 1 else 0);
+
+@why("x runs right, z runs toward the camera, so forward is minus z")
+@cases(Pad() -> Vec3(0, 0, 0), Pad(right: true) -> Vec3(16, 0, 0), Pad(left: true, forward: true) -> Vec3(-11, 0, -11), Pad(left: true, right: true) -> Vec3(0, 0, 0))
+pub fn walk_target(pad: Pad) -> Vec3 = {
+  let dx = axis(pad.left, pos: pad.right);
+  let dz = axis(pad.forward, pos: pad.back);
+  let speed = if dx != 0 and dz != 0 then diagonal_speed else run_speed;
+  return Vec3(dx * speed, y: 0, z: dz * speed);
+}
+
+@why("the hero faces where the pad points, and keeps facing there when it lets go")
+@cases((Pad(), 90) -> 90, (Pad(right: true), 90) -> 0, (Pad(forward: true), 0) -> 90, (Pad(left: true, back: true), 0) -> 225)
+pub fn facing(pad: Pad, was: Int) -> Int = {
+  let dx = axis(pad.left, pos: pad.right);
+  let dz = axis(pad.forward, pos: pad.back);
+  if dx == 1 { return if dz == -1 then 45 else if dz == 1 then 315 else 0; }
+  if dx == -1 { return if dz == -1 then 135 else if dz == 1 then 225 else 180; }
+  return if dz == -1 then 90 else if dz == 1 then 270 else was;
+}
+
+@why("move on one axis, then stop flush against the first solid in the way")
+pub fn slide_x(at: Vec3, v: Int, solids: List[Solid]) -> Axis = {
+  if v == 0 { return Axis(at.x, vel: 0); }
+  let hits = solids.filter(s => geom.overlaps(body(at.with(x: at.x + v)), b: s.box));
+  if hits.size == 0 { return Axis(at.x + v, vel: v); }
+  if v > 0 { return Axis(hits.map(it.box.lo.x).min() - body_half.x, vel: 0); }
+  return Axis(hits.map(it.box.hi.x).max() + body_half.x, vel: 0);
+}
+
+pub fn slide_z(at: Vec3, v: Int, solids: List[Solid]) -> Axis = {
+  if v == 0 { return Axis(at.z, vel: 0); }
+  let hits = solids.filter(s => geom.overlaps(body(at.with(z: at.z + v)), b: s.box));
+  if hits.size == 0 { return Axis(at.z + v, vel: v); }
+  if v > 0 { return Axis(hits.map(it.box.lo.z).min() - body_half.z, vel: 0); }
+  return Axis(hits.map(it.box.hi.z).max() + body_half.z, vel: 0);
+}
+
+@why("solids stop the body both ways; a mover's top only catches feet that were above it")
+pub fn fall(at: Vec3, v: Int, solids: List[Solid], tops: List[Placed]) -> Fall = {
+  let hits = solids.filter(s => geom.overlaps(body(at.with(y: at.y + v)), b: s.box));
+  if hits.size > 0 and v > 0 { return Fall(hits.map(it.box.lo.y).min() - body_half.y, vel: 0, grounded: false, riding: none); }
+  if hits.size > 0 { return Fall(hits.map(it.box.hi.y).max(), vel: 0, grounded: true, riding: none); }
+  let catching = tops.filter(p => v < 0 and geom.over(body(at), b: p.box) and at.y >= p.box.hi.y and at.y + v < p.box.hi.y);
+  if catching.size == 0 { return Fall(at.y + v, vel: v, grounded: false, riding: none); }
+  let top = catching.map(it.box.hi.y).max();
+  return Fall(top, vel: 0, grounded: true, riding: Some(catching.filter(it.box.hi.y == top).map(it.no).min()));
+}
+
+@why("a crawler walks to the end of its beat and turns")
+@cases(
+  Crawler(1, at: Vec3(0, 0, 0), lo: -10, hi: 10, dir: 1, speed: 4) -> Crawler(1, at: Vec3(4, 0, 0), lo: -10, hi: 10, dir: 1, speed: 4),
+  Crawler(1, at: Vec3(8, 0, 0), lo: -10, hi: 10, dir: 1, speed: 4) -> Crawler(1, at: Vec3(10, 0, 0), lo: -10, hi: 10, dir: -1, speed: 4),
+)
+pub fn patrol(c: Crawler) -> Crawler = {
+  let x = c.at.x + c.dir * c.speed;
+  if x >= c.hi { return c.with(at: c.at.with(x: c.hi), dir: -1); }
+  if x <= c.lo { return c.with(at: c.at.with(x: c.lo), dir: 1); }
+  return c.with(at: c.at.with(x: x));
+}
+
+@why("from above and falling, on the upper half: a stomp; any other touch hurts")
+pub fn stomps(feet: Int, vy: Int, c: Crawler) -> Bool = vy < 0 and feet >= c.at.y + stomp_line;

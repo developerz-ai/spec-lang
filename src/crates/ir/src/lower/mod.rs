@@ -1,18 +1,23 @@
-//! AST to IR. Six passes, each over every module:
+//! AST to IR. Seven passes, each over every module:
 //!
-//! 1. parse every file;
+//! 1. parse every file, then every library they `use` (`library`), whose
+//!    contracts join the modules and whose vocabularies are registered as data;
 //! 2. declare: one table entry per declaration, names into module scopes;
 //! 3. resolve `use` items, and refuse import cycles;
 //! 4. classify `type` bodies (alias, record, sum, rule set) and declare variants;
 //! 5. lower declared types: fields, parameters, states, constants;
-//! 6. lower bodies and notes.
+//! 6. lower bodies and notes;
+//! 7. check what needs every body: an app field that names a rule has the
+//!    trigger its library's shape asks for.
 //!
 //! Errors are collected per declaration so one bad declaration does not hide
 //! the others; a pass that depends on a failed one is skipped.
 
+mod apps;
 mod declare;
 mod decls;
 mod expr;
+mod library;
 mod notes;
 mod pattern;
 mod scope;
@@ -22,12 +27,13 @@ mod ty;
 
 use crate::error::IrError;
 use crate::ids::*;
+use crate::library::LibPath;
 use crate::load::LoadFailure;
 use crate::program::*;
 use scope::Scopes;
 use spec_lang_syntax::{SourceFile, SourceMap, ast, parse_file};
 
-pub(crate) fn lower_program(sources: Vec<(String, String, String)>) -> Result<Program, LoadFailure> {
+pub(crate) fn lower_program(sources: Vec<(String, String, String)>, libs: &LibPath) -> Result<Program, LoadFailure> {
     let mut map = SourceMap::new();
     let mut files = Vec::new();
     let mut errors = Vec::new();
@@ -41,8 +47,13 @@ pub(crate) fn lower_program(sources: Vec<(String, String, String)>) -> Result<Pr
     if !errors.is_empty() {
         return Err(LoadFailure { sources: map, errors });
     }
-    let mut lw = Lowerer::new(map);
-    lw.run(files);
+    let found = library::find_libraries(&mut files, &mut map, libs);
+    let found = match found {
+        Ok(f) => f,
+        Err(errors) => return Err(LoadFailure { sources: map, errors }),
+    };
+    let mut lw = Lowerer::new(map, libs.clone());
+    lw.run(files, found);
     if lw.errors.is_empty() { Ok(lw.prog) } else { Err(LoadFailure { sources: lw.prog.sources, errors: lw.errors }) }
 }
 
@@ -58,10 +69,12 @@ pub(crate) struct Lowerer {
     /// Parameter names, and whether each has a default, of everything that
     /// can be called: known from the syntax, before any type is lowered.
     pub(crate) sigs: std::collections::HashMap<crate::expr::Callee, Vec<(String, bool)>>,
+    /// Where `use` looked for libraries, for its errors.
+    pub(crate) lib_path: LibPath,
 }
 
 impl Lowerer {
-    fn new(sources: SourceMap) -> Self {
+    fn new(sources: SourceMap, lib_path: LibPath) -> Self {
         let mut prog = Program {
             sources,
             modules: Vec::new(),
@@ -77,6 +90,8 @@ impl Lowerer {
             option_type: TypeId(0),
             result_type: TypeId(1),
             rule_set_uses: Vec::new(),
+            libraries: Vec::new(),
+            handlers: Vec::new(),
         };
         declare::add_core(&mut prog);
         Lowerer {
@@ -86,10 +101,11 @@ impl Lowerer {
             asts: vec![None],
             pending: Vec::new(),
             sigs: Self::core_sigs(),
+            lib_path,
         }
     }
 
-    fn run(&mut self, files: Vec<(String, String, ast::File)>) {
+    fn run(&mut self, files: Vec<(String, String, ast::File)>, libraries: Vec<library::LibSource>) {
         for (name, path, file) in files {
             if self.prog.modules.iter().any(|m| m.name == name) {
                 self.errors.push(IrError::load(format!("two files make module {name}")));
@@ -103,10 +119,15 @@ impl Lowerer {
                 uses: Vec::new(),
                 vocabularies: Vec::new(),
                 decls: Vec::new(),
+                library: None,
             });
             self.asts.push(Some(file));
         }
         self.scopes.ensure(self.prog.modules.len());
+        self.register_libraries(libraries);
+        if !self.errors.is_empty() {
+            return;
+        }
         let asts = std::mem::take(&mut self.asts);
         for (i, file) in asts.iter().enumerate() {
             if let Some(f) = file {
@@ -141,6 +162,9 @@ impl Lowerer {
         for (d, decl) in &pending {
             self.lower_decl_body(*d, decl);
         }
+        if self.errors.is_empty() {
+            self.check_app_triggers();
+        }
     }
 
     fn core_sigs() -> std::collections::HashMap<crate::expr::Callee, Vec<(String, bool)>> {
@@ -148,7 +172,6 @@ impl Lowerer {
         m.insert(crate::expr::Callee::Variant(TypeId(0), SOME_TAG), vec![("value".to_string(), false)]);
         m.insert(crate::expr::Callee::Variant(TypeId(1), OK_TAG), vec![("value".to_string(), false)]);
         m.insert(crate::expr::Callee::Variant(TypeId(1), ERR_TAG), vec![("error".to_string(), false)]);
-        m.insert(crate::expr::Callee::Effect(crate::expr::Effect::OutLine), vec![("text".to_string(), false)]);
         m
     }
 

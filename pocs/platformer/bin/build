@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Build every backend, or the ones named: bin/build rust cpp
+set -euo pipefail
+cd "$(dirname "$0")/.."
+backends=("$@"); [ ${#backends[@]} -eq 0 ] && backends=(rust bun ruby cpp)
+for b in "${backends[@]}"; do
+  echo "▸ build $b"
+  "out/$b/bin/build"
+done

@@ -1,0 +1,74 @@
+// Text.lower: the full Unicode lowercase mapping, no locale. The tables below are the ones of the toolchain
+// that printed this file, so the build lowers as `spec-lang test` does.
+#include <algorithm>
+#include <iterator>
+#include <vector>
+
+#include "rt/text.hpp"
+
+namespace rt {
+
+namespace {
+
+struct Lowered {
+  char32_t from;
+  char32_t to[3];
+};
+struct Span {
+  char32_t first;
+  char32_t last;
+};
+
+// clang-format off
+const Lowered kLowered[] = {
+@LOWERED@};
+// Cased and not case-ignorable.
+const Span kCased[] = {
+@CASED@};
+const Span kIgnorable[] = {
+@IGNORABLE@};
+// clang-format on
+
+template <std::size_t N>
+bool within(const Span (&spans)[N], char32_t c) {
+  const auto* it = std::upper_bound(std::begin(spans), std::end(spans), c, [](char32_t x, const Span& s) { return x < s.first; });
+  return it != std::begin(spans) && c <= std::prev(it)->last;
+}
+
+// Whether the first code point that is not case-ignorable is cased.
+template <class It>
+bool cased_after_ignorable(It from, It to) {
+  for (; from != to; ++from) {
+    if (!within(kIgnorable, *from)) return within(kCased, *from);
+  }
+  return false;
+}
+
+}  // namespace
+
+Text lower(const Text& text) {
+  std::vector<char32_t> points;
+  for (std::size_t at = 0; at < text.size();) points.push_back(unicode::next(text, at));
+  Text out;
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    const char32_t c = points[i];
+    if (c == 0x3A3) {
+      // Sigma is final after a cased letter and not before one.
+      const bool final_form = cased_after_ignorable(std::make_reverse_iterator(points.begin() + static_cast<std::ptrdiff_t>(i)), points.rend()) &&
+                              !cased_after_ignorable(points.begin() + static_cast<std::ptrdiff_t>(i) + 1, points.end());
+      unicode::append(out, final_form ? 0x3C2 : 0x3C3);
+      continue;
+    }
+    const auto* hit = std::lower_bound(std::begin(kLowered), std::end(kLowered), c, [](const Lowered& l, char32_t x) { return l.from < x; });
+    if (hit == std::end(kLowered) || hit->from != c) {
+      unicode::append(out, c);
+      continue;
+    }
+    for (const char32_t to : hit->to) {
+      if (to != 0) unicode::append(out, to);
+    }
+  }
+  return out;
+}
+
+}  // namespace rt

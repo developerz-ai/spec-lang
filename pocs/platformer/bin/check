@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# The gate. CI runs exactly this file; scripts/lint/gate-parity.test.ts fails if they drift.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
+
+step "spec parses"
+../../bin/slg-check src docs README.md findings.md
+
+step "spec checks, lints and tests (spec-lang test)"
+(cd ../../src && cargo build --release -q -p spec-lang-cli)
+../../src/target/release/spec-lang test src --deny warnings
+
+step "scripts: lint, types, tests"
+(cd scripts && bunx biome check . && bunx tsc -p . && bun test)
+
+step "assets: models and shaders rebuild byte for byte and load in raylib"
+assets/bin/check
+
+for b in rust bun ruby cpp; do
+  step "backend $b"
+  "out/$b/bin/check"
+done
+
+step "parity: every backend, fixed bytes and pixel agreement"
+bun scripts/parity/run.ts

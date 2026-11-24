@@ -1,0 +1,27 @@
+// cli: a program its user runs from a shell. It adds a trigger, two app notes and one effect; never grammar.
+// The meaning of each note and trigger is the runtime's (real/): no body here means the toolchain only checks the form.
+
+@why("the user runs `<bin> name ...`; the rule's parameters become the arguments")
+@allows(on)
+note cli(command: Text);
+
+@why("the executable's name")
+@allows(app)
+note bin(name: Text);
+
+@why("where every state of the app's modules lives between runs")
+@allows(app)
+note store(at: Store);
+
+@why("a file relative to the working directory")
+type Store = file(path: Text);
+
+@why("lines to the program's user: one line on standard output per call, sent after the rule commits")
+@uses(out.write)
+handler out {
+  @uses(out.write)
+  rule line(text: Text);
+
+  @why("everything `line` sent in this test, each line ending in a newline")
+  test text -> Text;
+}

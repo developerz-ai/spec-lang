@@ -1,0 +1,109 @@
+// f28-scenarios pins the scenario forms: `call;` (when), `call -> value;`
+// (when + then, on rules and on fns, with any data as the value), `call ->
+// fail E;` (a refusal by a guard, by `fail` in a body, by a library failure
+// such as `Missing`, `Uneven`, `DivByZero`, and by a fn), `assert`, `let` and
+// loops between steps, and replies that are records, options and lists.
+
+type Ticket(no: Int, seat: Text, paid: Bool = false);
+
+state tickets: Map[Int, Ticket];
+state free: List[Text] = ["A1", "A2", "B1"];
+
+@why("a seat is sold once")
+@uses(tickets.write, free.write)
+@guard(free.size > 0 else SoldOut)
+pub rule book() -> Ticket = {
+  let seat = free.first;
+  free.remove(0);
+  let t = Ticket(tickets.size + 1, seat: seat);
+  tickets[t.no] = t;
+  return t;
+}
+
+@why("a ticket is paid once, and only a real one")
+@uses(tickets.write)
+pub rule pay(no: Int) -> Bool = {
+  let t = tickets[no] else fail NoTicket;
+  if t.paid { fail AlreadyPaid; }
+  tickets[no].paid = true;
+  return true;
+}
+
+@why("a cancelled seat goes back to the end of the queue")
+@uses(tickets.write, free.write)
+@guard(no in tickets else NoTicket, not tickets[no].paid else Paid)
+pub rule cancel(no: Int) -> List[Text] = {
+  free.push(tickets[no].seat);
+  tickets.remove(no);
+  return free;
+}
+
+@why("who sits where, if anyone")
+pub fn seat_of(no: Int) -> Option[Text] = match tickets.get(no) {
+  Some(t) => Some(t.seat);
+  none => none;
+}
+
+fn left_over(total: Int, people: Int) -> Int = total mod people;
+
+fn nth_free(i: Int) -> Text = free[i];
+
+test when_and_then = {
+  book() -> Ticket(1, seat: "A1");
+  book() -> Ticket(2, seat: "A2", paid: false);
+  seat_of(2) -> Some("A2");
+  seat_of(3) -> none;
+  pay(1) -> true;
+  cancel(2) -> ["B1", "A2"];
+  nth_free(1) -> "A2";
+}
+
+test refusals_of_every_kind = {
+  pay(1) -> fail NoTicket;
+  cancel(1) -> fail NoTicket;
+  book();
+  pay(1);
+  pay(1) -> fail AlreadyPaid;
+  cancel(1) -> fail Paid;
+  book();
+  book();
+  book() -> fail SoldOut;
+  nth_free(0) -> fail Missing;
+  left_over(10, people: 0) -> fail DivByZero;
+  left_over(10, people: 3) -> 1;
+  [1, 2].zip(["a"]) -> fail Uneven;
+}
+
+test a_refused_step_leaves_the_world_for_the_next_step = {
+  book();
+  let before = tickets;
+  pay(7) -> fail NoTicket;
+  cancel(7) -> fail NoTicket;
+  assert tickets == before and free == ["A2", "B1"];
+  pay(1) -> true;
+  assert tickets[1].paid and tickets != before;
+}
+
+test steps_can_sit_in_loops_and_branches = {
+  var sold: List[Text] = [];
+  for i in 1..=3 {
+    let t = book();
+    sold.push(t.seat);
+    if i mod 2 == 1 { pay(t.no) -> true; }
+  }
+  assert sold == ["A1", "A2", "B1"];
+  assert tickets.values.filter(it.paid).map(it.no) == [1, 3];
+  for no in [1, 3] { cancel(no) -> fail Paid; }
+  cancel(2) -> ["A2"];
+  book() -> Ticket(3, seat: "A2");
+}
+
+test a_reply_is_a_value_like_any_other = {
+  let t = book();
+  assert t.no == 1 and t.seat == "A1" and not t.paid;
+  assert book().seat == "A2";
+  assert [book()].map(it.seat) == ["B1"];
+  assert (book() else Ticket(0, seat: "none")).no == 0;
+  assert (pay(2) else false) and tickets[2].paid;
+  assert not (pay(2) else false);
+}

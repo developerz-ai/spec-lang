@@ -1,0 +1,8 @@
+// cli in tests: what the engine runs for the `out` handler. A refused rule takes its lines back with its writes,
+// because the handler's state is part of the world a rule commits or rolls back.
+
+@why("keeps every line in order; a test starts with none")
+handler PretendOut(sent: mut List[Text] = []) = {
+  out.line(text) -> sent.push(text);
+  out.text -> sent.map(line => "{line}\n").join("");
+}

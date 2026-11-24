@@ -1,0 +1,27 @@
+// game: a fixed-tick, single-player game with a window. It adds a trigger, an app note, an app shape and two world
+// effects; `out` is cli's handler, offered here too. Never grammar.
+
+use cli.out;
+
+@why("called once per tick of play, at that rate, with the controls of that tick")
+@allows(on)
+note tick(rate: 1Hz..=1000Hz);
+
+@why("the executable's name")
+@allows(app)
+note bin(name: Text);
+
+@why("the window `play` opens: width and height in pixels, then its title")
+@allows(app)
+note window(width: 1..=16384, height: 1..=16384, title: Text);
+
+@why("draws on the window; only foreign declarations perform it")
+@uses(screen.write)
+handler screen;
+
+@why("reads the keyboard; only foreign declarations perform it")
+@uses(keys.read)
+handler keys;
+
+@why("an app in a module that uses game names these six declarations")
+app Game(start: rule, @on(tick) tick: rule, input: fn, frame: rule, dump: fn, report: fn);

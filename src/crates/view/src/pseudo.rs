@@ -9,8 +9,8 @@
 use crate::class::params_text;
 use crate::facts::{Facts, Kind};
 use spec_lang_ir::{
-    Arg, Arm, BinOp, Block, Callee, CmpOp, DeclRef, Effect, Expect, Expr, ExprKind, Failure, InterpPart, LambdaBody,
-    MutOp, PatArg, Pattern, Place, PlaceRoot, PlaceStep, Stmt, StmtKind, Trigger, TypeDef, UnOp,
+    Arg, Arm, BinOp, Block, Callee, CmpOp, DeclRef, Expect, Expr, ExprKind, Failure, InterpPart, LambdaBody, MutOp,
+    PatArg, Pattern, Place, PlaceRoot, PlaceStep, Stmt, StmtKind, TypeDef, UnOp,
 };
 use std::fmt::Write as _;
 
@@ -106,7 +106,10 @@ impl Printer<'_, '_> {
                 };
                 (self.f.variant_name(id, tag), names)
             }
-            Callee::Effect(Effect::OutLine) => ("out.line".to_string(), vec!["text".to_string()]),
+            Callee::Effect(e) => (
+                p.effect_name(e),
+                p.effect_op(e).into_iter().flat_map(|o| o.params.iter().flatten()).map(|x| x.name.clone()).collect(),
+            ),
         }
     }
 
@@ -339,7 +342,7 @@ impl Printer<'_, '_> {
                 atom(format!("match {} {{ {} }}", self.expr(scrutinee, Level::Implies), arms.join("; ")))
             }
             ExprKind::Block(b) => atom(self.inline_block(b)),
-            ExprKind::OutText => atom("out.text".to_string()),
+            ExprKind::EffectRead(e) => atom(self.f.p.effect_name(*e)),
             ExprKind::Hole(n) => atom(format!("?{n}")),
         }
     }
@@ -502,9 +505,16 @@ impl Printer<'_, '_> {
                 self.depth += 1;
                 self.why(i);
                 for t in &x.triggers {
-                    match t {
-                        Trigger::Cli { command } => self.line(&format!("on command {}", quote(command))),
-                    }
+                    // `on command "add"`: each argument after its parameter's name.
+                    let args: Vec<String> = t
+                        .args
+                        .iter()
+                        .map(|a| match &a.value {
+                            spec_lang_ir::NoteValue::Text(s) => format!("{} {}", a.param, quote(s)),
+                            v => format!("{} {v}", a.param),
+                        })
+                        .collect();
+                    self.line(&format!("on {}", args.join(", ")));
                 }
                 if !x.uses.is_empty() {
                     self.line(&format!("uses {}", x.uses.join(", ")));

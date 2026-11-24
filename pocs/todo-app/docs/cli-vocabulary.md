@@ -1,6 +1,6 @@
 # The `cli` vocabulary
 
-> **Design, POC-local.** Nothing here runs. The [domain tour](../../../docs/idea/15-domain-tour.md) writes `use cli;` and lists what it derives; this card is the smallest set of kinds and notes the todo POC needed, written down so four backends could agree. It adds no grammar.
+> **POC-local, now a library.** The toolchain loads it from [`libs/cli/vocab.slg`](../../../libs/cli/vocab.slg) and checks programs against it ([009](../../../docs/decisions/009-one-compiler-any-language.md)). The [domain tour](../../../docs/idea/15-domain-tour.md) writes `use cli;` and lists what it derives; this card is the smallest set of kinds and notes the todo POC needed, written down so four backends could agree. It adds no grammar.
 
 ## What it adds
 
@@ -45,4 +45,4 @@ Each of these had two possible behaviours, so each was a question ([minimal and 
 ## Limits
 
 - One POC wrote this card, for one program. A second CLI program will find what it lacks.
-- Nothing in it is checked: the trigger, notes and effect parse as forms and mean nothing to any tool yet.
+- The engine checks the trigger, notes and effect against `libs/cli/vocab.slg`; their runtime is still embedded in the todo emitters until it moves to `libs/cli/real/`.

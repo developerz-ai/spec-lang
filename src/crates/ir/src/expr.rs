@@ -7,7 +7,7 @@
 //! access on a value: [`ExprKind::Prop`] (`x.size`, `t.status`) and
 //! [`ExprKind::Method`] (`xs.filter(...)`) are looked up on the value.
 
-use crate::ids::{LambdaId, ModuleId, RuleId, StateId, TypeId};
+use crate::ids::{HandlerId, LambdaId, ModuleId, RuleId, StateId, TypeId};
 use crate::ty::Ty;
 use spec_lang_syntax::Span;
 pub use spec_lang_syntax::ast::{CmpOp, UnOp};
@@ -139,8 +139,9 @@ pub enum ExprKind {
     },
     /// A block used as a value: its value is its `return`.
     Block(Block),
-    /// The `out.text` test handler: every line `out.line` sent, each with `\n`.
-    OutText,
+    /// An operation of a library's handler read as a value, without a call:
+    /// `out.text`, a test handler.
+    EffectRead(Effect),
     /// `?name`: runs until reached, then the test is blocked.
     Hole(String),
 }
@@ -161,14 +162,17 @@ pub enum Callee {
     Record(TypeId),
     /// A sum variant's constructor (`Some(x)`, `Held(by, until)`).
     Variant(TypeId, u32),
-    /// An effect of a vocabulary.
+    /// An operation of a library's handler: `out.line(text)`.
     Effect(Effect),
 }
 
+/// An operation of a library's handler ([`crate::Program::effect_op`]);
+/// [`crate::Program::effect_name`] gives it as written (`out.line`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Effect {
-    /// `out.line(text)` of the `cli` vocabulary: one line, sent after commit.
-    OutLine,
+pub struct Effect {
+    pub handler: HandlerId,
+    /// Its index in the handler's operations.
+    pub op: u32,
 }
 
 /// An argument of a dynamic call.

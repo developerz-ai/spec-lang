@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Rebuild every GLB in out/ from its recipe. With --preview, also redraw out/preview.png and
+# out/preview-large.png in raylib (needs ../vendor/raylib and xvfb-run).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+bun install --frozen-lockfile >/dev/null
+bun scripts/build.ts out
+
+if [[ "${1:-}" == "--preview" ]]; then
+  bin/view out/preview.png 320 180 side
+  bin/view out/preview-large.png 960 540 hero
+fi

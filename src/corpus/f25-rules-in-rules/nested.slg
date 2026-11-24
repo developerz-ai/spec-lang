@@ -1,0 +1,137 @@
+// f25-rules-in-rules pins: a rule called inside a rule joins it. The inner
+// rule's guards run at the call, its reply is a value, its writes and lines
+// belong to the outer call: an inner refusal fails the outer rule and undoes
+// everything, the inner calls that had succeeded included; `inner(..) else
+// fail E` replaces the error; `inner(..) else v` handles a refusal by the
+// inner rule's guard and the outer rule goes on. (What stays of an inner body
+// that wrote and then failed, when the outer rule handles it, is not pinned:
+// see the corpus README, engine findings.)
+
+use cli;
+
+state balance: Map[Text, Int];
+state ledger: List[Text];
+state fee_pot: Int = 0;
+
+@why("money leaves an account that has it")
+@uses(balance.write, ledger.write, out.write)
+@guard(who in balance else NoAccount, n > 0 else NotPositive, balance[who] >= n else Short)
+pub rule take(who: Text, n: Int) -> Int = {
+  balance[who] = balance[who] - n;
+  ledger.push("-{n} {who}");
+  out.line("took {n} from {who}");
+  return balance[who];
+}
+
+@why("money enters an account that exists")
+@uses(balance.write, ledger.write, out.write)
+@guard(who in balance else NoAccount, n > 0 else NotPositive)
+pub rule give(who: Text, n: Int) -> Int = {
+  balance[who] = balance[who] + n;
+  ledger.push("+{n} {who}");
+  out.line("gave {n} to {who}");
+  return balance[who];
+}
+
+@why("a transfer is one move: both legs or neither")
+@uses(balance.write, ledger.write, out.write)
+pub rule transfer(from: Text, to: Text, n: Int) -> Int = {
+  let left = take(from, n: n);
+  give(to, n: n);
+  out.line("moved {n}");
+  return left;
+}
+
+@why("a transfer with a fee takes three steps and still counts as one")
+@uses(balance.write, ledger.write, fee_pot.write, out.write)
+pub rule transfer_with_fee(from: Text, to: Text, n: Int) = {
+  fee_pot = fee_pot + 1;
+  transfer(from, to: to, n: n);
+  take(from, n: 1) else fail CannotPayFee;
+}
+
+@why("a sweep moves what it can and reports how many accounts it could not touch")
+@uses(balance.write, ledger.write, out.write)
+pub rule sweep(names: List[Text], to: Text) -> Int = {
+  var skipped = 0;
+  for name in names {
+    let left = take(name, n: 1) else -1;
+    if left == -1 { skipped = skipped + 1; } else { give(to, n: 1); }
+  }
+  out.line("skipped {skipped}");
+  return skipped;
+}
+
+@given(balance -> Map("ana" -> 10, "bob" -> 0))
+test two_people = {
+  assert ledger == [];
+}
+
+@given(two_people)
+test both_legs_happen = {
+  transfer("ana", to: "bob", n: 4) -> 6;
+  assert balance == Map("ana" -> 6, "bob" -> 4);
+  assert ledger == ["-4 ana", "+4 bob"];
+  assert out.text == "took 4 from ana\ngave 4 to bob\nmoved 4\n";
+}
+
+@given(two_people)
+test the_inner_guard_refuses_the_outer_rule = {
+  transfer("ana", to: "bob", n: 11) -> fail Short;
+  transfer("eve", to: "bob", n: 1) -> fail NoAccount;
+  transfer("ana", to: "bob", n: 0) -> fail NotPositive;
+  assert balance == Map("ana" -> 10, "bob" -> 0) and ledger == [] and out.text == "";
+}
+
+@given(two_people)
+test a_second_leg_that_fails_undoes_the_first = {
+  transfer("ana", to: "eve", n: 4) -> fail NoAccount;
+  assert balance == Map("ana" -> 10, "bob" -> 0);
+  assert ledger == [] and out.text == "";
+}
+
+@given(two_people)
+test three_levels_deep_is_still_one_call = {
+  transfer_with_fee("ana", to: "bob", n: 10) -> fail CannotPayFee;
+  assert balance == Map("ana" -> 10, "bob" -> 0) and fee_pot == 0 and ledger == [] and out.text == "";
+  transfer_with_fee("ana", to: "bob", n: 9);
+  assert balance == Map("ana" -> 0, "bob" -> 9) and fee_pot == 1;
+  assert ledger == ["-9 ana", "+9 bob", "-1 ana"];
+  assert out.text == "took 9 from ana\ngave 9 to bob\nmoved 9\ntook 1 from ana\n";
+}
+
+@given(two_people)
+test a_handled_refusal_lets_the_outer_rule_go_on = {
+  sweep(["bob", "ana", "eve", "ana"], to: "ana") -> 2;
+  assert balance == Map("ana" -> 10, "bob" -> 0);
+  assert ledger == ["-1 ana", "+1 ana", "-1 ana", "+1 ana"];
+  assert out.text == "took 1 from ana\ngave 1 to ana\ntook 1 from ana\ngave 1 to ana\nskipped 2\n";
+  sweep(["ana", "bob", "eve", "ana"], to: "bob") -> 1;
+  assert balance == Map("ana" -> 8, "bob" -> 2);
+}
+
+@given(two_people)
+test a_handled_refusal_then_a_failure_still_undoes_all = {
+  sweep(["ana", "bob"], to: "eve") -> fail NoAccount;
+  assert balance == Map("ana" -> 10, "bob" -> 0) and ledger == [] and out.text == "";
+}
+
+@given(two_people)
+test transfer_moves_or_refuses(n: -3..=14) = {
+  if 1 <= n <= 10 {
+    transfer("ana", to: "bob", n: n) -> 10 - n;
+    assert balance["bob"] == n and ledger.size == 2;
+  } else {
+    assert (transfer("ana", to: "bob", n: n) else -1) == -1;
+    assert balance == Map("ana" -> 10, "bob" -> 0) and ledger == [] and out.text == "";
+  }
+}
+
+law transfers_conserve_money(t: Trace[transfer | sweep]) =
+  t.steps.all(s => s.after.balance.values.sum() == s.before.balance.values.sum());
+
+law a_refusal_at_any_depth_changes_nothing(t: Trace[take | give | transfer | transfer_with_fee | sweep]) =
+  t.steps.all(s => s.reply.is(Err(_)) implies s.after == s.before);
+
+law nobody_goes_negative(t: Trace[take | give | transfer | transfer_with_fee | sweep]) =
+  t.states.all(w => w.balance.values.all(it >= 0));

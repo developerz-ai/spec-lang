@@ -1,0 +1,133 @@
+// f10-text-ops pins the Text library one name at a time: `split` (keeps empty
+// pieces, splits on a whole separator, by code point), `join`, `lower` (full
+// Unicode mapping, no locale: a capital sigma at the end of a word, a dotted
+// capital I that grows to two code points), `starts_with`, `contains` and `in`
+// (substring), `replace` (every match, left to right, never rescanning what
+// it wrote).
+
+@cases(
+  ("a,b,c", ",") -> ["a", "b", "c"],
+  ("a,b,,c", ",") -> ["a", "b", "", "c"],
+  (",a,", ",") -> ["", "a", ""],
+  (",", ",") -> ["", ""],
+  ("", ",") -> [""],
+  ("abc", ",") -> ["abc"],
+  ("a--b-c", "--") -> ["a", "b-c"],
+  ("a---b", "--") -> ["a", "-b"],
+  ("aaaa", "aa") -> ["", "", ""],
+  ("aaa", "aa") -> ["", "a"],
+  ("x😀y😀z", "😀") -> ["x", "y", "z"],
+  ("one two  three", " ") -> ["one", "two", "", "three"],
+  ("a\nb\n", "\n") -> ["a", "b", ""],
+)
+pub fn pieces(t: Text, sep: Text) -> List[Text] = t.split(sep);
+
+@cases(
+  (["a", "b", "c"], ",") -> "a,b,c",
+  (["a"], ",") -> "a",
+  ([], ",") -> "",
+  (["", ""], ",") -> ",",
+  (["a", "b"], "") -> "ab",
+  (["a", "b"], ", ") -> "a, b",
+  (["", "x", ""], "-") -> "-x-",
+)
+pub fn joined(xs: List[Text], sep: Text) -> Text = xs.join(sep);
+
+@cases(
+  "ABC" -> "abc",
+  "abc" -> "abc",
+  "A1-b_C" -> "a1-b_c",
+  "ÀÉÎ" -> "àéî",
+  "ß" -> "ß",
+  "ΑΣ" -> "ας",
+  "ΣΑ" -> "σα",
+  "ΑΣ ΑΣΑ" -> "ας ασα",
+  "İ" -> "i\u{307}",
+  "I" -> "i",
+  "Ǆ" -> "ǆ",
+  "ǅ" -> "ǆ",
+  "ЖУК" -> "жук",
+  "😀" -> "😀",
+  "" -> "",
+)
+pub fn lowered(t: Text) -> Text = t.lower();
+
+@cases(
+  ("hello", "he") -> true,
+  ("hello", "hello") -> true,
+  ("hello", "") -> true,
+  ("", "") -> true,
+  ("hello", "hello!") -> false,
+  ("hello", "el") -> false,
+  ("Hello", "he") -> false,
+  ("é", "e") -> false,
+  ("😀x", "😀") -> true,
+)
+pub fn starts(t: Text, x: Text) -> Bool = t.starts_with(x);
+
+@cases(
+  ("hello", "ell") -> true,
+  ("hello", "") -> true,
+  ("", "") -> true,
+  ("hello", "lo") -> true,
+  ("hello", "hello!") -> false,
+  ("hello", "L") -> false,
+  ("a😀b", "😀b") -> true,
+  ("e\u{301}", "é") -> false,
+)
+pub fn holds(t: Text, x: Text) -> Bool = t.contains(x);
+
+@cases(
+  ("a-b-c", "-", "+") -> "a+b+c",
+  ("aaa", "a", "aa") -> "aaaaaa",
+  ("aaa", "aa", "b") -> "ba",
+  ("abab", "ab", "") -> "",
+  ("abc", "x", "y") -> "abc",
+  ("", "x", "y") -> "",
+  ("a.b", ".", "..") -> "a..b",
+  ("x😀x", "😀", "é") -> "xéx",
+  ("abcabc", "bc", "cb") -> "acbacb",
+  ("aXbXc", "X", "X") -> "aXbXc",
+)
+pub fn swapped(t: Text, old: Text, new: Text) -> Text = t.replace(old, new);
+
+@why("a slug: lower case, words joined by one dash")
+@cases(
+  "Hello World" -> "hello-world",
+  "  Many   Spaces " -> "many-spaces",
+  "ÉCOLE d'été" -> "école-d'été",
+  "one" -> "one",
+  "   " -> "",
+)
+pub fn slug(title: Text) -> Text = title.trim().lower().split(" ").filter(it != "").join("-");
+
+test in_is_contains = {
+  assert "ell" in "hello";
+  assert not ("L" in "hello");
+  assert "" in "";
+}
+
+test lower_can_change_the_size = {
+  assert "İ".size == 1;
+  assert "İ".lower().size == 2;
+  assert "İ".lower().bytes == [105, 204, 135];
+  assert "ẞ".lower() == "ß";
+}
+
+test split_then_join_is_the_text(t: Text) = {
+  assert t.split(",").join(",") == t;
+  assert t.split(",").size >= 1;
+  assert t.split("ab").join("ab") == t;
+  assert t.split(",").all(p => not p.contains(","));
+}
+
+test replace_is_split_and_join(t: Text) = {
+  assert t.replace("a", "bb") == t.split("a").join("bb");
+  assert t.replace("a", "a") == t;
+  assert not t.replace("a", "").contains("a");
+  assert t.starts_with(t.take(3)) and t.contains(t.drop(2));
+}
+
+test lower_is_stable(t: Text) = {
+  assert t.lower().lower() == t.lower();
+}

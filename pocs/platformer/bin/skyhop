@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Run one backend's built binary with the POC's raylib and assets: bin/skyhop cpp play --level 2
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+backend="${1:?usage: bin/skyhop <rust|bun|ruby|cpp> <command> [args]}"; shift
+exe=$(bun -e "console.log(require('$root/parity/backends.json')['$backend']?.run[0] ?? '')")
+[ -n "$exe" ] || { echo "unknown backend $backend" >&2; exit 2; }
+export SKYHOP_RAYLIB="${SKYHOP_RAYLIB:-$root/vendor/raylib/lib/libraylib.so}"
+export SKYHOP_ASSETS="${SKYHOP_ASSETS:-$root/assets}"
+exec "$root/$exe" "$@"

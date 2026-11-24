@@ -1,0 +1,60 @@
+// hop.levels: the two levels, written in quarter metres. Pure data.
+
+use hop.geom.Vec3;
+use hop.geom.Box;
+use hop.model.Rgb;
+use hop.model.Solid;
+use hop.model.Mover;
+use hop.model.Gem;
+use hop.model.Crawler;
+use hop.model.Level;
+
+pub type LevelNo = 1..=2;
+
+const grass: Rgb = Rgb(98, g: 170, b: 80);
+const stone: Rgb = Rgb(150, g: 150, b: 160);
+const wood: Rgb = Rgb(210, g: 150, b: 60);
+
+@why("levels are laid out on a quarter-metre grid: 64 sub-metres")
+@cases(4 -> 256, -2 -> -128)
+fn q(n: Int) -> Int = n * 64;
+
+fn at(x: Int, y: Int, z: Int) -> Vec3 = Vec3(q(x), y: q(y), z: q(z));
+
+fn slab(from: Vec3, to: Vec3, color: Rgb) -> Solid = Solid(Box(from, hi: to), color: color);
+
+@why("teaches running, a gap, a step up, a crawler and the flag")
+pub const meadow: Level = Level(
+  "meadow",
+  start: at(0, y: 0, z: 0),
+  solids: [
+    slab(at(-8, y: -4, z: -8), to: at(16, y: 0, z: 8), color: grass),
+    slab(at(24, y: -4, z: -8), to: at(40, y: 0, z: 8), color: grass),
+    slab(at(40, y: -4, z: -8), to: at(56, y: 4, z: 8), color: stone),
+    slab(at(64, y: -4, z: -8), to: at(84, y: 0, z: 8), color: grass),
+  ],
+  gems: [Gem(1, at: at(32, y: 6, z: 0)), Gem(2, at: at(60, y: 10, z: 0)), Gem(3, at: at(72, y: 2, z: 0))],
+  crawlers: [Crawler(1, at: at(48, y: 4, z: 0), lo: q(43), hi: q(53), dir: 1, speed: 2)],
+  goal: at(80, y: 0, z: 0),
+);
+
+@why("a moving platform over a wide gap, then two crawlers on high ground a jump can reach")
+pub const ridge: Level = Level(
+  "ridge",
+  start: at(0, y: 0, z: 0),
+  solids: [
+    slab(at(-8, y: -4, z: -8), to: at(16, y: 0, z: 8), color: grass),
+    slab(at(52, y: -4, z: -8), to: at(60, y: 0, z: 8), color: grass),
+    slab(at(60, y: -4, z: -8), to: at(76, y: 5, z: 8), color: stone),
+    slab(at(80, y: -4, z: -8), to: at(100, y: 5, z: 8), color: grass),
+  ],
+  movers: [Mover(1, home: Box(at(20, y: -2, z: -6), hi: at(32, y: 0, z: 6)), step: Vec3(8, y: 0, z: 0), span: 128, color: wood)],
+  gems: [Gem(1, at: at(34, y: 5, z: 0)), Gem(2, at: at(68, y: 9, z: 0)), Gem(3, at: at(90, y: 9, z: 0))],
+  crawlers: [
+    Crawler(1, at: at(68, y: 5, z: 0), lo: q(62), hi: q(74), dir: 1, speed: 3),
+    Crawler(2, at: at(88, y: 5, z: 0), lo: q(82), hi: q(94), dir: -1, speed: 2),
+  ],
+  goal: at(96, y: 5, z: 0),
+);
+
+pub fn level(n: LevelNo) -> Level = if n == 1 then meadow else ridge;

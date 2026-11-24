@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Projected by hand from the build of the ruby target (docs/contract.md section 6). Stand-in for spec-lang build output; change the spec, not this file.
+# Ruby has no compile step. The build installs the pinned ffi gem into vendor/bundle with a load path that needs no
+# RubyGems (bundle install --standalone), makes exe/skyhop executable and proves every product file parses without a warning.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+bundle config set --local path vendor/bundle >/dev/null
+bundle install --quiet --standalone default
+chmod +x exe/skyhop
+while IFS= read -r file; do
+  if ! report=$(ruby -wc "$file" 2>&1) || [ "$report" != "Syntax OK" ]; then
+    printf '%s: %s\n' "$file" "$report" >&2
+    exit 1
+  fi
+done < <(find exe lib -type f | sort)
+echo "built exe/skyhop"

@@ -48,15 +48,12 @@ impl Interp<'_> {
                 };
                 Ok(Value::Variant(t, tag, Rc::new(vals)))
             }
-            Callee::Effect(Effect::OutLine) => {
-                let Some(Some(Value::Text(t))) = vals.first() else {
-                    return Err(runtime(span, "`out.line` takes one Text"));
-                };
-                if self.depth == 0 {
-                    return Err(runtime(span, "`out.line` is sent by a rule"));
+            Callee::Effect(e) => {
+                let mut args = Vec::with_capacity(vals.len());
+                for v in vals {
+                    args.push(v.ok_or_else(|| runtime(span, "an effect takes every argument"))?);
                 }
-                self.pending.push(t.to_string());
-                Ok(Value::Unit)
+                self.run_effect(e, args, span)
             }
         }
     }

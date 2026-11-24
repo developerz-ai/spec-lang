@@ -72,7 +72,6 @@ pub(crate) enum Core {
     Err,
     Set,
     Map,
-    Out,
 }
 
 fn core(name: &str) -> Option<Core> {
@@ -85,7 +84,6 @@ fn core(name: &str) -> Option<Core> {
         "Err" => Core::Err,
         "Set" => Core::Set,
         "Map" => Core::Map,
-        "out" => Core::Out,
         _ => return None,
     })
 }
@@ -246,16 +244,8 @@ impl Lowerer {
                     let b = self.member(m, &name.name, name.span)?;
                     return self.lower_binding(cx, b, &name.name, span);
                 }
-                if self.is_core(cx, recv, Core::Out) {
-                    return match name.name.as_str() {
-                        "text" if cx.body == Body::Test => Ok(Expr::new(ExprKind::OutText, span)),
-                        "text" => Err(IrError::error(
-                            "E-EFFECT-KIND",
-                            span,
-                            "`out.text` is a test handler: only tests read it",
-                        )),
-                        other => Err(IrError::unsupported(span, format!("`out.{other}`"))),
-                    };
+                if let Some(effect) = self.effect_of(cx, recv, name, false, span)? {
+                    return Ok(Expr::new(ExprKind::EffectRead(effect), span));
                 }
                 ExprKind::Prop { recv: Box::new(self.lower_expr(cx, recv)?), name: name.name.clone() }
             }
@@ -340,10 +330,6 @@ impl Lowerer {
             AK::Fail(x) => ExprKind::Fail(self.lower_failure(cx, x)?),
         };
         Ok(Expr::new(kind, span))
-    }
-
-    fn is_core(&self, cx: &Cx, e: &ast::Expr, c: Core) -> bool {
-        matches!(&e.kind, AK::Name(n) if matches!(self.resolve(cx, n), Ok(Named::Core(k)) if k == c))
     }
 
     pub(crate) fn lower_positional(&mut self, cx: &mut Cx, args: &[ast::Arg]) -> R<Vec<Expr>> {
@@ -456,22 +442,8 @@ impl Lowerer {
         let AK::Field(recv, name) = &callee.kind else {
             return Err(IrError::unsupported(span, "calling the value of an expression"));
         };
-        if self.is_core(cx, recv, Core::Out) {
-            if name.name != "line" {
-                return Err(IrError::unsupported(span, format!("`out.{}`", name.name)));
-            }
-            if cx.body != Body::Rule {
-                return Err(IrError::error("E-EFFECT-KIND", span, "`out.line` is an effect: only a rule sends it"));
-            }
-            if !self.prog.module(cx.module).vocabularies.iter().any(|v| v == crate::vocab::CLI) {
-                return Err(IrError::error(
-                    "E-NAME-UNKNOWN",
-                    span,
-                    "`out.line` comes from the `cli` vocabulary: add `use cli;`",
-                )
-                .with_note("the module has no `use cli;`"));
-            }
-            return self.bound_call(cx, Callee::Effect(Effect::OutLine), args, span);
+        if let Some(effect) = self.effect_of(cx, recv, name, true, span)? {
+            return self.bound_call(cx, Callee::Effect(effect), args, span);
         }
         match name.name.as_str() {
             "is" => {

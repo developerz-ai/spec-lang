@@ -42,7 +42,7 @@ impl Status {
 
 /// How a check is known (card, Evidence). An example is one run; sampling
 /// is many runs; neither is `proven`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Evidence {
     /// One run of a written example.
     Example,
@@ -51,6 +51,9 @@ pub enum Evidence {
     /// `traces` random traces of up to `steps` steps, `lawful` of them from
     /// a random world the types and laws allow, the rest from reached worlds.
     Traces { traces: u32, steps: u32, lawful: u32 },
+    /// The check reached a `foreign` body (`foreign c "raylib#X"`): what it
+    /// rests on is assumed until a backend runs it (card, Altitude is the form of the body).
+    Assumed(String),
 }
 
 impl std::fmt::Display for Evidence {
@@ -61,6 +64,7 @@ impl std::fmt::Display for Evidence {
             Evidence::Traces { traces, steps, lawful } => {
                 write!(f, "sampled({traces} traces x {steps} steps, {lawful} from lawful worlds)")
             }
+            Evidence::Assumed(foreign) => write!(f, "assumed ({foreign}: runs only on a backend)"),
         }
     }
 }
@@ -80,6 +84,12 @@ pub struct CheckResult {
     pub micros: u128,
 }
 
+impl CheckResult {
+    pub fn blocked_by_foreign(&self) -> bool {
+        self.status == Status::Blocked && self.diag.as_ref().is_some_and(|d| d.code == "B-FOREIGN")
+    }
+}
+
 /// Every check of a run.
 #[derive(Debug)]
 pub struct Report {
@@ -93,8 +103,11 @@ impl Report {
         self.checks.iter().filter(|c| c.status == s).count()
     }
 
+    /// No check failed, and every blocked one is blocked by a `foreign`
+    /// body (`B-FOREIGN`), which only a backend can run. A check blocked by a
+    /// `?hole` or by a failing `@given` parent is not green.
     pub fn green(&self) -> bool {
-        self.checks.iter().all(|c| c.status == Status::Pass)
+        self.checks.iter().all(|c| c.status == Status::Pass || c.blocked_by_foreign())
     }
 
     /// The header line naming every count and the seed.

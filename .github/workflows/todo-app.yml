@@ -3,10 +3,10 @@ name: todo-app
 
 on:
   pull_request:
-    paths: ["pocs/todo-app/**", "src/**", "docs/idea/25-grammar.md", ".github/workflows/todo-app.yml"]
+    paths: ["pocs/todo-app/**", "src/**", "libs/**", "docs/idea/25-grammar.md", ".github/workflows/todo-app.yml"]
   push:
     branches: [main]
-    paths: ["pocs/todo-app/**", "src/**", "docs/idea/25-grammar.md", ".github/workflows/todo-app.yml"]
+    paths: ["pocs/todo-app/**", "src/**", "libs/**", "docs/idea/25-grammar.md", ".github/workflows/todo-app.yml"]
 
 permissions:
   contents: read

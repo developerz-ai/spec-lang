@@ -11,5 +11,9 @@ cargo test --workspace
 cargo build --release -p spec-lang-cli
 
 spec=target/release/spec-lang
-"$spec" parse ../docs ../pocs/todo-app/src ../README.md
+"$spec" parse ../docs ../pocs/todo-app/src ../libs ../README.md
 "$spec" test ../pocs/todo-app/src
+
+# The judge: every corpus program green on the engine, and every built side
+# (LIR evaluator, printers) agreeing with it check by check. See corpus/README.md.
+bin/corpus

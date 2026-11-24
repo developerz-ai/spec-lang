@@ -1,0 +1,52 @@
+// f33-modules-consts pins (module main): a top-level module that reaches the
+// others three ways: `use lib.units;` then `units.kilo`; `use
+// lib.units.Prefix;` then the type and its variants bare; `use
+// lib.geo.shape;` for a deep module by its last name. Its own constant is
+// computed from theirs.
+
+use lib.units;
+use lib.units.Prefix;
+use lib.units.amount;
+use lib.geo.shape;
+use lib.geo.shape.Shape;
+
+const plot: Shape = Strip(units.kilo, h: 2);
+const sizes: List[Int] = ["1k", "1M", "1G"].map(t => amount(t));
+
+fn bigger(a: Prefix, b: Prefix) -> Prefix = if units.factor(a) >= units.factor(b) then a else b;
+
+test a_module_name_reaches_its_pub_names = {
+  assert units.kilo == 1000 and units.mega == 1000000 and units.giga == 1000000000;
+  assert units.banner == "units v3";
+  assert units.origin == (0, 0);
+  assert units.letters.keys == ["G", "M", "k"];
+  assert units.number("12") * units.kilo == 12000;
+}
+
+test an_imported_type_brings_its_variants = {
+  assert bigger(Kilo, b: Mega) == Mega and bigger(Giga, b: One) == Giga;
+  assert [Mega, One, Giga, Kilo].sort() == [One, Kilo, Mega, Giga];
+  assert units.letters["M"] == Mega;
+  assert units.factor(Kilo) == units.kilo;
+}
+
+test an_imported_fn_is_called_bare = {
+  assert amount("3k") == 3 * units.kilo;
+  assert sizes == [units.kilo, units.mega, units.giga];
+  assert sizes == [One, Kilo, Mega].map(p => units.factor(p) * 1000);
+}
+
+test a_deep_module_goes_by_its_last_name = {
+  assert shape.area(plot) == 2000;
+  assert shape.area(shape.hectare) == 10000;
+  assert shape.unit_square == Square(1);
+  assert shape.at_origin(units.origin);
+  assert plot.is(Strip(_, 2)) and not plot.is(Square(_));
+}
+
+test constants_are_the_same_value_everywhere(n: 0..=999) = {
+  assert amount("{n}k") == n * units.kilo;
+  assert amount("{n}M") == amount("{n}k") * units.kilo;
+  assert amount("{n}") == n and units.number("{n}") == n;
+  assert shape.area(Square(n)) == n * n;
+}

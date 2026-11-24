@@ -6,25 +6,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 root="$(pwd)"
 
-(cd ../../src && cargo build --release -q -p spec-lang-cli -p emit-ts)
+(cd ../../src && cargo build --release -q -p spec-lang-cli)
 slg="$root/../../src/target/release/spec-lang"
-emit_ts="$root/../../src/target/release/emit-ts"
 
 scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
 keep=(target build node_modules dist .bundle vendor)
 
 generate() { # backend app dir
-  case "$1" in
-    bun)
-      # The emitter's own --normalize runs the project's formatter and re-anchors provenance.json to the moved lines;
-      # `spec-lang build` does not yet, so the TypeScript target goes through emit-ts directly.
-      mkdir -p "$3"
-      [ -d "$root/gen/bun/node_modules" ] && ln -s "$root/gen/bun/node_modules" "$3/node_modules"
-      "$emit_ts" src "$3" --normalize >/dev/null
-      rm -rf "$3/node_modules" ;;
-    *) "$slg" build src --app "$2" --out "$3" >/dev/null ;;
-  esac
+  "$slg" build src --app "$2" --out "$3" >/dev/null
 }
 
 stale=0

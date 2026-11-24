@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Projected by hand from app SkyhopCpp (src/apps/cpp.slg): the gate of docs/contract.md section 6. Stand-in for spec-lang build output; change the spec, not this file.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bin/build
+# The screen tests need an X server. With one already there (DISPLAY) or none to start, ctest
+# runs as it is and the screen tests say why they skip; otherwise a virtual one is started.
+if [ -z "${DISPLAY:-}" ] && command -v xvfb-run >/dev/null; then
+  xvfb-run -a ctest --test-dir build --output-on-failure
+else
+  ctest --test-dir build --output-on-failure
+fi

@@ -1,0 +1,54 @@
+// f30-laws-traces pins (module tank.laws): laws over traces. `t.states` (the
+// start, then the world after each step) and `t.steps` with `before`,
+// `after`, `event` and `reply`; `s.event.n` reads an argument;
+// `s.event.is(valves.flush())` and `s.event.is(valves.fill(_))` match a
+// call; `s.reply.is(Ok(_))` and `Err(_)` match the reply, and a reply prints
+// as `Ok(v)`; a set of events named as a type; a law with a second, generated
+// parameter; a state law that makes random start worlds lawful.
+
+use tank.valves;
+
+type Change = valves.fill | valves.drain | valves.flush;
+
+@why("the record explains the level: this is the state law that every start world must meet")
+law the_history_adds_up_to_the_level(t: Trace[Change]) =
+  t.states.all(w => w.history.sum() == w.level and w.history.size == w.moves);
+
+law the_level_stays_in_the_tank(t: Trace[Change]) =
+  t.states.all(w => 0 <= w.level <= 100);
+
+law a_fill_adds_exactly_its_argument(t: Trace[Change]) =
+  t.steps.all(s => s.event.is(valves.fill(_)) and s.reply.is(Ok(_)) implies s.after.level == s.before.level + s.event.n);
+
+law a_drain_takes_exactly_its_argument(t: Trace[valves.drain]) =
+  t.steps.all(s => s.reply.is(Ok(_)) implies s.after.level == s.before.level - s.event.n);
+
+law the_reply_is_the_new_level(t: Trace[valves.fill | valves.drain]) =
+  t.steps.all(s => s.reply.is(Err(_)) or "{s.reply}" == "Ok({s.after.level})");
+
+law a_refusal_changes_nothing(t: Trace[Change]) =
+  t.steps.all(s => s.reply.is(Err(_)) implies s.after == s.before);
+
+law refusals_are_exactly_the_guards(t: Trace[valves.fill | valves.drain]) =
+  t.steps.all(s =>
+    (s.event.is(valves.fill(_)) implies s.reply.is(Err(_)) == (s.before.level + s.event.n > 100))
+    and (s.event.is(valves.drain(_)) implies s.reply.is(Err(_)) == (s.event.n > s.before.level)));
+
+law a_flush_empties_everything(t: Trace[Change]) =
+  t.steps.all(s => s.event.is(valves.flush()) implies s.after.level == 0 and s.after.moves == 0 and s.after.history == []);
+
+law an_accepted_move_is_counted_once(t: Trace[valves.fill | valves.drain]) =
+  t.steps.all(s => s.after.moves == s.before.moves + (if s.reply.is(Ok(_)) then 1 else 0));
+
+law a_reading_changes_nothing(t: Trace[valves.read]) =
+  t.steps.all(s => s.after == s.before and s.reply.is(Ok(_)) and s.event.is(valves.read()));
+
+law each_step_starts_where_the_last_one_ended(t: Trace[Change]) =
+  t.steps.size + 1 == t.states.size
+  and (0..<t.steps.size).all(i => t.steps[i].before == t.states[i] and t.steps[i].after == t.states[i + 1]);
+
+law one_exact_fill_is_matched_by_value(t: Trace[valves.fill]) =
+  t.steps.all(s => s.event.is(valves.fill(40)) == (s.event.n == 40));
+
+law a_level_is_crossed_only_by_a_big_enough_move(t: Trace[Change], mark: valves.Litres) =
+  t.steps.all(s => s.before.level < mark and s.after.level >= mark implies s.event.is(valves.fill(_)) and s.event.n >= mark - s.before.level);

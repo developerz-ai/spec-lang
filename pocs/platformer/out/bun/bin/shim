@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Projected by hand from the foreign c "raylib#..." declarations (src/hop/screen.slg, docs/contract.md section 3). Stand-in for spec-lang build output; change the spec, not this file.
+# Compiles the by-value marshalling shim to build/libskyhop_shim.so. It needs raylib.h for the struct types only; it links no raylib.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+include="${SKYHOP_RAYLIB_INCLUDE:-../../vendor/raylib/include}"
+[ -f "$include/raylib.h" ] || { echo "raylib.h not found in $include: run pocs/platformer/bin/raylib" >&2; exit 1; }
+mkdir -p build
+"${CC:-cc}" -std=c11 -O2 -fPIC -shared -Wall -Wextra -Werror -I"$include" native/shim.c -o build/libskyhop_shim.so

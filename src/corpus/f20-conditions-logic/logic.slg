@@ -1,0 +1,103 @@
+// f20-conditions-logic pins: `if c then a else b` as a value (chained, and
+// inside arithmetic), `and or not implies` with their precedence, left to
+// right evaluation that stops when decided (the right side may be a failing
+// expression), chained comparisons `a <= b <= c` meaning both, `in` on lists,
+// sets, maps, ranges and text.
+
+@cases((1, 2) -> 2, (2, 1) -> 2, (3, 3) -> 3)
+pub fn bigger(a: Int, b: Int) -> Int = if a > b then a else b;
+
+@cases(-5 -> -1, 0 -> 0, 5 -> 1)
+pub fn sign(n: Int) -> Int = if n < 0 then -1 else if n == 0 then 0 else 1;
+
+@cases(15 -> "FizzBuzz", 9 -> "Fizz", 10 -> "Buzz", 7 -> "7", 0 -> "FizzBuzz")
+pub fn fizz(n: Int) -> Text =
+  if n mod 15 == 0 then "FizzBuzz" else if n mod 3 == 0 then "Fizz" else if n mod 5 == 0 then "Buzz" else "{n}";
+
+@cases((10, true) -> 15, (10, false) -> 9)
+pub fn inside_arithmetic(n: Int, up: Bool) -> Int = n + (if up then 5 else -1);
+
+@cases(
+  (false, false) -> true, (false, true) -> true, (true, false) -> false, (true, true) -> true,
+)
+pub fn follows(a: Bool, b: Bool) -> Bool = a implies b;
+
+@cases(
+  (false, false, false) -> false, (true, false, false) -> true, (false, true, false) -> false,
+  (false, true, true) -> true, (true, true, true) -> true, (false, false, true) -> false,
+)
+pub fn or_then_and(a: Bool, b: Bool, c: Bool) -> Bool = a or b and c;
+
+@cases((true, true) -> false, (false, true) -> true, (true, false) -> false, (false, false) -> false)
+pub fn not_binds_tight(a: Bool, b: Bool) -> Bool = not a and b;
+
+@cases((true, false, true) -> true, (true, true, false) -> false, (false, true, false) -> true, (true, false, false) -> true)
+pub fn implies_is_loosest(a: Bool, b: Bool, c: Bool) -> Bool = a and b implies c;
+
+@cases((true, true, false) -> false, (true, false, true) -> true, (false, true, false) -> true, (true, true, true) -> true)
+pub fn implies_chains_to_the_right(a: Bool, b: Bool, c: Bool) -> Bool = a implies b implies c;
+
+@cases((1, 5, 9) -> true, (5, 5, 5) -> true, (1, 0, 9) -> false, (1, 10, 9) -> false)
+pub fn between(lo: Int, x: Int, hi: Int) -> Bool = lo <= x <= hi;
+
+@cases((1, 2, 3) -> true, (1, 1, 3) -> false, (1, 2, 2) -> false, (3, 2, 1) -> false)
+pub fn rising(a: Int, b: Int, c: Int) -> Bool = a < b < c;
+
+@cases(([], 0) -> false, ([5], 0) -> true, ([5], 1) -> false, ([0], 0) -> false)
+pub fn safe_positive(xs: List[Int], i: Int) -> Bool = i < xs.size and xs[i] > 0;
+
+@cases((Map(), "a") -> true, (Map("a" -> 0), "a") -> true, (Map("a" -> 3), "a") -> false)
+pub fn absent_or_zero(m: Map[Text, Int], k: Text) -> Bool = not (k in m) or m[k] == 0;
+
+@cases((0, 5) -> true, (2, 5) -> false, (2, 4) -> true)
+pub fn divides(d: Int, n: Int) -> Bool = d != 0 implies n mod d == 0;
+
+test the_right_side_is_not_evaluated_when_decided = {
+  let empty: List[Int] = [];
+  assert not (false and empty.first == 1);
+  assert true or empty.first == 1;
+  assert false implies empty.first == 1;
+  assert not (1 > 2 and 1 mod 0 == 0);
+  assert 1 < 2 or 1 mod 0 == 0;
+  assert not (3 <= 2 <= 1 mod 0);
+  assert (if true then 1 else empty.first) == 1;
+  assert (if false then empty.first else 2) == 2;
+}
+
+test in_reads_every_collection = {
+  assert 2 in [1, 2] and not (3 in [1, 2]);
+  assert 2 in Set(1, 2) and not (3 in Set(1, 2));
+  assert "a" in Map("a" -> 1) and not (1 in Map("a" -> 1).values.filter(it > 1));
+  assert 5 in 1..=5 and not (5 in 1..<5) and not (0 in 1..=5);
+  assert "ell" in "hello" and not ("hex" in "hello");
+  assert not (2 in [1, 2]) == false;
+  assert [1, 2] in [[1, 2], [3]];
+  assert (1, "a") in Set((1, "a"));
+}
+
+test comparison_gives_a_bool_value = {
+  let flags = [1 < 2, 2 < 1, 1 == 1, 1 != 1, not true];
+  assert flags == [true, false, true, false, false];
+  assert (1 < 2) == (2 > 1);
+  assert (1 < 2) != (1 > 2);
+  assert flags.filter(it).size == 2;
+}
+
+test de_morgan(a: Bool, b: Bool, c: Bool) = {
+  assert (not (a and b)) == (not a or not b);
+  assert (not (a or b)) == (not a and not b);
+  assert (a implies b) == (not a or b);
+  assert (a or b and c) == (a or (b and c));
+  assert (a and b implies c) == ((a and b) implies c);
+  assert (a implies b implies c) == (a implies (b implies c));
+  assert (if a then b else c) == ((a and b) or (not a and c));
+}
+
+test chains_mean_both(a: -5..=5, b: -5..=5, c: -5..=5) = {
+  assert (a <= b <= c) == (a <= b and b <= c);
+  assert (a < b <= c) == (a < b and b <= c);
+  assert (a == b == c) == (a == b and b == c);
+  assert between(a, x: b, hi: c) == (b in a..=c);
+  assert sign(a) * a == a.abs();
+  assert bigger(a, b: b) == a.max(b);
+}

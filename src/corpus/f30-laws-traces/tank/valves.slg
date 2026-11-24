@@ -1,0 +1,42 @@
+// f30-laws-traces pins (module tank.valves): the rules a trace calls. A tank
+// with a level and a capacity, a counter of accepted moves, and a history.
+
+pub type Litres = 0..=100;
+
+state level: Litres = 0;
+state moves: Int = 0;
+state history: List[Int];
+
+@why("the tank takes what fits and refuses the rest whole")
+@uses(level.write, moves.write, history.write)
+@guard(level + n <= 100 else Overflow)
+pub rule fill(n: 1..=40) -> Litres = {
+  level = level + n;
+  moves = moves + 1;
+  history.push(n);
+  return level;
+}
+
+@why("the tank gives only what it holds")
+@uses(level.write, moves.write, history.write)
+@guard(n <= level else Empty)
+pub rule drain(n: 1..=40) -> Litres = {
+  level = level - n;
+  moves = moves + 1;
+  history.push(0 - n);
+  return level;
+}
+
+@why("a reading changes nothing")
+@uses(level.read)
+pub rule read() -> Litres = {
+  return level;
+}
+
+@why("a flush empties the tank and starts the record again")
+@uses(level.write, moves.write, history.write)
+pub rule flush() = {
+  level = 0;
+  moves = 0;
+  history = [];
+}

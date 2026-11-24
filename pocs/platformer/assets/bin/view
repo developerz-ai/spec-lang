@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Compile test/view.c against the POC's raylib and run it headless.
+#   bin/view <out.png> <width> <height> <side|hero>
+# Checks the shader and the four GLBs in raylib, writes the frame, prints its FNV-1a 64 hash.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+raylib="$PWD/../vendor/raylib"
+if [[ ! -f "$raylib/include/raylib.h" || ! -f "$raylib/lib/libraylib.so" ]]; then
+  echo "bin/view: no raylib in ../vendor/raylib; run the POC's bin/raylib first" >&2
+  exit 2
+fi
+command -v xvfb-run >/dev/null || { echo "bin/view: xvfb-run is not installed" >&2; exit 2; }
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+cc -std=c11 -O1 -Wall -Wextra -Werror -o "$work/view" test/view.c \
+  -I"$raylib/include" -L"$raylib/lib" -lraylib -lm -Wl,-rpath,"$raylib/lib"
+xvfb-run -a "$work/view" "$PWD" "$@"

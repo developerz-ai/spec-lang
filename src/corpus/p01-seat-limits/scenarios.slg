@@ -1,0 +1,47 @@
+// scenarios: the six tests of docs/pocs/01-seat-limits as a `@given` chain three deep.
+// Pins `-> fail E` for each guard, and constants.
+
+use seats;
+use seats.OrgId;
+use seats.UserId;
+
+const acme: OrgId = 1;
+const ana: UserId = 1;
+const bob: UserId = 2;
+const cat: UserId = 3;
+const dan: UserId = 4;
+
+@given(seats.one_owner)
+test full = {
+  seats.add(ana, org: acme, user: bob);
+  seats.add(ana, org: acme, user: cat);
+  seats.add(ana, org: acme, user: dan) -> fail Full;
+}
+
+@given(full)
+test room_after_a_removal = {
+  seats.remove(ana, org: acme, user: bob);
+  seats.add(ana, org: acme, user: dan);
+  assert seats.taken(acme) == 3;
+}
+
+@given(seats.one_owner)
+test the_last_owner_stays = {
+  seats.remove(ana, org: acme, user: ana) -> fail LastOwner;
+  seats.add(ana, org: acme, user: bob);
+  seats.promote(ana, org: acme, user: bob);
+  seats.remove(ana, org: acme, user: ana);
+}
+
+@given(full)
+test members_and_strangers_are_denied = {
+  seats.add(bob, org: acme, user: dan) -> fail NotFound;
+  seats.add(dan, org: acme, user: dan) -> fail NotFound;
+}
+
+@given(full)
+test the_limit_cannot_drop_below_use = {
+  seats.set_limit(ana, org: acme, limit: 2) -> fail TooMany;
+  seats.set_limit(ana, org: acme, limit: 4);
+  seats.add(ana, org: acme, user: dan);
+}

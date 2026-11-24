@@ -18,7 +18,7 @@ pub fn walk_expr<'a>(p: &'a Program, e: &'a Expr, f: &mut dyn FnMut(&'a Expr)) {
         | ExprKind::Const(_)
         | ExprKind::State(_)
         | ExprKind::Variant { .. }
-        | ExprKind::OutText
+        | ExprKind::EffectRead(_)
         | ExprKind::Hole(_) => {}
         ExprKind::Interp(parts) => parts.iter().for_each(|x| {
             if let InterpPart::Expr(x) = x {

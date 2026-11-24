@@ -35,6 +35,8 @@ id! {
     AppId,
     /// A lambda expression; the table lets values refer to code by id.
     LambdaId,
+    /// A handler of a loaded library ([`crate::library::Handler`]).
+    HandlerId,
 }
 
 /// Any top-level declaration.

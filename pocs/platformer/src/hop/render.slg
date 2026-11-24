@@ -1,0 +1,87 @@
+// hop.render: what one frame shows, as data. Pure; the screen module draws it.
+
+use hop.geom;
+use hop.geom.Vec3;
+use hop.geom.Box;
+use hop.model.Rgb;
+use hop.model.Mode;
+use hop.physics;
+use hop.world;
+use hop.world.View;
+
+@why("each mesh is one model file the game loads at start")
+pub type Asset = PipMesh | CrawlerMesh | GemMesh | FlagMesh;
+
+pub type Draw = Cube(box: Box, color: Rgb) | Wires(box: Box, color: Rgb) | Mesh(asset: Asset, at: Vec3, yaw: 0..=359);
+
+pub type Label(x: Int, y: Int, size: Int, text: Text, color: Rgb);
+
+@why("time is the tick count, an exact integer; the shader divides it into seconds")
+pub type Frame(sky: Rgb, eye: Vec3, target: Vec3, time: Int, world: List[Draw], labels: List[Label]);
+
+const sky: Rgb = Rgb(135, g: 206, b: 235);
+const edge: Rgb = Rgb(30, g: 40, b: 30);
+const ink: Rgb = Rgb(255, g: 255, b: 255);
+
+@why("the camera looks at the hero from the side and a little above, at a fixed distance")
+pub const eye_offset: Vec3 = Vec3(0, y: 512, z: 2048);
+pub const look_height: Int = 192;
+
+@cases(PipMesh -> "pip", CrawlerMesh -> "crawler", GemMesh -> "gem", FlagMesh -> "flag")
+pub fn asset_name(a: Asset) -> Text = match a {
+  PipMesh => "pip";
+  CrawlerMesh => "crawler";
+  GemMesh => "gem";
+  FlagMesh => "flag";
+}
+
+@why("a gem bobs a quarter of a metre and turns three degrees a tick")
+@cases(0 -> -32, 16 -> 0, 32 -> 32, 48 -> 0)
+pub fn bob(t: Int) -> Int = geom.triangle(t, n: 32) * 2 - 32;
+
+fn block(box: Box, color: Rgb) -> List[Draw] = [Cube(box, color: color), Wires(box, color: edge)];
+
+fn banner(m: Mode) -> List[Label] = match m {
+  Playing => [];
+  Won => [Label(380, y: 250, size: 40, text: "level clear", color: ink)];
+  Lost => [Label(400, y: 250, size: 40, text: "game over", color: ink)];
+}
+
+@why("solids, then movers, gems, crawlers, the flag and last the hero, so the order of the frame is fixed")
+pub fn scene(v: View) -> Frame = {
+  let target = geom.plus(v.player.at, b: Vec3(0, y: look_height, z: 0));
+  var draws: List[Draw] = [];
+  for s in v.stage.solids { draws = draws + block(s.box, color: s.color); }
+  for m in v.stage.movers { draws = draws + block(physics.mover_box(m, t: v.ticks), color: m.color); }
+  for g in v.stage.gems.filter(g => not (g.no in v.taken)) {
+    draws.push(Mesh(GemMesh, at: g.at.with(y: g.at.y + bob(v.ticks)), yaw: (v.ticks * 3) mod 360));
+  }
+  for c in v.crawlers { draws.push(Mesh(CrawlerMesh, at: c.at, yaw: if c.dir < 0 then 180 else 0)); }
+  draws.push(Mesh(FlagMesh, at: v.stage.goal, yaw: 0));
+  draws.push(Mesh(PipMesh, at: v.player.at, yaw: v.player.yaw));
+  let hud = [
+    Label(16, y: 12, size: 20, text: "gems {v.taken.size}/{v.stage.gems.size}", color: ink),
+    Label(16, y: 38, size: 20, text: "lives {v.lives}", color: ink),
+  ];
+  return Frame(sky, eye: geom.plus(target, b: eye_offset), target: target, time: v.ticks, world: draws, labels: hud + banner(v.mode));
+}
+
+fn rgb_text(c: Rgb) -> Text = "{c.r},{c.g},{c.b}";
+
+@cases(
+  Cube(geom.Box(Vec3(0, 0, 0), hi: Vec3(64, 64, 64)), color: Rgb(1, g: 2, b: 3)) -> "cube 0,0,0 64,64,64 1,2,3",
+  Mesh(PipMesh, at: Vec3(1, 2, 3), yaw: 90) -> "mesh pip 1,2,3 90",
+)
+pub fn draw_text(d: Draw) -> Text = match d {
+  Cube(b, color) => "cube {geom.vec_text(b.lo)} {geom.vec_text(b.hi)} {rgb_text(color)}";
+  Wires(b, color) => "wires {geom.vec_text(b.lo)} {geom.vec_text(b.hi)} {rgb_text(color)}";
+  Mesh(asset, at, yaw) => "mesh {asset_name(asset)} {geom.vec_text(at)} {yaw}";
+}
+
+@why("a frame as text, one line per call the screen will make, so four backends can be compared without a GPU")
+pub fn frame_lines(f: Frame) -> List[Text] =
+  ["sky {rgb_text(f.sky)}", "camera {geom.vec_text(f.eye)} {geom.vec_text(f.target)}", "time {f.time}"]
+  + f.world.map(d => draw_text(d))
+  + f.labels.map(l => "label {l.x} {l.y} {l.size} {rgb_text(l.color)} {l.text}");
+
+pub fn dump() -> List[Text] = frame_lines(scene(world.view()));

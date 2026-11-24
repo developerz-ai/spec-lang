@@ -1,0 +1,35 @@
+# Frames drawn by raylib off screen: every backend must print the same pixel hash on one machine.
+# The value depends on the GL driver, so it is compared across backends, never fixed.
+
+# case: the meadow at tick 0
+$ ["shot"]
+>~ shot [0-9a-f]{16}
+
+# case: the meadow mid run, gems bobbing, lit shader time moving
+<@ meadow-win.txt
+$ ["shot", "--at", "150"]
+>~ shot [0-9a-f]{16}
+
+# case: the ridge on the mover
+<@ ridge-win.txt
+$ ["shot", "--level", "2", "--at", "300"]
+>~ shot [0-9a-f]{16}
+
+# The banner sits at window pixels (380, 250), outside the 320x180 shot; the draw case checks its bytes.
+# case: the last frame of a won meadow
+<@ meadow-win.txt
+$ ["shot"]
+>~ shot [0-9a-f]{16}
+
+# case: no display: refused before raylib is called
+& DISPLAY=
+$ ["shot"]
+! error: window: cannot open
+? 3
+
+# case: a bad script is refused before any window opens
+< 1 Z
+$ ["shot"]
+! error: input line 1: unknown key "Z"
+? 2
+

@@ -141,6 +141,7 @@ fn card(prog: &Program, name: &str, json: bool) -> u8 {
             .set("at", JsonWriter::str(loc.to_string()))
             .set("why", info.why.as_ref().map_or(JsonWriter::Null, JsonWriter::str))
             .set("source", JsonWriter::str(prog.snippet(info.span)))
+            .set("foreign", foreign_of(prog, d).map_or(JsonWriter::Null, |f| JsonWriter::str(f.to_string())))
             .set("names", list(&names))
             .set("named_by", list(&callers))
             .set(
@@ -168,6 +169,12 @@ fn card(prog: &Program, name: &str, json: bool) -> u8 {
         out.push('\n');
         out.push_str(prog.snippet(info.span));
         out.push_str("\n\n");
+        if let Some(f) = foreign_of(prog, d) {
+            out.push_str(&format!(
+                "foreign:  {} \"{}\": the interpreter blocks a check that reaches it\n",
+                f.lang, f.symbol
+            ));
+        }
         out.push_str(&format!("names:    {}\n", if names.is_empty() { "-".into() } else { names.join(", ") }));
         out.push_str(&format!("named by: {}\n", if callers.is_empty() { "-".into() } else { callers.join(", ") }));
         out.push_str(&format!(
@@ -189,4 +196,13 @@ fn card(prog: &Program, name: &str, json: bool) -> u8 {
         emit(&out);
     }
     0
+}
+
+/// The `foreign` body of a `fn` or rule.
+fn foreign_of(prog: &Program, d: DeclRef) -> Option<&spec_lang_ir::Foreign> {
+    match d {
+        DeclRef::Fn(f) => prog.func(f).foreign.as_ref(),
+        DeclRef::Rule(r) => prog.rule(r).foreign.as_ref(),
+        _ => None,
+    }
 }

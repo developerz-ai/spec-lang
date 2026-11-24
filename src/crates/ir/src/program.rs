@@ -2,6 +2,7 @@
 
 use crate::expr::{Block, Expect, Expr, Lambda};
 use crate::ids::*;
+use crate::library::{AppField, Handler, HandlerOp, Library, NoteUse, Trigger};
 use crate::ty::Ty;
 use spec_lang_syntax::{Location, SourceMap, Span};
 
@@ -30,6 +31,10 @@ pub struct Program {
     /// Rule-set types (`type Change = a | b;`) named inside a `Trace[...]`,
     /// which [`crate::Ty::Trace`] has already flattened into rules.
     pub rule_set_uses: Vec<TypeId>,
+    /// Every library a `use` loaded, in load order ([`crate::library`]).
+    pub libraries: Vec<Library>,
+    /// Every handler of a loaded library, shared by the libraries that offer it.
+    pub handlers: Vec<Handler>,
 }
 
 /// The tag of `Some` in [`Program::option_type`].
@@ -122,6 +127,32 @@ impl Program {
         self.modules.iter().find(|m| m.name == name)
     }
 
+    pub fn handler(&self, id: HandlerId) -> &Handler {
+        &self.handlers[id.index()]
+    }
+
+    /// The operation an effect call or read names.
+    pub fn effect_op(&self, e: crate::expr::Effect) -> Option<&HandlerOp> {
+        self.handlers.get(e.handler.index())?.ops.get(e.op as usize)
+    }
+
+    /// `out.line`: an effect as written in source.
+    pub fn effect_name(&self, e: crate::expr::Effect) -> String {
+        let h = self.handler(e.handler);
+        format!("{}.{}", h.name, self.effect_op(e).map(|o| o.name.as_str()).unwrap_or("?"))
+    }
+
+    /// A loaded library by name.
+    pub fn library(&self, name: &str) -> Option<&Library> {
+        self.libraries.iter().find(|l| l.name == name)
+    }
+
+    /// Every effect label a loaded library's handler adds (`screen.write`):
+    /// what a `foreign` declaration may state.
+    pub fn world_labels(&self) -> std::collections::BTreeSet<String> {
+        self.handlers.iter().flat_map(|h| h.labels.iter().cloned()).collect()
+    }
+
     /// `module.name` of a declaration, for reports.
     pub fn qualified(&self, info: &DeclInfo) -> String {
         format!("{}.{}", self.module(info.module).name, info.name)
@@ -138,9 +169,11 @@ pub struct Module {
     /// The file as given to the loader; empty for `core`.
     pub path: String,
     pub uses: Vec<UseItem>,
-    /// Vocabularies named by `use` ([`crate::vocab`]).
+    /// Libraries named by `use` ([`crate::library`]).
     pub vocabularies: Vec<String>,
     pub decls: Vec<DeclRef>,
+    /// The library whose `contract.slg` this module is; `None` for the project's own.
+    pub library: Option<String>,
 }
 
 /// What one `use` bound.
@@ -150,7 +183,7 @@ pub enum UseItem {
     Module { alias: String, module: ModuleId, span: Span },
     /// `use a.b.c;` binds `c` to a declaration of `a.b` (and, for a sum type, its variants).
     Decl { name: String, decl: DeclRef, span: Span },
-    /// `use cli;`.
+    /// `use cli;`: a library.
     Vocabulary { name: String, span: Span },
 }
 
@@ -232,8 +265,32 @@ pub struct FnDecl {
     pub info: DeclInfo,
     pub params: Vec<Param>,
     pub result: Option<Ty>,
+    /// The hole `?foreign` when [`FnDecl::foreign`] is set.
     pub body: Expr,
     pub cases: Vec<Case>,
+    /// `@uses(...)` as written (`keys.read`).
+    pub uses: Vec<String>,
+    /// `= foreign c "raylib#IsKeyDown";`: the body lives outside spec-lang.
+    pub foreign: Option<Foreign>,
+}
+
+/// `foreign <lang> "<symbol>"`: a body only a backend can run (card,
+/// Functions: evidence starts at `assumed`). The interpreter blocks a check
+/// that reaches one.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Foreign {
+    /// `c`, `rust`, `ts`, as written.
+    pub lang: String,
+    /// The text, as written: `raylib#IsKeyDown`.
+    pub symbol: String,
+    /// `foreign c "raylib#IsKeyDown"`.
+    pub span: Span,
+}
+
+impl std::fmt::Display for Foreign {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "foreign {} \"{}\"", self.lang, self.symbol)
+    }
 }
 
 /// One `@cases` row: arguments in parameter order (`None`: the default) and
@@ -254,10 +311,14 @@ pub struct RuleDecl {
     /// Every `@guard` clause, in written order: the first that does not hold
     /// fails the call with its error, before the body runs.
     pub guards: Vec<Guard>,
+    /// The hole `?foreign` when [`RuleDecl::foreign`] is set.
     pub body: Expr,
     /// `@uses(...)` as written (`tasks.write`); recorded, not checked.
     pub uses: Vec<String>,
+    /// `@on(...)` with a library's trigger: `cli("add")`, `tick(60Hz)`.
     pub triggers: Vec<Trigger>,
+    /// `= foreign c "raylib#DrawCube";`.
+    pub foreign: Option<Foreign>,
 }
 
 /// `@guard(cond else Error)`.
@@ -266,13 +327,6 @@ pub struct Guard {
     pub cond: Expr,
     pub error: String,
     pub span: Span,
-}
-
-/// What calls a rule from outside (`@on(...)`).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Trigger {
-    /// `@on(cli("add"))`: the program's user runs `<bin> add ...`.
-    Cli { command: String },
 }
 
 #[derive(Debug)]
@@ -312,7 +366,7 @@ impl LawDecl {
     }
 }
 
-/// `app Name(rules: [...])` with its notes.
+/// `app Name(rules: [...])`, or an app with a library's shape, with its notes.
 #[derive(Debug)]
 pub struct AppDecl {
     pub info: DeclInfo,
@@ -320,14 +374,29 @@ pub struct AppDecl {
     pub rules: Vec<RuleId>,
     /// `@target(rust)`.
     pub target: Option<String>,
-    /// `@bin("todo")`.
-    pub bin: Option<String>,
-    /// `@store(file(".todo.json"))`.
-    pub store: Option<Store>,
+    /// Notes of its libraries, in written order: `@bin("todo")`, `@window(960, 540, "Skyhop")`.
+    pub notes: Vec<NoteUse>,
+    /// The library whose app shape it has (`game`), if any.
+    pub shape: Option<String>,
+    /// The shape's parameters, in the shape's order: `start: world.start`.
+    pub fields: Vec<AppField>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Store {
-    /// A file relative to the working directory.
-    File(String),
+impl AppDecl {
+    /// Every declaration the app names: its rules, and its fields.
+    pub fn named(&self) -> Vec<DeclRef> {
+        let mut out: Vec<DeclRef> = self.rules.iter().map(|r| DeclRef::Rule(*r)).collect();
+        out.extend(self.fields.iter().map(|f| f.decl));
+        out
+    }
+
+    /// The library note `name`, if written.
+    pub fn note(&self, name: &str) -> Option<&NoteUse> {
+        self.notes.iter().find(|n| n.name == name)
+    }
+
+    /// The declaration the shape parameter `name` names.
+    pub fn field(&self, name: &str) -> Option<DeclRef> {
+        self.fields.iter().find(|f| f.name == name).map(|f| f.decl)
+    }
 }

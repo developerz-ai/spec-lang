@@ -28,8 +28,9 @@ Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End s
 | `docs/pocs/` | proofs of concept, one folder each, written for an agent with no other context |
 | `src/` | the toolchain, Rust: parser, engine, then emitters slg → Rust, TypeScript, Ruby, C++; own `CLAUDE.md` |
 | `pocs/` | runnable proofs: spec-lang source, hand-projected backends, their gate; each has its own `CLAUDE.md` |
+| `libs/` | libraries a program `use`s: `vocab.slg`, `contract.slg`, `pretend.slg`, `real/<lang>/` runtimes ([009](docs/decisions/009-one-compiler-any-language.md)) |
 
-Markdown only, except `src/`, `pocs/` and the repo tooling in `bin/` and `scripts/`: each code area has its own `bin/check` and CI workflow.
+Markdown only, except `src/`, `pocs/`, `libs/` and the repo tooling in `bin/` and `scripts/`: each code area has its own `bin/check` and CI workflow.
 
 ## Commands
 ```bash

@@ -1,0 +1,105 @@
+// f09-text-interpolation pins: `"{expr}"` with any expression inside, Text
+// printed raw and every other value printed as spec-lang source (records with
+// every field, defaults included; sets and maps in ascending order), and the
+// six escapes `\n \t \\ \" \{ \u{...}`. A text literal cannot hold a `"` inside
+// `{...}` (the grammar's TEXT token ends there), so no row nests one.
+
+type Tone = Low | High(level: Int);
+const comma: Text = ",";
+
+type Tag(name: Text, tone: Tone = Low, count: Int = 0);
+
+@cases(
+  (1, 2) -> "1 + 2 = 3",
+  (-1, 1) -> "-1 + 1 = 0",
+  (9007199254740993, 0) -> "9007199254740993 + 0 = 9007199254740993",
+)
+pub fn sum_line(a: Int, b: Int) -> Text = "{a} + {b} = {a + b}";
+
+@cases("x" -> "<x>", "" -> "<>", "a b" -> "<a b>", "q\"q" -> "<q\"q>", "\{x}" -> "<\{x}>")
+pub fn angle(t: Text) -> Text = "<{t}>";
+
+@cases(true -> "true!", false -> "false!")
+pub fn flag(b: Bool) -> Text = "{b}!";
+
+@cases(
+  Tag("a") -> "Tag(\"a\", tone: Low, count: 0)",
+  Tag("b", tone: High(3), count: 2) -> "Tag(\"b\", tone: High(3), count: 2)",
+  Tag("", count: -1) -> "Tag(\"\", tone: Low, count: -1)",
+)
+pub fn tag_source(t: Tag) -> Text = "{t}";
+
+@cases(Low -> "Low", High(0) -> "High(0)", High(-5) -> "High(-5)")
+pub fn tone_source(t: Tone) -> Text = "{t}";
+
+@cases(
+  [] -> "[]",
+  [1] -> "[1]",
+  [3, 1, 2] -> "[3, 1, 2]",
+)
+pub fn list_source(xs: List[Int]) -> Text = "{xs}";
+
+@cases(
+  Set() -> "Set()",
+  Set(3, 1, 2) -> "Set(1, 2, 3)",
+)
+pub fn set_source(xs: Set[Int]) -> Text = "{xs}";
+
+@cases(
+  Map() -> "Map()",
+  Map(2 -> "b", 1 -> "a") -> "Map(1 -> \"a\", 2 -> \"b\")",
+)
+pub fn map_source(m: Map[Int, Text]) -> Text = "{m}";
+
+@cases(none -> "none", Some(1) -> "Some(1)", Some(-1) -> "Some(-1)")
+pub fn option_source(o: Option[Int]) -> Text = "{o}";
+
+@cases(
+  ("a", 1) -> "(\"a\", 1) a 1",
+)
+pub fn pair_source(t: Text, n: Int) -> Text = "{(t, n)} {t} {n}";
+
+@cases(["a", "b"] -> "[\"a\", \"b\"] a,b", [] -> "[] ")
+pub fn texts_inside_data_are_quoted(xs: List[Text]) -> Text = "{xs} {xs.join(comma)}";
+
+test escapes_are_one_code_point_each = {
+  assert "\n".size == 1 and "\n".bytes == [10];
+  assert "\t".size == 1 and "\t".bytes == [9];
+  assert "\\".size == 1 and "\\".bytes == [92];
+  assert "\"".size == 1 and "\"".bytes == [34];
+  assert "\{".size == 1 and "\{".bytes == [123];
+  assert "\u{41}" == "A";
+  assert "\u{e9}" == "é" and "\u{00E9}" == "é";
+  assert "\u{1F600}" == "😀";
+  assert "a\\nb".size == 4;
+  assert "\\\{x}".size == 4;
+}
+
+test a_brace_is_text_only_when_escaped = {
+  let x = 5;
+  assert "{x}" == "5";
+  assert "\{x}" != "5";
+  assert "\{x}".bytes == [123, 120, 125];
+  assert "\{{x}}" == "\{5}";
+  assert "{x}{x}" == "55";
+  assert "{ x }" == "5";
+  assert "}" == "\u{7D}";
+}
+
+test expressions_inside_are_whole_expressions = {
+  let xs = [3, 1, 2];
+  assert "{xs.sort().first}..{xs.max()}" == "1..3";
+  assert "{if xs.size > 2 then xs.size else 0 - xs.size}" == "3";
+  assert "{xs.map(it * 2).sum()} {xs.size == 3}" == "12 true";
+  let tag = Tag("n");
+  assert "{tag.name}:{tag.count + 1}:{tag.with(count: 7).count}" == "n:1:7";
+  assert "{xs.filter(it > 1).map(n => n * n)}" == "[9, 4]";
+}
+
+test text_prints_raw_and_data_prints_as_source(t: Text, n: Int) = {
+  assert "{t}" == t;
+  assert "{t}{t}".size == 2 * t.size;
+  assert "{n}:{t}".starts_with("{n}:");
+  assert "{[n]}" == "[{n}]";
+  assert "{Some(n)}" == "Some({n})";
+}

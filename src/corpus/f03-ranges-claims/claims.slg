@@ -1,0 +1,105 @@
+// f03-ranges-claims pins: range types (`a..=b`, negative bounds), `T where
+// claim` over Int, Text and records, claims that call a fn, claims on record
+// fields, generated values staying inside every claim, and refusal: a rule
+// that takes a wide value and refuses with a typed error before a narrow place
+// is written.
+
+type Floor = -2..=12;
+type Percent = 0..=100;
+type Even = Int where self mod 2 == 0;
+type Code = Text where is_code(self);
+type Ends(lo: Floor, hi: Floor);
+type Span = Ends where self.lo <= self.hi;
+type Dose(mg: Even, share: Percent = 50);
+
+state at: Floor = 0;
+state doses: List[Dose];
+
+@cases("AB12" -> true, "ab12" -> false, "" -> false, "ABCDEFGHI" -> false, "A B" -> false)
+pub fn is_code(t: Text) -> Bool = 1 <= t.size <= 8 and t.bytes.all(65 <= it <= 90 or 48 <= it <= 57);
+
+@cases((-2, 12) -> 15, (3, 3) -> 1, (0, 1) -> 2)
+pub fn width(lo: Floor, hi: Floor) -> Int = Ends(lo, hi: hi).hi - lo + 1;
+
+@cases(-3 -> false, -2 -> true, 0 -> true, 12 -> true, 13 -> false)
+pub fn is_floor(n: Int) -> Bool = n in -2..=12;
+
+@cases(0 -> true, 99 -> true, 100 -> false, -1 -> false)
+pub fn below_hundred(n: Int) -> Bool = n in 0..<100;
+
+@why("the lift takes any number from the panel and refuses the ones the shaft does not have")
+@uses(at.write)
+@guard(-2 <= to <= 12 else NoSuchFloor)
+pub rule go(to: Int) -> Floor = {
+  at = to;
+  return at;
+}
+
+@why("a dose is stored only when it is whole tablets and a real share")
+@uses(doses.write)
+@guard(mg mod 2 == 0 else OddDose, 0 <= share <= 100 else BadShare)
+pub rule prescribe(mg: Int, share: Int) = {
+  doses.push(Dose(mg, share: share));
+}
+
+test the_edges_are_inside = {
+  go(-2) -> -2;
+  go(12) -> 12;
+  go(0) -> 0;
+}
+
+test one_past_the_edge_is_refused = {
+  go(5);
+  go(13) -> fail NoSuchFloor;
+  go(-3) -> fail NoSuchFloor;
+  assert at == 5;
+}
+
+test refusals_come_in_guard_order = {
+  prescribe(3, share: 101) -> fail OddDose;
+  prescribe(4, share: 101) -> fail BadShare;
+  prescribe(4, share: -1) -> fail BadShare;
+  prescribe(-4, share: 0);
+  prescribe(0, share: 100);
+  assert doses == [Dose(-4, share: 0), Dose(0, share: 100)];
+}
+
+test a_default_meets_its_claim = {
+  assert Dose(8).share == 50;
+  assert Dose(8) == Dose(8, share: 50);
+}
+
+test generated_floors_are_floors(f: Floor) = {
+  assert -2 <= f <= 12;
+  assert is_floor(f);
+  go(f) -> f;
+}
+
+test generated_evens_are_even(e: Even) = {
+  assert e mod 2 == 0;
+  assert (e + 2) mod 2 == 0;
+}
+
+test generated_codes_are_codes(c: Code) = {
+  assert is_code(c);
+  assert 1 <= c.size <= 8;
+}
+
+test generated_spans_are_ordered(s: Span) = {
+  assert s.lo <= s.hi;
+  assert 1 <= width(s.lo, hi: s.hi) <= 15;
+}
+
+test generated_records_meet_field_claims(d: Dose) = {
+  assert d.mg mod 2 == 0;
+  assert 0 <= d.share <= 100;
+  prescribe(d.mg, share: d.share);
+  assert doses.last == d;
+}
+
+law the_lift_stays_in_the_shaft(t: Trace[go]) =
+  t.states.all(w => -2 <= w.at <= 12);
+
+law a_refused_floor_moves_nothing(t: Trace[go]) =
+  t.steps.all(s => (s.event.to < -2 or s.event.to > 12) == s.reply.is(Err(_))
+    and (s.reply.is(Err(_)) implies s.after == s.before));

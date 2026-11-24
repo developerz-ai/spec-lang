@@ -7,7 +7,6 @@ use crate::expr::{Expr, ExprKind};
 use crate::ids::*;
 use crate::program::*;
 use crate::ty::Ty;
-use crate::vocab;
 use spec_lang_syntax::ast::{self, BinOp as AstBin, ExprKind as AK, Tail};
 use spec_lang_syntax::{FileId, Span};
 
@@ -21,6 +20,7 @@ pub(super) fn add_core(prog: &mut Program) {
         uses: Vec::new(),
         vocabularies: Vec::new(),
         decls: vec![DeclRef::Type(TypeId(0)), DeclRef::Type(TypeId(1))],
+        library: None,
     });
     let info = DeclInfo { module: ModuleId(0), name: "Option".into(), span, name_span: span, is_pub: true, why: None };
     let some = Variant {
@@ -103,7 +103,15 @@ impl Lowerer {
                 DeclRef::State(StateId(next_id(self.prog.states.len() - 1)))
             }
             "fn" => {
-                self.prog.fns.push(FnDecl { info, params: Vec::new(), result: None, body: p, cases: Vec::new() });
+                self.prog.fns.push(FnDecl {
+                    info,
+                    params: Vec::new(),
+                    result: None,
+                    body: p,
+                    cases: Vec::new(),
+                    uses: Vec::new(),
+                    foreign: None,
+                });
                 DeclRef::Fn(FnId(next_id(self.prog.fns.len() - 1)))
             }
             "rule" => {
@@ -115,6 +123,7 @@ impl Lowerer {
                     body: p,
                     uses: Vec::new(),
                     triggers: Vec::new(),
+                    foreign: None,
                 });
                 DeclRef::Rule(RuleId(next_id(self.prog.rules.len() - 1)))
             }
@@ -128,7 +137,14 @@ impl Lowerer {
                 DeclRef::Law(LawId(next_id(self.prog.laws.len() - 1)))
             }
             "app" => {
-                self.prog.apps.push(AppDecl { info, rules: Vec::new(), target: None, bin: None, store: None });
+                self.prog.apps.push(AppDecl {
+                    info,
+                    rules: Vec::new(),
+                    target: None,
+                    notes: Vec::new(),
+                    shape: None,
+                    fields: Vec::new(),
+                });
                 DeclRef::App(AppId(next_id(self.prog.apps.len() - 1)))
             }
             "task" | "event" | "flow" | "note" | "kind" | "handler" => {
@@ -139,7 +155,7 @@ impl Lowerer {
                 self.err(IrError::error(
                     "E-KIND-UNKNOWN",
                     decl.kind.span,
-                    format!("`{kind}` is neither a core kind nor a kind of a used vocabulary"),
+                    format!("`{kind}` is neither a core kind nor a kind of a used library"),
                 ));
                 return None;
             }
@@ -160,7 +176,12 @@ impl Lowerer {
     pub(super) fn resolve_uses(&mut self, m: ModuleId, file: &ast::File) {
         for u in &file.uses {
             let dotted = u.path.dotted();
+            // A library's contract is a module too: `use raylib;` binds it and the library.
+            let library = (u.path.segments.len() == 1).then(|| self.prog.library(&dotted)).flatten();
             let item = if let Some(target) = self.prog.find_module(&dotted).map(|t| t.id) {
+                if library.is_some() {
+                    self.prog.modules[m.index()].vocabularies.push(dotted.clone());
+                }
                 let alias = u.path.segments.last().map(|s| s.name.clone()).unwrap_or_default();
                 UseItem::Module { alias, module: target, span: u.span }
             } else if let Some((target, name)) = self.split_decl_path(&u.path) {
@@ -181,14 +202,20 @@ impl Lowerer {
                         continue;
                     }
                 }
-            } else if u.path.segments.len() == 1 && vocab::KNOWN.contains(&dotted.as_str()) {
+            } else if library.is_some() {
                 UseItem::Vocabulary { name: dotted, span: u.span }
             } else {
-                self.err(IrError::error(
-                    "E-NAME-UNKNOWN",
-                    u.span,
-                    format!("`use {dotted}` names no module and no known vocabulary"),
-                ));
+                self.err(
+                    IrError::error(
+                        "E-NAME-UNKNOWN",
+                        u.span,
+                        format!("`use {dotted}` names no module and no library on the search path"),
+                    )
+                    .with_note(format!(
+                        "looked for `{dotted}/vocab.slg` in: {}",
+                        super::library::searched(&self.lib_path)
+                    )),
+                );
                 continue;
             };
             let bound = match &item {

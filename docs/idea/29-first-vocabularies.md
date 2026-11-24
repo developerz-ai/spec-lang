@@ -2,6 +2,8 @@
 
 > **Design.** Nothing here runs yet. The exact kinds and notes of the first five vocabularies, what each expands to, its default, what it derives and what it leaves outside.
 
+Two smaller vocabularies exist as files and load today: [`libs/cli`](../../libs/cli/README.md) and [`libs/game`](../../libs/game/README.md), written for the todo and platformer POCs. They have notes, triggers, handlers and an app shape, and no kinds yet. The designs below are larger.
+
 **Rule: a word earns its place only if it expands to core declarations, has one default, and comes with a law a backend can be tested against.** The machinery is in [09-vocabularies](09-vocabularies.md). The order is the corpus ranking in [16-corpus](16-corpus.md): `web`, `errors`, `jobs`, then `game` and `storage` from the roadmap. Every module below parses. Nothing else about them is checked.
 
 ## `web`

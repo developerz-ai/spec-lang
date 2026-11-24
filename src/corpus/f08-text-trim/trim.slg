@@ -1,0 +1,73 @@
+// f08-text-trim pins: `trim` removes exactly the 25 code points of Unicode
+// `White_Space` from both ends and nothing else. The rows are the points where
+// host languages disagree: U+0085 (JavaScript keeps it), U+FEFF (JavaScript
+// removes it), U+001C..U+001F (Python removes them), U+0000 (Ruby removes it),
+// U+200B and U+180E (white space in no current Unicode version).
+
+const spaces: List[Text] = [
+  "\u{9}", "\u{A}", "\u{B}", "\u{C}", "\u{D}", "\u{20}", "\u{85}", "\u{A0}", "\u{1680}",
+  "\u{2000}", "\u{2001}", "\u{2002}", "\u{2003}", "\u{2004}", "\u{2005}", "\u{2006}",
+  "\u{2007}", "\u{2008}", "\u{2009}", "\u{200A}", "\u{2028}", "\u{2029}", "\u{202F}",
+  "\u{205F}", "\u{3000}",
+];
+
+const not_spaces: List[Text] = [
+  "\u{0}", "\u{8}", "\u{E}", "\u{1C}", "\u{1D}", "\u{1E}", "\u{1F}", "\u{7F}", "\u{84}", "\u{86}",
+  "\u{AD}", "\u{180E}", "\u{200B}", "\u{200C}", "\u{200D}", "\u{200E}", "\u{2060}", "\u{FEFF}",
+  "\u{1F600}", "_", "0",
+];
+
+@cases(
+  "" -> "",
+  "a" -> "a",
+  "  a  " -> "a",
+  "\t\na b\u{D}\n" -> "a b",
+  " a  b " -> "a  b",
+  "   " -> "",
+  "\u{3000}x\u{3000}" -> "x",
+  "\u{85}x\u{85}" -> "x",
+  "\u{A0}x\u{A0}" -> "x",
+  "\u{2028}\u{2029}x" -> "x",
+  "\u{FEFF}x" -> "\u{FEFF}x",
+  "x\u{200B}" -> "x\u{200B}",
+  "\u{1C}x\u{1F}" -> "\u{1C}x\u{1F}",
+  "\u{0}x\u{0}" -> "\u{0}x\u{0}",
+  " \u{200B} " -> "\u{200B}",
+  " é " -> "é",
+  " 😀 " -> "😀",
+)
+pub fn trimmed(t: Text) -> Text = t.trim();
+
+test there_are_twenty_five = {
+  assert spaces.size == 25;
+  assert spaces.distinct().size == 25;
+  assert spaces.all(it.size == 1);
+}
+
+test every_white_space_goes_from_both_ends = {
+  for s in spaces {
+    assert s.trim() == "";
+    assert "{s}x".trim() == "x";
+    assert "x{s}".trim() == "x";
+    assert "{s}{s}x{s}y{s}".trim() == "x{s}y";
+  }
+  let run = spaces.join("");
+  let back = spaces.reversed().join("");
+  assert run.size == 25 and run.trim() == "";
+  assert "{run}mid{back}".trim() == "mid";
+}
+
+test nothing_else_goes = {
+  for c in not_spaces {
+    assert c.trim() == c;
+    assert " {c} ".trim() == c;
+    assert "{c} x {c}".trim() == "{c} x {c}";
+  }
+}
+
+test trim_twice_is_trim_once(t: Text) = {
+  assert t.trim().trim() == t.trim();
+  assert t.trim().size <= t.size;
+  assert " {t}\n".trim() == t.trim();
+  assert t.trim() == "" or (t.contains(t.trim()) and not spaces.any(s => t.trim().starts_with(s)));
+}

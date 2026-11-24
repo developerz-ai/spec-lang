@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Projected by hand from app SkyhopBun with @target(bun), @bin("skyhop") (src/apps/bun.slg). Stand-in for spec-lang build output; change the spec, not this file.
+# Builds the shim, then the standalone executable dist/skyhop with the shim embedded in it.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bin/shim
+bun build --compile --minify --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig src/main.ts --outfile dist/skyhop

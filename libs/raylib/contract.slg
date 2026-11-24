@@ -1,0 +1,57 @@
+// raylib 5.5, the calls a program may make, as foreign declarations. `use raylib;` gives them as `raylib.<name>`.
+// The card has no f32 and no C struct layout: a length here is a whole number of 1/256 of a raylib unit, and a
+// runtime converts it at the edge (`(float)v / 256.0f`); a Color is four bytes. A runtime implements each symbol.
+
+use game;
+
+@why("a raylib Color: four bytes")
+pub type Color(r: 0..=255, g: 0..=255, b: 0..=255, a: 0..=255 = 255);
+
+@why("a raylib Vector3, each coordinate in 1/256 of a unit")
+pub type Vector3(x: Int, y: Int, z: Int);
+
+@why("a raylib BoundingBox: its two corners")
+pub type BoundingBox(min: Vector3, max: Vector3);
+
+@why("fills the frame with one color")
+@uses(screen.write)
+pub rule clear_background(color: Color) = foreign c "raylib#ClearBackground";
+
+@why("starts the 3D pass: a perspective camera, y up, 45 degrees of vertical view")
+@uses(screen.write)
+pub rule begin_mode_3d(position: Vector3, target: Vector3) = foreign c "raylib#BeginMode3D";
+
+@why("ends the 3D pass")
+@uses(screen.write)
+pub rule end_mode_3d() = foreign c "raylib#EndMode3D";
+
+@why("draws through the loaded shader until end_shader_mode")
+@uses(screen.write)
+pub rule begin_shader_mode(time: Int) = foreign c "raylib#BeginShaderMode";
+
+@why("draws with the default shader again")
+@uses(screen.write)
+pub rule end_shader_mode() = foreign c "raylib#EndShaderMode";
+
+@why("a solid box")
+@uses(screen.write)
+pub rule draw_cube(box: BoundingBox, color: Color) = foreign c "raylib#DrawCube";
+
+@why("a box's edges")
+@uses(screen.write)
+pub rule draw_cube_wires(box: BoundingBox, color: Color) = foreign c "raylib#DrawCubeWires";
+
+@why("a loaded model, by its index in load order, turned about y")
+@uses(screen.write)
+pub rule draw_model_ex(model: Int, position: Vector3, yaw: 0..=359) = foreign c "raylib#DrawModelEx";
+
+@why("text in the default font, in pixels from the top left")
+@uses(screen.write)
+pub rule draw_text(text: Text, x: Int, y: Int, size: Int, color: Color) = foreign c "raylib#DrawText";
+
+@why("whether a key is held now; key codes are raylib's")
+@uses(keys.read)
+pub fn is_key_down(key: Int) -> Bool = foreign c "raylib#IsKeyDown";
+
+@why("raylib's own box test: true when the boxes overlap or touch")
+pub fn check_collision_boxes(a: BoundingBox, b: BoundingBox) -> Bool = foreign c "raylib#CheckCollisionBoxes";

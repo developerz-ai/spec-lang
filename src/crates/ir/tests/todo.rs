@@ -45,11 +45,12 @@ fn guards_are_ordered_and_apps_carry_their_notes() {
     let done = p.rules.iter().find(|r| r.info.name == "done").unwrap();
     let errors: Vec<_> = done.guards.iter().map(|g| g.error.as_str()).collect();
     assert_eq!(errors, ["NoTask", "AlreadyDone"]);
-    assert_eq!(done.triggers, [Trigger::Cli { command: "done".into() }]);
+    assert_eq!(done.triggers.len(), 1);
+    assert_eq!((done.triggers[0].library.as_str(), done.triggers[0].text("command")), ("cli", Some("done")));
     let rust = p.apps.iter().find(|a| a.info.name == "TodoRust").unwrap();
     assert_eq!(rust.target.as_deref(), Some("rust"));
-    assert_eq!(rust.bin.as_deref(), Some("todo"));
-    assert_eq!(rust.store, Some(Store::File(".todo.json".into())));
+    let notes: Vec<String> = rust.notes.iter().map(|n| n.to_string()).collect();
+    assert_eq!(notes, ["bin(\"todo\")", "store(file(\".todo.json\"))"]);
     assert_eq!(rust.rules.len(), 8);
 }
 

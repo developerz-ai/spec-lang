@@ -1,0 +1,85 @@
+// hop.screen: the raylib edge. Every call into the C library is declared here, and nowhere else.
+
+use game;
+use hop.geom.Vec3;
+use hop.geom.Box;
+use hop.model.Pad;
+use hop.model.Rgb;
+use hop.render;
+use hop.render.Asset;
+use hop.render.Draw;
+use hop.world;
+
+@uses(screen.write)
+rule clear_background(color: Rgb) = foreign c "raylib#ClearBackground";
+
+@why("a perspective camera, y up, 45 degrees of vertical view")
+@uses(screen.write)
+rule begin_mode_3d(eye: Vec3, target: Vec3) = foreign c "raylib#BeginMode3D";
+
+@uses(screen.write)
+rule end_mode_3d() = foreign c "raylib#EndMode3D";
+
+@why("the lit shader for the whole 3D pass; its one uniform is the tick count")
+@uses(screen.write)
+rule begin_lit(time: Int) = foreign c "raylib#BeginShaderMode";
+
+@uses(screen.write)
+rule end_lit() = foreign c "raylib#EndShaderMode";
+
+@uses(screen.write)
+rule draw_cube(box: Box, color: Rgb) = foreign c "raylib#DrawCube";
+
+@uses(screen.write)
+rule draw_cube_wires(box: Box, color: Rgb) = foreign c "raylib#DrawCubeWires";
+
+@uses(screen.write)
+rule draw_model(asset: Asset, at: Vec3, yaw: 0..=359) = foreign c "raylib#DrawModelEx";
+
+@uses(screen.write)
+rule draw_text(text: Text, x: Int, y: Int, size: Int, color: Rgb) = foreign c "raylib#DrawText";
+
+@uses(keys.read)
+fn key_down(key: Int) -> Bool = foreign c "raylib#IsKeyDown";
+
+@why("raylib's own box test, so the game's rule can be checked against the library's")
+pub fn check_collision_boxes(a: Box, b: Box) -> Bool = foreign c "raylib#CheckCollisionBoxes";
+
+const key_right: Int = 262;
+const key_left: Int = 263;
+const key_down_arrow: Int = 264;
+const key_up: Int = 265;
+const key_space: Int = 32;
+const key_a: Int = 65;
+const key_d: Int = 68;
+const key_s: Int = 83;
+const key_w: Int = 87;
+
+@why("arrows or WASD to run, space to jump")
+@uses(keys.read)
+pub fn read_pad() -> Pad = Pad(
+  left: key_down(key_left) or key_down(key_a),
+  right: key_down(key_right) or key_down(key_d),
+  forward: key_down(key_up) or key_down(key_w),
+  back: key_down(key_down_arrow) or key_down(key_s),
+  jump: key_down(key_space),
+);
+
+@why("the frame as data goes to raylib in its own order: background, 3D pass under the lit shader, then the HUD")
+@uses(screen.write, world.stage.read, world.ticks.read, world.player.read, world.taken.read, world.crawlers.read, world.lives.read, world.mode.read)
+pub rule present() = {
+  let f = render.scene(world.view());
+  clear_background(f.sky);
+  begin_mode_3d(f.eye, target: f.target);
+  begin_lit(f.time);
+  for d in f.world {
+    match d {
+      Cube(b, color) => draw_cube(b, color: color);
+      Wires(b, color) => draw_cube_wires(b, color: color);
+      Mesh(asset, at, yaw) => draw_model(asset, at: at, yaw: yaw);
+    }
+  }
+  end_lit();
+  end_mode_3d();
+  for l in f.labels { draw_text(l.text, x: l.x, y: l.y, size: l.size, color: l.color); }
+}

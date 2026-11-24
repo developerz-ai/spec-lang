@@ -1,0 +1,83 @@
+// hop.tests.touches: gems, crawlers, falls, the flag, and the end of the game.
+
+use hop.world;
+use hop.levels;
+use hop.model.Pad;
+use hop.model.Mode;
+
+const rest: Pad = Pad();
+
+@given(world.at_the_third_gem)
+test a_gem_is_taken_once = {
+  world.step(rest);
+  assert world.taken == Set(3);
+  world.step(rest);
+  assert world.taken == Set(3);
+  assert out.text == "1 gem 3\n";
+}
+
+@why("a life lost keeps the gems taken")
+@given(world.about_to_fall_out_holding_a_gem)
+test a_fall_keeps_the_gems = {
+  world.step(rest);
+  assert world.lives == 2;
+  assert world.taken == Set(1);
+}
+
+@why("only a falling body stomps; rising into a crawler hurts")
+@given(world.rising_beside_the_crawler)
+test rising_into_a_crawler_hurts = {
+  world.step(rest);
+  assert world.lives == 2;
+  assert 1 in world.crawlers;
+}
+
+@why("falling onto the upper half of a crawler removes it and bounces")
+@given(world.falling_on_the_crawler)
+test a_stomp_removes_the_crawler = {
+  world.step(rest);
+  assert not (1 in world.crawlers);
+  assert world.player.vel.y == 24;
+  assert world.lives == 3;
+}
+
+@why("walking into a crawler costs a life and restarts the hero")
+@given(world.running_at_the_crawler)
+test a_crawler_hurts_from_the_side = {
+  world.step(Pad(right: true));
+  assert world.lives == 2;
+  assert world.player.at == levels.meadow.start;
+  assert 1 in world.crawlers;
+}
+
+@given(world.about_to_fall_out)
+test falling_out_costs_a_life = {
+  world.step(rest);
+  assert world.lives == 2;
+  assert world.mode == Playing;
+}
+
+@given(world.about_to_fall_out_for_the_last_time)
+test the_last_life_ends_the_game = {
+  world.step(rest);
+  assert world.lives == 0;
+  assert world.mode == Lost;
+  world.step(rest) -> fail Over;
+}
+
+@given(world.beside_the_flag)
+test reaching_the_flag_wins = {
+  world.step(rest);
+  assert world.mode == Won;
+  world.step(rest) -> fail Over;
+}
+
+test starting_again_resets_everything = {
+  world.start(1);
+  for i in 1..=5 { world.step(Pad(right: true)); }
+  world.start(2);
+  assert world.taken == Set();
+  assert world.ticks == 0;
+  assert world.crawlers.size == 2;
+  assert world.player.at == levels.ridge.start;
+}

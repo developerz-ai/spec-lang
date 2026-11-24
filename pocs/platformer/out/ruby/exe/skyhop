@@ -1,0 +1,15 @@
+#!/usr/bin/env -S ruby --disable-gems --disable-yjit
+# frozen_string_literal: true
+
+# Projected by hand from app SkyhopRuby with @bin("skyhop") (src/apps/ruby.slg). Stand-in for spec-lang build output; change the spec, not this file.
+
+# RubyGems stays off: run and draw need the standard library only; shot and play find the ffi gem without it
+# (lib/skyhop/screen/raylib.rb). YJIT stays off even where RUBY_YJIT_ENABLE asks for it: a run is a few hundred
+# cold ticks, and compiling them costs more than it saves (NOTES.md, Optimizations).
+require_relative "../lib/skyhop/cli"
+
+Signal.trap("PIPE", "SYSTEM_DEFAULT")
+$stdout.binmode
+$stderr.binmode
+$stdin.binmode
+exit Skyhop::CLI.run(ARGV, stdin: $stdin, out: $stdout, err: $stderr, env: ENV)

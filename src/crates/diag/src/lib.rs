@@ -16,13 +16,16 @@ mod render;
 pub use json::JsonWriter;
 use spec_lang_syntax::{Diagnostic, Span};
 
-/// Error, warning, or a failed check.
+/// Error, warning, a failed check, or a blocked one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Severity {
     Error,
     Warning,
     /// A test, case, property or law that did not hold.
     Failure,
+    /// A check that could not run to the end here: it reached a `foreign`
+    /// body only a backend can run.
+    Blocked,
 }
 
 impl Severity {
@@ -31,6 +34,7 @@ impl Severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
             Severity::Failure => "failure",
+            Severity::Blocked => "blocked",
         }
     }
 }

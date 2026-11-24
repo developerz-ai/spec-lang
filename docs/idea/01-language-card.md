@@ -19,7 +19,7 @@ The whole language on one page: what a model is given before it writes spec-lang
 | `@note(args)` | every claim, policy, trigger and budget | closed set; one typed meaning; an unknown, misplaced or contradictory note is an error |
 | `= body` | how | its form is the altitude |
 
-Grammar never grows per domain. A vocabulary adds kinds and notes, nothing else.
+Grammar never grows per domain. A library adds kinds, notes, handlers and an app shape, nothing else ([Libraries](#libraries)).
 
 ## Core kinds
 
@@ -34,7 +34,7 @@ Grammar never grows per domain. A vocabulary adds kinds and notes, nothing else.
 | `flow` | a state machine every writer of that place must obey |
 | `test` | an example, table, property, trace or scenario |
 | `law` | a claim that must always hold; part of the interface |
-| `note` `kind` `handler` `app` | extend the vocabulary · implement an effect · compose and pick targets |
+| `note` `kind` `handler` `app` | extend the vocabulary · declare or implement an effect · compose and pick targets |
 
 Every program is rules: a request, a game tick, an interrupt, a syscall, a tap, a reconcile. Domain kinds (`entity`, `query`, `page`, `system`, `service`, `controller`, `layout`) are shorthand for ordinary declarations; `spec-lang view --as expanded` shows them.
 
@@ -69,7 +69,7 @@ Callers never change when the body does.
 | `@edge(A -> B, via: rule, by: who, after: t)` | one legal move of a `flow`; any other fails `IllegalMove`; a self-move restarts `after`; `by` names a subject `fn` and adds to `@access` |
 | `@assume("reason")` | admits a claim unproven; always listed in reports |
 | `@target(x)` | choose a backend |
-| `@memo` `@mmio` `@place` `@allows` | see below; `@allows` says where a new note may go |
+| `@memo` `@mmio` `@place` `@allows` | see below; `@allows` says where a new note may go: kinds, or `on` for a trigger |
 
 ## Data
 
@@ -290,6 +290,32 @@ test ana_holds = {
 
 Full programs: [24](24-examples.md) (seats, todo, webhooks, movement, k8s service, PID, page allocator, B-tree + WAL).
 
+## Libraries
+
+`use cli;` that names no module loads the library `libs/cli/`. It is written in this grammar, in three files; the toolchain knows no library by name.
+
+```slg
+// vocab.slg: what the library adds; a note without a body means what its runtime says
+@allows(on) note cli(command: Text);                  // a trigger: @on(cli("add"))
+@allows(app) note bin(name: Text);                    // an app note: @bin("todo")
+
+@uses(out.write)
+handler out {                                         // effects; the kind says who may use one
+  @uses(out.write) rule line(text: Text);             // a rule sends it: out.line("hi")
+  test text -> Text;                                  // a test reads it: out.text
+}
+
+app Game(start: rule, @on(tick) tick: rule);          // the parameters an app takes where it is used
+
+// pretend.slg: what tests run; its state commits and rolls back with the rule
+handler PretendOut(sent: mut List[Text] = []) = {
+  out.line(text) -> sent.push(text);
+  out.text -> sent.map(line => "{line}\n").join("");
+}
+```
+
+`contract.slg` holds ordinary declarations, `foreign` ones for a C library, and becomes the module `cli`. `use cli.out;` in a vocabulary offers another library's handler. A note's arguments are checked against its declared types; a `foreign` declaration may state only effects a loaded library declares. Where libraries are found: [`libs/README.md`](../../libs/README.md).
+
 ## Names
 
-Language and CLI `spec-lang`, files `.slg`, code fence `slg`. Path is the module: `seats/core.slg` is `seats.core`. `use seats.core;` gives `core.hold`; `use seats.core.hold;` gives `hold`; `use web;` gives a vocabulary's kinds and notes. A module owns its `state`: only its rules write it. `use` has no cycles; an `event` breaks one. Only `app` names targets, places and handlers. Six verbs: `view edit test prove build land`.
+Language and CLI `spec-lang`, files `.slg`, code fence `slg`. Path is the module: `seats/core.slg` is `seats.core`. `use seats.core;` gives `core.hold`; `use seats.core.hold;` gives `hold`; `use web;` gives a library's kinds, notes and handlers. A module owns its `state`: only its rules write it. `use` has no cycles; an `event` breaks one. Only `app` names targets, places and handlers. Six verbs: `view edit test prove build land`.

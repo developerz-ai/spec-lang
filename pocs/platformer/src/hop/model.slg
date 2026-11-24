@@ -1,0 +1,42 @@
+// hop.model: what a level and the bodies in it are. Data and claims; no state, no effects.
+
+use hop.geom.Vec3;
+use hop.geom.Box;
+
+@why("one frame of controls, sampled once per tick")
+pub type Pad(left: Bool = false, right: Bool = false, forward: Bool = false, back: Bool = false, jump: Bool = false);
+
+pub type Rgb(r: 0..=255, g: 0..=255, b: 0..=255);
+
+pub type Solid(box: Box, color: Rgb);
+
+@why("a one-way platform: it carries whoever lands on it from above and never blocks from the side or below")
+pub type Mover(no: Int, home: Box, step: Vec3, span: 1..=1024, color: Rgb);
+
+pub type Gem(no: Int, at: Vec3);
+
+@why("a crawler patrols along x between lo and hi")
+pub type Crawler(no: Int, at: Vec3, lo: Int, hi: Int, dir: -1..=1, speed: 1..=8);
+
+pub type Level(
+  name: Text,
+  start: Vec3,
+  solids: List[Solid],
+  movers: List[Mover] = [],
+  gems: List[Gem] = [],
+  crawlers: List[Crawler] = [],
+  goal: Vec3,
+);
+
+pub type Mode = Playing | Won | Lost;
+
+@why("riding names the mover the feet are on, so the body moves with it")
+pub type Player(
+  at: Vec3,
+  vel: Vec3 = Vec3(0, y: 0, z: 0),
+  grounded: Bool = false,
+  coyote: 0..=6 = 0,
+  jump_held: Bool = false,
+  riding: Option[Int] = none,
+  yaw: 0..=359 = 0,
+);

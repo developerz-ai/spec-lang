@@ -1,6 +1,7 @@
 //! Finding `.slg` files and naming their modules by path.
 
 use crate::error::IrError;
+use crate::library::LibPath;
 use crate::lower::lower_program;
 use crate::program::Program;
 use spec_lang_syntax::SourceMap;
@@ -26,10 +27,16 @@ impl LoadFailure {
 
 /// Load every `.slg` file under `dir` (or the one file `dir` names). A file
 /// `a/b.slg` under the directory is module `a.b`; a single file is the module
-/// named by its stem.
+/// named by its stem. Libraries come from [`LibPath::for_project`].
 pub fn load_project(dir: &Path) -> Result<Program, LoadFailure> {
+    load_project_with(dir, &LibPath::for_project(dir))
+}
+
+/// [`load_project`] with an explicit library search path.
+pub fn load_project_with(dir: &Path, libs: &LibPath) -> Result<Program, LoadFailure> {
     if dir.is_file() {
-        return load_file(dir);
+        let name = dir.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+        return load_sources_with(vec![(name, dir.display().to_string(), read(dir)?)], libs);
     }
     if !dir.is_dir() {
         return Err(LoadFailure::plain(IrError::load(format!("{}: no such file or directory", dir.display()))));
@@ -45,22 +52,26 @@ pub fn load_project(dir: &Path) -> Result<Program, LoadFailure> {
     if sources.is_empty() {
         return Err(LoadFailure::plain(IrError::load(format!("{}: no .slg files", dir.display()))));
     }
-    load_sources(sources)
+    load_sources_with(sources, libs)
 }
 
 /// Load one file as one module.
 pub fn load_file(path: &Path) -> Result<Program, LoadFailure> {
-    let name = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-    let text = read(path)?;
-    load_sources(vec![(name, path.display().to_string(), text)])
+    load_project_with(path, &LibPath::for_project(path))
 }
 
 /// Load modules from `(module name, path for messages, text)` triples.
+/// Libraries come from [`LibPath::from_env`].
 pub fn load_sources(sources: Vec<(String, String, String)>) -> Result<Program, LoadFailure> {
-    lower_program(sources)
+    load_sources_with(sources, &LibPath::from_env())
 }
 
-fn read(path: &Path) -> Result<String, LoadFailure> {
+/// [`load_sources`] with an explicit library search path.
+pub fn load_sources_with(sources: Vec<(String, String, String)>, libs: &LibPath) -> Result<Program, LoadFailure> {
+    lower_program(sources, libs)
+}
+
+pub(crate) fn read(path: &Path) -> Result<String, LoadFailure> {
     std::fs::read_to_string(path)
         .map(|t| t.replace("\r\n", "\n"))
         .map_err(|e| LoadFailure::plain(IrError::load(format!("{}: {e}", path.display()))))

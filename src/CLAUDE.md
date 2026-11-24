@@ -36,6 +36,7 @@ bin/lark-diff <seed> <count>                      # parser against Lark on mutat
 | a precedence level | `crates/syntax/src/parser/expr.rs` (one function per grammar level) |
 | what a name means | `crates/ir/src/lower/expr.rs`, `scope.rs` |
 | which notes exist, where | `crates/ir/src/lower/notes.rs` |
+| what a library (`libs/<name>/`) adds, how `use` finds it | `crates/ir/src/lower/library.rs`, `crates/ir/src/library.rs`; never a library's name in Rust |
 | a library method | `crates/engine/src/stdlib/` |
 | rule atomicity, claims | `crates/engine/src/interp.rs`, `conform.rs` |
 | generation, traces, laws | `crates/testing/src/generate.rs`, `trace.rs`, `law.rs` |

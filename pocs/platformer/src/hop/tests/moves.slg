@@ -1,0 +1,123 @@
+// hop.tests.moves: running, jumping, walls and riding, tick by tick.
+
+use hop.world;
+use hop.geom.Vec3;
+use hop.model.Pad;
+
+const right: Pad = Pad(right: true);
+const jump: Pad = Pad(jump: true);
+const rest: Pad = Pad();
+
+test standing_still_stays_put = {
+  world.start(1);
+  for i in 1..=30 { world.step(rest); }
+  assert world.player.at == Vec3(0, y: 0, z: 0);
+  assert world.player.grounded;
+  assert world.ticks == 30;
+}
+
+@why("the first tick starts in the air, so it gains 1; then 2 a tick up to 16")
+test running_reaches_full_speed = {
+  world.start(1);
+  for i in 1..=10 { world.step(right); }
+  assert world.player.vel.x == 16;
+  assert world.player.at.x == 96;
+  assert world.player.yaw == 0;
+}
+
+@why("a held jump rises 38 + 36 + ... + 2 = 380 sub-metres")
+test a_held_jump_peaks_at_380 = {
+  world.start(1);
+  world.step(rest);
+  var top = 0;
+  for i in 1..=50 {
+    world.step(jump);
+    top = top.max(world.player.at.y);
+  }
+  assert top == 380;
+  assert world.player.grounded;
+}
+
+@why("let go after one tick: 38, then cut to 16 and fall away: 14 + 12 + ... + 2 more")
+test a_short_hop_peaks_at_94 = {
+  world.start(1);
+  world.step(rest);
+  world.step(jump);
+  var top = 0;
+  for i in 1..=30 {
+    world.step(rest);
+    top = top.max(world.player.at.y);
+  }
+  assert top == 94;
+}
+
+@why("holding jump through a landing does not jump again")
+test a_jump_needs_a_fresh_press = {
+  world.start(1);
+  world.step(rest);
+  for i in 1..=60 { world.step(jump); }
+  assert world.player.grounded;
+  assert world.player.at.y == 0;
+}
+
+@given(world.past_the_first_ledge)
+test a_jump_just_after_the_edge_still_counts = {
+  world.step(rest);
+  assert not world.player.grounded;
+  world.step(jump);
+  assert world.player.vel.y == 38;
+}
+
+@given(world.past_the_first_ledge)
+test a_jump_long_after_the_edge_does_not = {
+  for i in 1..=7 { world.step(rest); }
+  world.step(jump);
+  assert world.player.vel.y < 0;
+}
+
+@given(world.running_at_the_step)
+test a_wall_stops_the_body_flush = {
+  for i in 1..=10 { world.step(right); }
+  assert world.player.at.x == 2496;
+  assert world.player.vel.x == 0;
+}
+
+@given(world.under_a_low_ceiling)
+test a_ceiling_stops_a_jump = {
+  var top = 0;
+  for i in 1..=40 {
+    world.step(jump);
+    top = top.max(world.player.at.y);
+  }
+  assert top == 208;
+}
+
+@given(world.riding_the_mover)
+test a_rider_moves_with_the_mover = {
+  for i in 1..=10 { world.step(rest); }
+  assert world.player.at == Vec3(1680, y: 0, z: 0);
+  assert world.player.riding == Some(1);
+}
+
+@given(world.above_the_mover)
+test a_mover_catches_a_falling_body = {
+  for i in 1..=40 { world.step(rest); }
+  assert world.player.riding == Some(1);
+  assert world.player.at.y == 0;
+}
+
+@why("a mover is one-way: a body below it keeps falling")
+@given(world.under_the_mover)
+test a_mover_never_catches_from_below = {
+  world.step(rest);
+  assert world.player.at.y < -200;
+  assert world.player.riding == none;
+}
+
+@why("the fastest fall still stops on a floor")
+@given(world.falling_fast_onto_the_floor)
+test a_fast_fall_lands = {
+  for i in 1..=12 { world.step(rest); }
+  assert world.player.at.y == 0;
+  assert world.player.grounded;
+}

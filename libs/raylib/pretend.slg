@@ -1,0 +1,1 @@
+// raylib in tests: no simulator yet. Every call is foreign, so a check that reaches one is blocked, never run.

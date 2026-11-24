@@ -1,0 +1,113 @@
+// f31-foreign pins: a `foreign` body on a `fn` and on a `rule` is declared,
+// never run by the engine. A check that reaches one is `blocked`, not passed
+// and not failed; a check that does not reach it runs as usual, also when the
+// foreign name sits on the untaken side of `and`, `or`, `if` or `match`; a
+// foreign rule's guards run first, so a refusal by a guard is an ordinary
+// refusal; a test whose `@given` parent is blocked is blocked; a law over a
+// rule that reaches one is blocked, and a law over its sibling that never
+// does is not. A printer's test runner links no symbol, so it reports the
+// same checks blocked.
+
+state total: Int = 0;
+state marks: List[Int];
+
+@why("the C library's own checksum, so ours can be compared with it")
+pub fn crc(data: List[Int]) -> Int = foreign c "zlib#crc32";
+
+@why("the host says how many cores it has; nothing in the program can know")
+pub fn cores() -> Int = foreign c "host#core_count";
+
+@why("ours: the sum of the bytes, kept below 2^16")
+@cases([] -> 0, [1, 2, 3] -> 6, [65535, 1] -> 0, [255, 255] -> 510)
+pub fn checksum(data: List[Int]) -> Int = data.sum() mod 65536;
+
+@cases(([1], false) -> 1, ([1, 2], false) -> 3)
+pub fn pick(data: List[Int], exact: Bool) -> Int = if exact then crc(data) else checksum(data);
+
+@why("a sample is stored through the device driver, which only a backend has")
+@guard(n >= 0 else Negative, n < 1000 else TooBig)
+pub rule store(n: Int) -> Int = foreign c "driver#store";
+
+@why("adds in the program, then tells the device: the telling is the foreign part")
+@uses(total.write, marks.write)
+@guard(n != 0 else Nothing)
+pub rule add(n: -50..=150) -> Int = {
+  total = total + n;
+  if n > 100 { marks.push(store(n)); }
+  return total;
+}
+
+@why("a plain rule beside the foreign ones, so a law can trace it alone")
+@uses(total.write)
+pub rule reset() = {
+  total = 0;
+}
+
+test the_engine_side_runs = {
+  assert checksum([1, 2, 3]) == 6;
+  add(5) -> 5;
+  add(100) -> 105;
+  add(0) -> fail Nothing;
+  assert marks == [];
+}
+
+test an_untaken_branch_does_not_block = {
+  assert pick([7], exact: false) == 7;
+  assert false and crc([1]) == 0 or true;
+  assert true or cores() > 0;
+  assert (if 1 > 2 then cores() else 4) == 4;
+  assert [1, 2].filter(it > 5).map(n => crc([n])) == [];
+}
+
+test a_guard_refuses_before_the_foreign_body = {
+  store(-1) -> fail Negative;
+  store(1000) -> fail TooBig;
+  add(0) -> fail Nothing;
+}
+
+test reaching_a_foreign_fn_blocks = {
+  assert crc([1, 2, 3]) == crc([1, 2, 3]);
+}
+
+test reaching_a_foreign_rule_blocks = {
+  store(5) -> 5;
+}
+
+test reaching_one_through_a_rule_blocks = {
+  add(5) -> 5;
+  add(150) -> 155;
+  assert marks.size == 1;
+}
+
+test a_block_is_reached_only_after_the_steps_before_it_pass = {
+  add(1) -> 1;
+  assert total == 1;
+  assert pick([1, 2], exact: true) >= 0;
+}
+
+@given(reaching_one_through_a_rule_blocks)
+test a_child_of_a_blocked_test_is_blocked = {
+  assert total == 155;
+}
+
+@given(the_engine_side_runs)
+test a_child_of_a_passing_test_runs = {
+  assert total == 105;
+  reset();
+  assert total == 0;
+}
+
+test ours_against_theirs(data: List[0..=255]) = {
+  assert checksum(data) <= crc(data) or checksum(data) > crc(data);
+}
+
+test ours_alone(data: List[0..=255]) = {
+  assert 0 <= checksum(data) < 65536;
+  assert pick(data, exact: false) == checksum(data);
+}
+
+law reset_alone_never_reaches_the_device(t: Trace[reset]) =
+  t.steps.all(s => s.after.total == 0 and s.after.marks == s.before.marks);
+
+law a_law_over_add_is_blocked(t: Trace[add]) =
+  t.steps.all(s => s.reply.is(Ok(_)) implies s.after.total == s.before.total + s.event.n);

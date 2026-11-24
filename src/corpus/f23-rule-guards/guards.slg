@@ -1,0 +1,134 @@
+// f23-rule-guards pins: `@guard` clauses run before the body, top to bottom,
+// across several `@guard` notes and inside one; the first that fails gives
+// the error and nothing is written; a failure while evaluating a guard's
+// condition gives that guard's error; a later guard may lean on an earlier
+// one; a guard reads state and parameters; a rule's reply.
+
+use cli;
+
+type Account(owner: Text, balance: Int = 0, frozen: Bool = false);
+
+state accounts: Map[Int, Account];
+state calls: Int = 0;
+
+@why("an account is opened once")
+@uses(accounts.write, calls.write)
+@guard(not (id in accounts) else Exists)
+@guard(owner.trim().size > 0 else NoOwner)
+pub rule open(id: Int, owner: Text) = {
+  accounts[id] = Account(owner);
+  calls = calls + 1;
+}
+
+@why("money leaves only an open, unfrozen account that has it")
+@uses(accounts.write, calls.write, out.write)
+@guard(amount > 0 else NotPositive, id in accounts else NoAccount)
+@guard(not accounts[id].frozen else Frozen)
+@guard(accounts[id].balance >= amount else Insufficient)
+pub rule withdraw(id: Int, amount: Int) -> Int = {
+  accounts[id].balance = accounts[id].balance - amount;
+  calls = calls + 1;
+  out.line("paid {amount}");
+  return accounts[id].balance;
+}
+
+@why("a deposit is refused by the first broken clause, in the order written")
+@uses(accounts.write, calls.write)
+@guard(amount > 0 else NotPositive)
+@guard(accounts[id].owner != "" else NoAccount)
+@guard(not accounts[id].frozen else Frozen)
+pub rule deposit(id: Int, amount: Int) -> Int = {
+  accounts[id].balance = accounts[id].balance + amount;
+  calls = calls + 1;
+  return accounts[id].balance;
+}
+
+@why("a frozen account keeps its money and refuses to move it")
+@uses(accounts.write)
+@guard(id in accounts else NoAccount, not accounts[id].frozen else AlreadyFrozen)
+pub rule freeze(id: Int) = {
+  accounts[id].frozen = true;
+}
+
+@given(accounts -> Map(1 -> Account("ana", balance: 100), 2 -> Account("bob", balance: 5, frozen: true)), calls -> 0)
+test two_accounts = {
+  assert accounts.size == 2;
+}
+
+@given(two_accounts)
+test every_clause_can_refuse = {
+  withdraw(1, amount: 0) -> fail NotPositive;
+  withdraw(9, amount: 1) -> fail NoAccount;
+  withdraw(2, amount: 1) -> fail Frozen;
+  withdraw(1, amount: 101) -> fail Insufficient;
+  withdraw(1, amount: 100) -> 0;
+  assert calls == 1;
+  assert out.text == "paid 100\n";
+}
+
+@given(two_accounts)
+test the_first_broken_clause_wins = {
+  withdraw(9, amount: 0) -> fail NotPositive;
+  withdraw(2, amount: 0) -> fail NotPositive;
+  withdraw(2, amount: 999) -> fail Frozen;
+  withdraw(9, amount: 999) -> fail NoAccount;
+  open(1, owner: "") -> fail Exists;
+  open(3, owner: "  ") -> fail NoOwner;
+  freeze(9) -> fail NoAccount;
+  freeze(2) -> fail AlreadyFrozen;
+  assert calls == 0 and out.text == "";
+}
+
+@given(two_accounts)
+test a_failing_condition_gives_its_guards_error = {
+  deposit(9, amount: 5) -> fail NoAccount;
+  deposit(9, amount: 0) -> fail NotPositive;
+  deposit(2, amount: 5) -> fail Frozen;
+  deposit(1, amount: 5) -> 105;
+}
+
+@given(two_accounts)
+test a_refusal_writes_nothing = {
+  let before = accounts;
+  withdraw(1, amount: 500) -> fail Insufficient;
+  freeze(2) -> fail AlreadyFrozen;
+  open(2, owner: "eve") -> fail Exists;
+  assert accounts == before and calls == 0;
+}
+
+test guards_read_what_earlier_calls_wrote = {
+  withdraw(1, amount: 1) -> fail NoAccount;
+  open(1, owner: "ana");
+  withdraw(1, amount: 1) -> fail Insufficient;
+  deposit(1, amount: 10) -> 10;
+  withdraw(1, amount: 4) -> 6;
+  freeze(1);
+  withdraw(1, amount: 1) -> fail Frozen;
+  deposit(1, amount: 1) -> fail Frozen;
+  assert accounts[1] == Account("ana", balance: 6, frozen: true) and calls == 3;
+}
+
+@given(two_accounts)
+test withdraw_refuses_exactly_when_a_clause_breaks(id: 0..=3, amount: -5..=120) = {
+  let fine = amount > 0 and id == 1 and amount <= 100;
+  if fine {
+    withdraw(id, amount: amount) -> 100 - amount;
+  } else if amount <= 0 {
+    withdraw(id, amount: amount) -> fail NotPositive;
+  } else if id == 2 {
+    withdraw(id, amount: amount) -> fail Frozen;
+  } else if id == 1 {
+    withdraw(id, amount: amount) -> fail Insufficient;
+  } else {
+    withdraw(id, amount: amount) -> fail NoAccount;
+  }
+}
+
+law a_balance_never_goes_below_zero(t: Trace[open | withdraw | deposit | freeze]) =
+  t.states.all(w => w.accounts.values.all(it.balance >= 0));
+
+law refused_means_unchanged(t: Trace[open | withdraw | deposit | freeze]) =
+  t.steps.all(s => s.reply.is(Err(_)) implies s.after == s.before);
+
+law frozen_money_stays(t: Trace[withdraw | deposit | freeze], k: Int) =
+  t.steps.all(s => k in s.before.accounts and s.before.accounts[k].frozen implies s.after.accounts[k] == s.before.accounts[k]);

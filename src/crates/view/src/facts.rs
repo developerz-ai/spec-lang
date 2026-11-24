@@ -6,8 +6,8 @@
 //! declaration can touch, not what one run does touch.
 
 use spec_lang_ir::{
-    Arm, Block, Callee, DeclInfo, DeclRef, Effect, Expect, Expr, ExprKind, Given, InterpPart, LambdaBody, PatArg,
-    Pattern, Place, PlaceRoot, PlaceStep, Program, Stmt, StmtKind, Ty, TypeDef, TypeId,
+    Arm, Block, Callee, DeclInfo, DeclRef, Expect, Expr, ExprKind, Given, InterpPart, LambdaBody, PatArg, Pattern,
+    Place, PlaceRoot, PlaceStep, Program, Stmt, StmtKind, Ty, TypeDef, TypeId,
 };
 use spec_lang_syntax::Span;
 use std::collections::{BTreeSet, HashMap};
@@ -98,7 +98,7 @@ pub enum Phase {
 pub enum Target {
     /// An index into [`Facts::decls`].
     Decl(usize),
-    /// The `out` handler of the `cli` vocabulary: lines to the program's user.
+    /// A library handler's operation (`out.line`, `out.text`): the world outside.
     Out,
 }
 
@@ -596,7 +596,7 @@ impl Collector<'_> {
             | ExprKind::Text(_)
             | ExprKind::Local(_)
             | ExprKind::Hole(_) => {}
-            ExprKind::OutText => self.push(RefKind::Reads, Target::Out),
+            ExprKind::EffectRead(_) => self.push(RefKind::Reads, Target::Out),
             ExprKind::Interp(parts) => {
                 for part in parts {
                     if let InterpPart::Expr(x) = part {
@@ -612,7 +612,7 @@ impl Collector<'_> {
                     Callee::Fn(id) => self.to(RefKind::Calls, DeclRef::Fn(*id)),
                     Callee::Rule(id) => self.to(RefKind::Calls, DeclRef::Rule(*id)),
                     Callee::Record(id) | Callee::Variant(id, _) => self.to(RefKind::Constructs, DeclRef::Type(*id)),
-                    Callee::Effect(Effect::OutLine) => self.push(RefKind::Emits, Target::Out),
+                    Callee::Effect(_) => self.push(RefKind::Emits, Target::Out),
                 }
                 args.iter().flatten().for_each(|a| self.expr(a));
             }
@@ -763,7 +763,7 @@ pub fn walk<'a>(p: &'a Program, e: &'a Expr, visit: &mut dyn FnMut(&'a Expr)) {
         | ExprKind::Text(_)
         | ExprKind::Local(_)
         | ExprKind::Hole(_)
-        | ExprKind::OutText
+        | ExprKind::EffectRead(_)
         | ExprKind::Const(_)
         | ExprKind::State(_)
         | ExprKind::Variant { .. } => {}

@@ -1,0 +1,120 @@
+# The input script: what is read, what is refused, and that nothing runs before it is all read.
+
+# case: comments, blank lines, tabs and leading zeros
+< # wait, then walk
+<
+<   002	-   # two ticks of nothing
+< 0003 R
+$ ["run"]
+> 0 level meadow
+> 1 land
+> end 5 playing gems 0/3 lives 3 at 12,0,0
+
+# case: a last line without a newline counts
+<j "4 -\n1 R"
+$ ["run"]
+> 0 level meadow
+> 1 land
+> end 5 playing gems 0/3 lives 3 at 2,0,0
+
+# case: keys in any order
+< 3 JR
+$ ["run"]
+> 0 level meadow
+> 1 land
+> end 3 playing gems 0/3 lives 3 at 9,0,0
+
+# case: a line must be two fields
+< 5
+$ ["run"]
+! error: input line 1: expected <ticks> <keys>
+? 2
+< 5 R J
+$ ["run"]
+! error: input line 1: expected <ticks> <keys>
+? 2
+
+# case: ticks are 1 to 100000
+< 0 R
+$ ["run"]
+! error: input line 1: ticks must be 1 to 100000
+? 2
+< 100001 R
+$ ["run"]
+! error: input line 1: ticks must be 1 to 100000
+? 2
+< -3 R
+$ ["run"]
+! error: input line 1: ticks must be 1 to 100000
+? 2
+< R 3
+$ ["run"]
+! error: input line 1: ticks must be 1 to 100000
+? 2
+
+# case: unknown keys, lower case, and - mixed with keys
+< 1 r
+$ ["run"]
+! error: input line 1: unknown key "r"
+? 2
+< 1 R-
+$ ["run"]
+! error: input line 1: unknown key "-"
+? 2
+< 1 --
+$ ["run"]
+! error: input line 1: unknown key "-"
+? 2
+
+# case: a key twice, and the first problem in the field wins
+< 1 RJR
+$ ["run"]
+! error: input line 1: key "R" twice
+? 2
+< 1 RRZ
+$ ["run"]
+! error: input line 1: key "R" twice
+? 2
+< 1 RZR
+$ ["run"]
+! error: input line 1: unknown key "Z"
+? 2
+
+# case: the line number counts comments and blank lines, and the first bad line wins
+< # header
+<
+< 3 R
+< 2 X
+< 0 R
+$ ["draw"]
+! error: input line 4: unknown key "X"
+? 2
+
+# case: at most a million ticks in all
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 100000 R
+< 1 R
+$ ["run"]
+! error: input: more than 1000000 ticks
+? 2
+
+# case: input is checked whole before the first tick: no output on a late error
+< 300 R
+< 1 Q
+$ ["run"]
+! error: input line 2: unknown key "Q"
+? 2
+
+# case: a key outside ASCII is an unknown key
+<j "1 R\n1 ÿ\n"
+$ ["run"]
+! error: input line 2: unknown key "ÿ"
+? 2

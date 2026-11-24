@@ -1,0 +1,108 @@
+// f29-properties pins: a test with parameters is a property. Values are
+// generated from the parameter types, seeded by the check's name: Int, Bool,
+// Text, ranges, claims, records with their field claims, sums with data,
+// List, Set, Map, Option, tuples and nested mixes; a property may return
+// early; it may start from `@given`; it may call rules, each run in a fresh
+// world. A backend must generate the same values from the same seed to
+// report the same statuses, so these also pin the generator's contract.
+
+type Small = -3..=3;
+type Name = Text where 1 <= self.size <= 6;
+type Colour = Red | Green | Blue;
+type Token = Word(text: Name) | Number(n: Small) | Pair(a: Colour, b: Colour);
+type Box(w: 1..=9, h: 1..=9, label: Name, tint: Option[Colour] = none);
+
+state seen: List[Int];
+state hits: Int = 0;
+
+@why("a run records what it was given")
+@uses(seen.write, hits.write)
+pub rule record(n: Small) -> Int = {
+  seen.push(n);
+  hits = hits + 1;
+  return hits;
+}
+
+fn area(b: Box) -> Int = b.w * b.h;
+
+fn weight(t: Token) -> Int = match t {
+  Word(text) => text.size;
+  Number(n) => n.abs();
+  Pair(a, b) => if a == b then 1 else 2;
+}
+
+test ints_obey_arithmetic(a: Int, b: Int) = {
+  assert a + b == b + a;
+  assert a - a == 0 and a * 0 == 0 and a * 1 == a;
+  assert (a < b) == (b > a);
+  assert (a + b) - b == a;
+}
+
+test bools_are_two(b: Bool) = {
+  assert b or not b;
+  assert not (b and not b);
+  assert (b == true) != (b == false);
+}
+
+test text_is_text(t: Text) = {
+  assert t.size >= 0 and t.bytes.size >= t.size;
+  assert "{t}" == t and t.take(t.size) == t;
+}
+
+test ranges_stay_inside(s: Small, big: 1000000000000..=1000000000009) = {
+  assert -3 <= s <= 3;
+  assert 1000000000000 <= big <= 1000000000009;
+}
+
+test claims_hold(n: Name) = {
+  assert 1 <= n.size <= 6;
+}
+
+test sums_are_one_of_their_variants(c: Colour, t: Token) = {
+  assert c in [Red, Green, Blue];
+  assert t.is(Word(_)) or t.is(Number(_)) or t.is(Pair(_, _));
+  assert 0 <= weight(t) <= 6;
+}
+
+test records_meet_field_claims(b: Box) = {
+  assert 1 <= b.w <= 9 and 1 <= b.h <= 9;
+  assert 1 <= b.label.size <= 6;
+  assert 1 <= area(b) <= 81;
+  assert b.with(w: 1).h == b.h;
+}
+
+test collections_hold_their_element_types(xs: List[Small], s: Set[Small], m: Map[Small, Colour]) = {
+  assert xs.all(-3 <= it <= 3) and s.all(-3 <= it <= 3);
+  assert s.size <= 7 and m.size <= 7;
+  assert m.keys.all(-3 <= it <= 3) and m.values.all(it in [Red, Green, Blue]);
+  assert s.list == s.list.sort() and m.keys == m.keys.sort();
+}
+
+test options_and_tuples(o: Option[Small], p: (Small, Colour), deep: List[Option[(Bool, Small)]]) = {
+  assert o == none or -3 <= (o else 0) <= 3;
+  assert [p].sort() == [p];
+  assert deep.filter(it == none).size + deep.filter(it != none).size == deep.size;
+}
+
+test an_early_return_is_a_pass(n: Small) = {
+  if n < 0 { return; }
+  assert n.abs() == n;
+}
+
+test every_run_has_a_fresh_world(n: Small) = {
+  assert seen == [] and hits == 0;
+  record(n) -> 1;
+  record(n) -> 2;
+  assert seen == [n, n];
+}
+
+@given(seen -> [9, 9], hits -> 2)
+test every_run_starts_from_given(n: Small) = {
+  record(n) -> 3;
+  assert seen == [9, 9, n];
+}
+
+@cases((1, 2) -> 3, (-3, 3) -> 0)
+test a_table_on_a_test(a: Small, b: Small) -> Int = {
+  return a + b;
+}

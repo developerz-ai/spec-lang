@@ -1,0 +1,2 @@
+// cli implements no foreign call: arguments, the store and standard output are its runtime's (real/), reached
+// through the app manifest, never through a declaration a program calls.

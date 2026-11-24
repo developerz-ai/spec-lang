@@ -1,0 +1,101 @@
+# Arguments: help, commands, flags, and which error wins.
+
+# case: no arguments prints help to standard error
+$ []
+! @help
+? 2
+
+# case: --help and -h anywhere print help to standard output
+$ ["--help"]
+> @help
+$ ["run", "--level", "9", "-h"]
+> @help
+$ ["draw", "--at", "-h"]
+> @help
+
+# case: unknown commands
+$ ["jump"]
+! error: unknown command "jump"
+? 2
+$ ["--level"]
+! error: unknown command "--level"
+? 2
+
+# case: unknown flags, including the = spelling and another command's flag
+$ ["run", "--fast"]
+! error: unknown flag --fast
+? 2
+$ ["run", "--level=2"]
+! error: unknown flag --level=2
+? 2
+$ ["run", "--at", "3"]
+! error: unknown flag --at
+? 2
+$ ["play", "--out", "x.png"]
+! error: unknown flag --out
+? 2
+
+# case: a flag needs a value, once
+$ ["run", "--level"]
+! error: --level needs a value
+? 2
+$ ["draw", "--at", "1", "--at", "2"]
+! error: --at given twice
+? 2
+$ ["draw", "--level", "1", "--level"]
+! error: --level needs a value
+? 2
+
+# case: a level is 1 or 2, in digits
+$ ["run", "--level", "0"]
+! error: --level: not a LevelNo
+? 2
+$ ["run", "--level", "3"]
+! error: --level: not a LevelNo
+? 2
+$ ["run", "--level", "-1"]
+! error: --level: not a LevelNo
+? 2
+$ ["run", "--level", "one"]
+! error: --level: not a LevelNo
+? 2
+$ ["run", "--level", ""]
+! error: --level: not a LevelNo
+? 2
+$ ["run", "--level", "99999999999999999999999"]
+! error: --level: not a LevelNo
+? 2
+
+# case: a tick is digits, zero or more
+$ ["draw", "--at", "-1"]
+! error: --at: not a tick
+? 2
+$ ["draw", "--at", "1.5"]
+! error: --at: not a tick
+? 2
+$ ["draw", "--at", ""]
+! error: --at: not a tick
+? 2
+
+# case: an output path cannot be empty
+$ ["shot", "--out", ""]
+! error: --out: not a path
+? 2
+
+# case: positionals are refused
+$ ["run", "meadow"]
+! error: unexpected argument "meadow"
+? 2
+$ ["draw", "-"]
+! error: unexpected argument "-"
+? 2
+
+# case: the first problem from the left wins, before any input is read
+< nonsense
+$ ["run", "--level", "7", "--fast"]
+! error: --level: not a LevelNo
+? 2
+< nonsense
+$ ["run", "--fast", "--level", "7"]
+! error: unknown flag --fast
+? 2
