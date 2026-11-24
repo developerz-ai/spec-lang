@@ -382,6 +382,17 @@ Agents need big machines today mostly for the tools around the logic: compilers,
 | a shared build pool | generate, compile, parity | the heavy tools, once, for everyone |
 | CI | the same pool | as today |
 
+**Slim locally.** One binary and the source. No package install, database, container, browser, SDK or target compiler; vocabularies and contracts are data, fetched by hash. A fresh machine is ready when the binary is there.
+
+| | Local | CI | Production |
+|---|---|---|---|
+| Installed | one binary | every toolchain and service | the built software |
+| Runs | logic | generate, compile, parity, load | the real thing |
+| Finds | wrong logic | wrong backend, wrong simulator | wrong idea of the world |
+| Sends back | - | a local replay | a candidate test |
+
+The exception is work that needs eyes or hardware: screens, games, devices. Then the one target being looked at is installed, or watched from a preview the build pool serves.
+
 So many agents can share one small machine, and the heavy tools are provisioned for landings and not for every agent. Solvers and deep searches are the exception: they use all the memory and cores they get, so they run in the pool, under a counted budget.
 
 ## Run almost nothing
