@@ -1,0 +1,158 @@
+# Lifecycle
+
+> **Design.** Nothing here runs yet. Adoption into existing code, data change, release, production feedback, upgrades and the way out.
+
+**Rule.** Source is the only thing people and models change. Data, deployed software and incidents are handled as consequences of a source diff or as input to the next test.
+
+## Adopt one declaration at a time
+
+The unit is one action, entity or job inside an existing Ultimate app, never the app.
+
+| Step | What happens | Evidence at the end |
+|---|---|---|
+| 1 observe | registry facts (entities, actions, policies) become interfaces; bodies stay `foreign` | `assumed`, some monitored |
+| 2 characterise | redacted traces are recorded; candidate laws mined from them are labelled `observed` | `sampled` about what *is* |
+| 3 intend | a person accepts, rejects or edits each candidate; a bug that traffic always showed must not become a law | laws with a human origin |
+| 4 shadow | the new logic runs on the same inputs in the simulated world; replies and effects are compared, nothing is written twice | differences, each a question |
+| 5 replace | the declaration goes live behind the same typed boundary; the old tests are black-box oracles | parity for what was exercised |
+| 6 count | behaviour that had to be added back is listed | the honest cost |
+
+```slg
+@uses(http.call, store.write)
+@fails(Declined, Unreachable)
+@idempotent(key)
+task charge(order: Id[Order], key: Text) -> Receipt = foreign ts "billing/actions/charge";
+
+@given(http.reply(503))
+test legacy_charge_reports_unreachable = {
+  charge(Id(1), key: "k1") -> fail Unreachable;
+}
+```
+
+Callers, tests and laws are written against this now and do not change when the body does. Calls the old code makes around the boundary are a **coverage hole**, reported, not green. Importing meaning from arbitrary TypeScript is not solved: step 1 reads what a framework already declares, and the logic is drafted by a model and accepted by a person.
+
+## Data changes
+
+A type with stored values has a history. The compiler compares the deployed schema hash with the new one.
+
+| Class | Example | Author owes |
+|---|---|---|
+| representation | reorder, new index | nothing |
+| total | `Int` to a wider range; new field with a default | nothing |
+| partial | `Option[Text]` to `Text` | a total repair or quarantine |
+| lossy | drop a field | a signed irreversible step |
+| contradictory | a law no stored row satisfies | a question; no plan |
+| ambiguous | a field gone and a field new: rename, or not? | pick one of two edits |
+
+```json
+{"code":"E-DATA","type":"Order","from":"s:71","to":"s:80","class":"partial",
+ "violating":{"count":19,"of":48210,"handle":"q:4"},
+ "hole":"repair_order","plan":["expand","backfill","verify","cut","contract"],
+ "rollbackUntil":"cut"}
+```
+
+The repair is ordinary logic with ordinary tests. The old shape is a generated read-only module, `before` (a proposal: the card has no form for it yet):
+
+```slg
+@why("nobody guesses an address; those orders are set aside for a person")
+@fails(Quarantine)
+fn repair_order(o: before.Order) -> Order = {
+  let email = o.email else fail Quarantine;
+  return Order(o.id, email: email, total: o.total);
+}
+
+test repair_keeps_money(o: before.Order where self.email != none) = {
+  repair_order(o).total -> o.total;
+}
+```
+
+Obligations, checked like any other: every old value maps or is quarantined; the backfill resumes after a crash at any point and is idempotent; laws hold on the result; if old and new versions overlap, traces mix them. If overlap cannot hold a law, the plan says downtime. The transition is generated and deleted after `contract`; no compatibility code stays in source. A business mapping is never inferred from a schema diff.
+
+## Release
+
+`build` is a function of source, lock file, compiler, vocabularies and targets. Same inputs, same bytes. `land` writes an attestation outside source: authenticated principal, model and session when supplied (marked self-reported otherwise), base and head, approval, obligations met, hashes of inputs and outputs. No prompts and no reasoning text are stored.
+
+Generated software is never edited; a tree that differs from its attestation fails the gate. An error from a target's own compiler is `BACKEND.BUG`: a defect in the backend, with a minimal source reproduction, never work for the author.
+
+## CI and delivery
+
+Cheap truth first. Each stage runs only if the one before is green, and only for declarations whose hash changed.
+
+| Stage | Runs | Red means |
+|---|---|---|
+| 1. Logic | types, tests, laws in the interpreter; nothing is built | the logic is wrong |
+| 2. Guarantees | the guarantee diff against the base commit's policy | something got weaker and nobody approved it |
+| 3. Generate | the compiler emits only changed targets; same source, same bytes | the plan refused, or a backend cannot keep a guarantee |
+| 4. Build | the target toolchains compile what changed | a compiler or backend bug, not author work |
+| 5. Parity | the **same tests** on the built software, plus what the model cannot see: real database, real device, load, screens | the backend diverged from the meaning |
+| 6. Deliver | migration plan, rollout, monitors for claims that are only monitored | a claim failed in production: a candidate test |
+
+A red stage names a kind of fault, so an agent knows where to look. An edit that changes only comments, local names or formatting stops after stage 1. An edit to one rule rebuilds that rule's targets, so a game with one changed rule does not need a full build to learn the rule is wrong.
+
+Stage 1 never replaces stage 5. Green logic with a wrong backend is a wrong program.
+
+## Production feeds the next test
+
+```text
+claim marked monitored -> sampled check in production -> violation
+  -> bounded, redacted replay -> shrink in the interpreter -> candidate test with an unset expectation
+  -> a person or the law's owner sets it -> runs on every backend, for ever
+```
+
+A candidate arrives as source, blocked by a hole:
+
+```slg
+@why("incident: the reply was lost and the card was charged again")
+@given(clock.at(0s), http.reply(200), net.drop(1))
+test lost_reply_then_retry = {
+  charge(Id(1), key: "k1") -> ?expected_first;
+  charge(Id(1), key: "k1") -> ?expected_second;
+}
+```
+
+Production shows what happened, not what should have. A hole in an expectation makes that a type-level fact: the test is `Blocked` until someone with authority decides.
+
+| Concern | Handling |
+|---|---|
+| private data | `@pii` and `@secret` values are replaced while shrinking, keeping the path; if the path needs the value, it stays in the protected environment behind a handle |
+| hostile data | the replay is typed values; its text is untrusted, never placed in a slice ([07](07-agent-loop.md)) |
+| nondeterminism in the target | the replay may not reproduce: that is reported as `diverges`, a backend lead |
+| a `proven` claim fails | becomes `contradicted`; suspects are listed: assumptions, backend, compiler, hardware, the monitor |
+| no violation seen | sampling says nothing about absence, and the report does not either |
+
+Debugging stays in source: stack frames, logs and profiles map back to declarations, and a recorded effect trace replays in the interpreter. Opening generated code is reading disassembly, allowed and a sign of a suspected backend bug ([10](10-compiler-and-ir.md)).
+
+## Upgrades
+
+| What moved | Treated as |
+|---|---|
+| a package or vocabulary | a guarantee diff; its proofs are re-checked, not trusted |
+| a default policy | a listed behaviour change, even with no source edit |
+| the compiler or solver | evidence that named the old one is re-earned; a claim that becomes `unknown` is shown as a lost rung |
+| a framework version | its backend re-runs conformance; attestation is per version |
+| the card | printed by `view card`, versioned with the compiler; old source is rewritten by a formatter step that preserves IR, or the change is a break |
+
+## Three budgets, kept apart
+
+| Budget | Declared on | When exceeded |
+|---|---|---|
+| runtime: `@within`, `@alloc`, size | declaration | checked where it can be, else monitored; the default only reports |
+| verification: solver steps | obligation | `unknown`, reproducibly |
+| context: `editCost` | declaration, tracked | a report that this declaration has become expensive to change |
+
+Agents have no work budget. A stall is handled by [07](07-agent-loop.md).
+
+## The way out
+
+`edit --eject` can eject one declaration: its generated code becomes hand-owned and the declaration's body becomes `foreign`. Types, contract and tests remain and keep running; evidence drops to what tests and monitors support. It is one-way, per declaration, and the reason is recorded.
+
+If the language itself is stopped ([19](19-density-and-experiments.md), K3), every module can be ejected, or its IR printed as the embedded TypeScript form. That printer is part of the E0 work, so the exit exists before there is anything to leave.
+
+## Limits
+
+- **Accumulated edge cases.** Some plumbing is hard-won behaviour. Shadowing finds only what traffic exercised.
+- Shadowing effects needs the simulated world to behave like the real one.
+- Expand and contract multiplies states during a rollout; mixed-version exploration may only reach small bounds.
+- Redaction that preserves a failing path is not always possible.
+- `before` needs a decision in the card, and long-lived data may need more than one past version at once.
+- Ejected code is generated code; nobody has yet had to live with it.

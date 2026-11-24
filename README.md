@@ -1,0 +1,249 @@
+<h1 align="center">spec-lang</h1>
+
+<p align="center"><strong>Executable pseudocode for AIs.</strong></p>
+
+<p align="center">The AI writes logic and tests. The interpreter runs them at once. The compiler generates the software.</p>
+
+<p align="center">
+<a href="docs/idea/00-thesis.md">Thesis</a> ·
+<a href="docs/idea/01-language-card.md">Language card</a> ·
+<a href="docs/idea/24-examples.md">Examples</a> ·
+<a href="docs/idea/README.md">All design docs</a> ·
+<a href="docs/decisions/README.md">Decisions</a>
+</p>
+
+> **Status: idea, `As of 2026-11-24`.** Markdown only. There is no interpreter and no compiler: the present tense below describes the design. The grammar has been run and every spec-lang block in these docs parses; nothing has been type-checked or executed.
+
+> **If you are a coding agent**, read the [language card](docs/idea/01-language-card.md) first: the whole language on one page.
+
+## What it is
+
+Every program is logic: something is true, something happens, something else becomes true. Around it sits plumbing: schemas, routes, clients, retries, wiring, and the same check repeated in five layers. spec-lang keeps the logic and derives the rest.
+
+```slg
+type Seat = Free | Held(by: Id[User], until: Time) | Sold(to: Id[User]);
+type SeatNo = 1..=200;
+state seats: Map[SeatNo, Seat];
+
+@why("a buyer gets ten minutes to pay")
+@uses(seats.write, clock.read)
+@guard(open(seats[n], now()) else Taken)
+pub rule hold(by: Id[User], n: SeatNo) -> Time = {
+  let until = now() + 10min;
+  seats[n] = Held(by, until);
+  return until;
+}
+
+@given(clock.at(0s), seats[1] -> Free)
+test ana_holds = {
+  hold(ana, 1) -> 10min;
+  hold(bob, 1) -> fail Taken;
+}
+
+law sold_is_final(t: Trace[hold], n: SeatNo) =
+  t.steps.all(it.before[n].is(Sold(_)) implies it.after[n] == it.before[n]);
+```
+
+| You write | The compiler derives |
+|---|---|
+| types and what they mean | schema, migrations, parsing, validation |
+| rules, flows, algorithms | transactions, races, retries, jobs, error mapping |
+| who may do what | checks on every surface |
+| examples, properties, laws | test suites for the interpreter and every backend |
+| budgets and deadlines | layout choices, monitors, deploy configuration |
+
+**The short analogy:** TypeScript is a front end whose back end is JavaScript. spec-lang is meant to be a front end with many back ends, frameworks included, and the logic and tests live in the front end. The difference that makes it harder: TypeScript's meaning is JavaScript's, while every spec-lang backend has to match spec-lang's meaning and is tested against it.
+
+## Examples
+
+Everything below parses with the grammar. The outputs show what the interpreter is **designed** to print; it does not exist yet.
+
+### Move money, and be unable to lose it
+
+```slg
+type Currency = USD | EUR;
+type Cents = Int where self >= 0;
+type Account(currency: Currency, balance: Cents = 0);
+state accounts: Map[Id[Account], Account];
+const a: Id[Account] = Id(1);
+const b: Id[Account] = Id(2);
+
+fn total(m: Map[Id[Account], Account], of: Currency) -> Cents =
+  m.values.filter(it.currency == of).sum(x => x.balance);
+
+@idempotent(request)
+@uses(accounts.write)
+@guard(from != to else SameAccount)
+@guard(accounts[from].currency == accounts[to].currency else CurrencyMismatch)
+@guard(accounts[from].balance >= amount else Insufficient)
+pub rule transfer(request: Id[Request], from: Id[Account], to: Id[Account], amount: Cents) = {
+  accounts[from].balance = accounts[from].balance - amount;
+  accounts[to].balance = accounts[to].balance + amount;
+}
+
+law conserved(t: Trace[transfer], c: Currency) =
+  t.steps.all(s => total(s.after.accounts, of: c) == total(s.before.accounts, of: c));
+
+@given(accounts[a] -> Account(USD, balance: 100), accounts[b] -> Account(USD, balance: 5))
+test sent_twice_moves_once = {
+  transfer(Id(1), from: a, to: b, amount: 30);
+  transfer(Id(1), from: a, to: b, amount: 30);
+  assert accounts[a].balance == 70;
+}
+```
+
+Delete the `SameAccount` guard and nothing breaks here, because the two assignments still cancel out. Write them as `let x = accounts[from].balance` and `let y = accounts[to].balance` first, and the law catches it:
+
+```text
+LAW.REFUTED  conserved
+  input     transfer(r1, from: a, to: a, amount: 1)   balance 1
+  expected  total 1
+  got       total 2
+  suspects  body, guard, law
+  edit      add  @guard(from != to else SameAccount)      strengthens; checked: types + 1 law + 1 test
+```
+
+### A web feature
+
+```slg
+use web;
+
+@access(owner -> all)
+@tenant(owner)
+entity Task(
+  owner: Id[User],
+  @pii title: Text[1..=200],
+  done: Bool = false,
+);
+
+@live
+@page(20)
+pub query mine(by: Id[User]) -> List[Task] =
+  Task.filter(it.owner == by and not it.done).sort(it.title);
+
+@at("/")
+page Today(me: Id[User], tasks: Live[List[Task]] = mine(me)) = column(
+  form(create, fields: [title]),
+  list(tasks, empty: text("Nothing due"), row: check(it.title, on: it.done)),
+);
+```
+
+Storage, migration, API, validation, tenant scoping, live updates and the matching checks on every surface come from these lines. What the words leave open is asked, never guessed:
+
+```text
+E-OPEN  Task.owner: deleting a User who owns tasks is undecided
+  edit   cascade  |  keep  |  refuse
+```
+
+### A deadline nobody has to poll
+
+```slg
+@edge(Pending -> Accepted, via: accept)
+@edge(Pending -> Revoked, via: revoke, by: admin)
+@edge(Pending -> Expired, after: 7d)
+flow InviteLife(at: Invite.status);
+
+law one_membership(t: Trace[accept | revoke], i: Id[Invite]) =
+  t.states.all(s => s.members.values.filter(it.invite == i).size <= 1);
+```
+
+Accept and revoke racing at the same instant is a trace the interpreter explores, not a bug someone finds in production.
+
+### A game system
+
+```slg
+use game;
+
+@on(tick(60Hz))
+@within(0.5ms)
+@alloc(none)
+@post(pos.at.y >= 0m)
+system movement(pos: mut Pos, vel: mut Vel, g: Grounded, dt: Time) = {
+  if not g.on { vel.v = vel.v + GRAVITY * dt; }
+  pos.at = (pos.at + vel.v * dt).clamp_y(0m);
+}
+```
+
+`vel.v + dt` is a unit error. An allocation in the body is a type error. Replaying the same inputs gives the same state.
+
+### A kernel page allocator
+
+```slg
+use kernel;
+
+@uses(used.write, irq.off)
+@fails(OutOfMemory)
+@post(not old(used).test(result / 4KiB))
+pub rule alloc() -> own Frame = machine {
+  let word = used.words.position(it != 0xFFFF_FFFF_FFFF_FFFF) else fail OutOfMemory;
+  let bit = used.words[word].invert().trailing_zeros();
+  used.words[word] = used.words[word] bor (1u64 shl bit);
+  return frame_at(word * 64 + bit);
+}
+
+law never_shared(t: Trace[alloc | release]) = t.live(Frame).distinct();
+```
+
+Same language, same laws, same tests, down to the bits. `own` makes a double free a type error.
+
+### Think first, fill in later
+
+```slg
+@cases((100USD, 3d) -> 100USD, (100USD, 30d) -> 90USD)
+fn price(base: Money[USD], early: Time) -> Money[USD] = ?price;
+```
+
+A strong model writes the types, the cases and the laws. A small model fills `?price`, and the cases say whether it is right. More: [whole programs](docs/idea/24-examples.md), [one program per domain](docs/idea/15-domain-tour.md).
+
+## The ideas
+
+Design goals. None has been demonstrated.
+
+1. **One core form.** State + event -> new state + effects + reply. A tap, a game tick, a syscall and a database write are all rules.
+2. **Tests beside the logic.** Examples, scenarios, properties and laws in one shape. Guard boundaries are derived. Unfinished programs run up to their holes.
+3. **Languages are intermediate.** TypeScript, Rust, C++, Swift and SQL are build output, as assembly is to C. Frameworks are backends: [Ultimate](https://github.com/developerz-ai/ultimate) first, [anygame](https://github.com/developerz-ai/anygame-engine) once it has an engine to target.
+4. **Four altitudes.** Declare, define, machine, foreign: one type system from a form to an interrupt handler, so there is no wall.
+5. **No model in the build.** Models write source; compilation is deterministic.
+6. **Evidence is never rounded up.** Proven, bounded, sampled, assumed: every claim says which, and what it trusts.
+7. **Errors teach.** The failing input, the checked edit, the one line of the card you need, so that a small model might be productive.
+8. **Minimal and sufficient.** If two behaviours are possible, the compiler asks instead of guessing.
+
+## Where it fits, and where it does not
+
+A prediction from the [corpus](docs/idea/16-corpus.md) and the trials; nothing has run.
+
+| Fit | Where | Why |
+|---|---|---|
+| **Best** | money, ledgers, orders, inventory | conservation, idempotency and races are the hard part |
+| **Best** | lifecycles: invites, approvals, subscriptions | one flow, with actors and deadlines |
+| **Best** | records with permissions across storage, API, UI and agents | the same rule is repeated in every layer today |
+| **Best** | webhooks, retries, jobs | webhooks, the one feature measured, took 2.7x fewer tokens |
+| **Good** | many scheduled jobs | the wiring repeats; a single retention job is easier in SQL |
+| **Good** | game rules, simulations, protocols | not much shorter; logic runs without building the engine, with determinism and units checked |
+| **Good** | one domain, many targets | no hand-synced types; pays only with a second backend |
+| **Later** | device control, drivers, storage engines, kernels | safety and crash testing; about the size of Rust |
+| **Weak** | one-off queries and scripts, plain algorithms | SQL and Python are already short |
+| **Weak** | integrations with odd third-party APIs | the quirks are the work |
+| **Not for** | visual design, data exploration, model training | taste is not a law; those ecosystems win, behind `foreign` |
+| **Not for** | SIMD kernels, boot code, lock-free internals | hand-written behind a contract |
+| **Not for** | a small app that already works | rewriting costs more than it saves |
+
+**Break-even.** The language card costs about 4,700 tokens to load; the measured feature saved about 4,200. One feature of that size does not pay for the card, so the gain must come from several features per session, caching, or fewer wrong attempts. The last is unmeasured.
+
+Rule of thumb: if the same rule would be written in three or more places, or getting it wrong costs money, data or safety, use it.
+
+## What we know so far, and what we do not
+
+| Finding | Caveat |
+|---|---|
+| One real feature (webhooks in Ultimate's example app): 6,705 tokens of TypeScript, 2,499 of spec-lang, **2.7x** | one feature, no UI, parsed but never run ([12](docs/idea/12-frameworks.md)) |
+| Two models given only the card wrote 20 modules: **16 parsed first try** | syntax only; the first author marked 183 lines as guesses. A small model's later 10 of 10 is not comparable: its card held near-answers ([02](docs/idea/02-syntax.md)) |
+| In a private corpus, one opinion per person per item took about 2k lines in about 50 files; 10 to 20% of the production code was judged essential | one reader's judgement, one organisation ([16](docs/idea/16-corpus.md)) |
+| Maths symbols often cost more tokens than words, and only `² ³ ± °C` cost fewer | tokens are not accuracy; no current Claude tokenizer was measured ([02](docs/idea/02-syntax.md)) |
+| Simulations, codecs and kernels are expected to barely shrink | unmeasured; there the gain would be checking, not size ([14](docs/idea/14-systems.md), [16](docs/idea/16-corpus.md)) |
+
+The first milestone tries to kill the idea: the same semantics embedded in TypeScript is the control. If the bespoke language does not beat it, we ship the embedded form ([19](docs/idea/19-density-and-experiments.md), [20](docs/idea/20-roadmap.md)).
+
+## License
+
+[MIT](LICENSE)
