@@ -25,6 +25,7 @@ Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End s
 |---|---|
 | `docs/idea/` | the design; index in `docs/idea/README.md` |
 | `docs/decisions/` | one record per one-way door |
+| `docs/pocs/` | proofs of concept, one folder each, written for an agent with no other context |
 
 Markdown only: no code, no build, no CI. Check links and `slg` blocks before committing.
 

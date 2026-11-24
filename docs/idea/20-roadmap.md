@@ -20,6 +20,8 @@ The compiler's first implementation is Rust, with a small permanent trusted kern
 
 ## Proofs of concept
 
+Each has a folder in [docs/pocs](../pocs/README.md).
+
 The engine grows with small programs, and each program is chosen to break something. Engine and backends are fixed as they go.
 
 | POC | Drives | Answers |
