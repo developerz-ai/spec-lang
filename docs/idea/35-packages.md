@@ -63,6 +63,52 @@ test paying_moves_money_and_keeps_the_total = {
 
 The caller passes the request key on. A key made inside `pay` would be new on every retry, and the money would move twice.
 
+## Real libraries
+
+Real software stands on npm packages, crates, gems, system libraries and SDKs. Nobody rewrites those. A library enters as a **contract with two handlers**: the real one, used by a backend, and a simulated one, used by the engine.
+
+```slg
+type Charged = Ok(id: Text) | Declined | Unknown;
+
+@why("the provider may answer late, twice or not at all")
+@idempotent(key)
+@assume("the provider honours the key for 24 hours")
+@uses(pay.charge)
+pub task charge(key: Id[Request], amount: Money[USD], @secret card: Text) -> Charged = {
+  return pay.charge(key, amount: amount, card: card);
+}
+
+handler PretendPay(fail_every: Int = 0) = { pay.charge -> Ok("test"); }
+
+@needs(npm: "some-payments-sdk@18.2.0")
+handler RealPayTs() = foreign ts "./pay.ts#handler";
+
+@needs(gem: "some_payments@12.1.0")
+handler RealPayRuby() = foreign ruby "./pay.rb#handler";
+```
+
+| Piece | Lives | Installed |
+|---|---|---|
+| contract: types, effect, what is assumed | the package | nothing |
+| simulator | the package | nothing: it runs in the engine |
+| real handler | a small file per backend language | in the build pool and in production only |
+| library and version | `@needs`, then the lock file with its hash | by that language's own package manager |
+
+So the author's machine never installs the library. `app` picks the handler; the logic does not change with it.
+
+| Need | Rule |
+|---|---|
+| which packages does this really use | the lock file lists them per app and backend, with hashes |
+| a known hole in one | only apps whose handler needs it are listed; the contract says what it could touch |
+| install scripts | off by default in the pool; a package that needs one is named and approved |
+| upgrade | the contract's tests run against the real library in CI; a difference is a replay |
+| another language | one more handler for the same contract, checked by the same tests |
+| a huge library | write a contract for the five calls used, not for the library |
+| types | lifted from `.d.ts`, headers or signatures as a draft; the meaning is written by hand |
+| a library with callbacks or shared state | wrap it so values go in and come out; if it cannot be wrapped, that part stays in its language |
+
+Which libraries are worth a contract first: payments, email, storage, sign-in, models, queues. They are where products meet the world, and where a good simulator saves the most.
+
 ## Trust
 
 | Question | Answered by |
@@ -92,6 +138,9 @@ The habit to keep: **reuse an idea when its laws say what you need; write it whe
 - Laws describe what their author thought of. A package can be green and wrong for you.
 - Rerunning everyone's tests costs time; proofs are cached by hash, and a cached proof trusts whoever made the cache unless it is replayed.
 - Git hosts can vanish. A vendored copy or a mirror is the answer, and someone must keep one.
-- Backends and `foreign` code do run as normal programs. For those, the ordinary dangers of a dependency return, and they are listed apart.
+- Backends and real libraries run as normal programs. For those, the ordinary dangers of a dependency return. The design keeps them out of the author's machine and lists them; it does not make them safe.
+- A simulator is somebody's understanding of a library. Until its traces have been compared with the real one it counts as `assumed`.
+- Writing contracts is work, and the first user of each library pays it.
+- `@needs` is proposed here and the card does not list it.
 - Sharing a module that works over **your** types, such as webhooks for any kind of organisation, needs parameters on modules. The grammar has none; packages with fixed types are what this design can do today.
 - Nobody has published anything, so discovery, naming disputes and abandoned packages are untested.
