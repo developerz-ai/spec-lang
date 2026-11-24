@@ -1,0 +1,33 @@
+// The core library's Text.trim (docs/contract.md section 1).
+#include "rt/text.hpp"
+
+namespace rt::text {
+
+std::string_view trim(std::string_view t) noexcept {
+  // Decode from the front until a code point is not White_Space; then from the back.
+  std::size_t lo = 0;
+  while (lo < t.size()) {
+    std::size_t len = 1;
+    while (lo + len < t.size() && (static_cast<unsigned char>(t[lo + len]) & 0xC0U) == 0x80U) {
+      ++len;
+    }
+    if (!unicode::is_blank(t.substr(lo, len))) {
+      break;
+    }
+    lo += len;
+  }
+  std::size_t hi = t.size();
+  while (hi > lo) {
+    std::size_t start = hi - 1;
+    while (start > lo && (static_cast<unsigned char>(t[start]) & 0xC0U) == 0x80U) {
+      --start;
+    }
+    if (!unicode::is_blank(t.substr(start, hi - start))) {
+      break;
+    }
+    hi = start;
+  }
+  return t.substr(lo, hi - lo);
+}
+
+}  // namespace rt::text

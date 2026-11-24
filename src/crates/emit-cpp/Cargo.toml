@@ -1,0 +1,16 @@
+[package]
+name = "spec-lang-emit-cpp"
+description = "The C++ backend: a typed C++ target tree and printer over the shared typed lowering, clang-format, runtime shims."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-ir.workspace = true
+spec-lang-syntax.workspace = true
+spec-lang-diag = { path = "../diag" }
+spec-lang-emit-rust = { path = "../emit-rust" }
+
+[lints]
+workspace = true

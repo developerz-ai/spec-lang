@@ -1,0 +1,290 @@
+{
+  "view": "effects",
+  "title": "read sets, write sets and outside effects of every rule",
+  "counts": {
+    "nodes": 11,
+    "edges": 23,
+    "nodes_by_kind": {"effect": 1, "rule": 8, "state": 2},
+    "edges_by_kind": {"emits": 8, "reads": 8, "writes": 7}
+  },
+  "nodes": [
+    {"id": "todo_board_add", "kind": "rule", "label": "add", "group": "todo.board", "decl": "todo.board.add"},
+    {"id": "todo_board_list", "kind": "rule", "label": "list", "group": "todo.board", "decl": "todo.board.list"},
+    {"id": "todo_board_done", "kind": "rule", "label": "done", "group": "todo.board", "decl": "todo.board.done"},
+    {"id": "todo_board_reopen", "kind": "rule", "label": "reopen", "group": "todo.board", "decl": "todo.board.reopen"},
+    {"id": "todo_board_rename", "kind": "rule", "label": "rename", "group": "todo.board", "decl": "todo.board.rename"},
+    {"id": "todo_board_remove", "kind": "rule", "label": "remove", "group": "todo.board", "decl": "todo.board.remove"},
+    {"id": "todo_board_clear", "kind": "rule", "label": "clear", "group": "todo.board", "decl": "todo.board.clear"},
+    {"id": "todo_board_stats", "kind": "rule", "label": "stats", "group": "todo.board", "decl": "todo.board.stats"},
+    {"id": "todo_board_tasks", "kind": "state", "label": "tasks", "group": "todo.board", "decl": "todo.board.tasks", "hot": true},
+    {"id": "todo_board_next_no", "kind": "state", "label": "next_no", "group": "todo.board", "decl": "todo.board.next_no", "hot": true},
+    {"id": "fx_out", "kind": "effect", "label": "out"}
+  ],
+  "edges": [
+    {"from": "todo_board_add", "to": "todo_board_next_no", "kind": "reads"},
+    {"from": "todo_board_add", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_add", "to": "todo_board_next_no", "kind": "writes"},
+    {"from": "todo_board_add", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_list", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_list", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_done", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_done", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_done", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_reopen", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_reopen", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_reopen", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_rename", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_rename", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_rename", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_remove", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_remove", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_remove", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_clear", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_clear", "to": "todo_board_tasks", "kind": "writes"},
+    {"from": "todo_board_clear", "to": "fx_out", "kind": "emits", "label": "line"},
+    {"from": "todo_board_stats", "to": "todo_board_tasks", "kind": "reads"},
+    {"from": "todo_board_stats", "to": "fx_out", "kind": "emits", "label": "line"}
+  ],
+  "rules": [
+    {
+      "rule": "todo.board.add",
+      "uses": ["tasks.write", "next_no.write", "out.write"],
+      "reads": ["todo.board.next_no"],
+      "writes": ["todo.board.tasks", "todo.board.next_no"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.list",
+      "uses": ["tasks.read", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": [],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.done",
+      "uses": ["tasks.write", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": ["todo.board.tasks"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.reopen",
+      "uses": ["tasks.write", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": ["todo.board.tasks"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.rename",
+      "uses": ["tasks.write", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": ["todo.board.tasks"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.remove",
+      "uses": ["tasks.write", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": ["todo.board.tasks"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.clear",
+      "uses": ["tasks.write", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": ["todo.board.tasks"],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    },
+    {
+      "rule": "todo.board.stats",
+      "uses": ["tasks.read", "out.write"],
+      "reads": ["todo.board.tasks"],
+      "writes": [],
+      "outside": ["out.line"],
+      "undeclared": [],
+      "unused": []
+    }
+  ],
+  "conflict_count": 33,
+  "conflicts": [
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.add",
+      "states": ["todo.board.tasks", "todo.board.next_no"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.list",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.done",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.reopen",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.rename",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.add",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.list",
+      "b": "todo.board.done",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.list",
+      "b": "todo.board.reopen",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.list",
+      "b": "todo.board.rename",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.list",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.list",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.done",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.reopen",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.rename",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.done",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.reopen",
+      "b": "todo.board.reopen",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.reopen",
+      "b": "todo.board.rename",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.reopen",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.reopen",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.reopen",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.rename",
+      "b": "todo.board.rename",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.rename",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.rename",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.rename",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.remove",
+      "b": "todo.board.remove",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.remove",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.remove",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.clear",
+      "b": "todo.board.clear",
+      "states": ["todo.board.tasks"]
+    },
+    {
+      "a": "todo.board.clear",
+      "b": "todo.board.stats",
+      "states": ["todo.board.tasks"]
+    }
+  ]
+}

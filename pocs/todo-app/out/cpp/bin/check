@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Projected by hand from app TodoCpp (src/apps/cpp.slg): the gate of docs/contract.md section 4. Stand-in for spec-lang build output; change the spec, not this file.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+mapfile -t sources < <(find include src tests -name '*.hpp' -o -name '*.cpp' | sort)
+clang-format --dry-run --Werror "${sources[@]}"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure

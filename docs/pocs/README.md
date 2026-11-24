@@ -11,6 +11,7 @@
 | 05 | [elevator](05-elevator/README.md) | fixed ticks, determinism, liveness | no |
 | 06 | [webhooks on Ultimate](06-webhooks-on-ultimate/README.md) | first backend, parity, the honest measurement | yes |
 | 07 | [a second backend](07-second-backend/README.md) | platform independence | yes |
+| 08 | [todo app, four backends](../../pocs/todo-app/README.md) | one source to Rust, TypeScript, Ruby and C++, by hand and by `spec-lang build`, one parity suite | yes, four |
 
 Do them in order. Stop after any of them if its stop rule is met.
 

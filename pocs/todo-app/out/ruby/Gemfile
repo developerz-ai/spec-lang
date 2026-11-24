@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+# Projected by hand from the gate of the Ruby backend (docs/contract.md section 4). Stand-in for spec-lang build output; change the spec, not this file.
+
+# Development and test only. The program itself runs with RubyGems disabled and needs none of these.
+source "https://rubygems.org"
+
+ruby ">= 4.0"
+
+gem "minitest", "6.0.0"
+gem "rubocop", "1.92.3", require: false
+gem "rubocop-minitest", "0.41.0", require: false

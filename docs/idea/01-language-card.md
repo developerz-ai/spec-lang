@@ -111,7 +111,7 @@ rule pay(id: Id[Account], n: Cents) = {
 
 1. **A rule is atomic**: all its writes happen or none; a failure leaves the world unchanged. A store that cannot order it within its retry bound fails it with `Contended`. A rule called inside a rule joins it.
 2. Rules interleave; traces explore every order the triggers allow. A trace starts from `@given`, or from any world its types, flows and laws allow; a counterexample that starts where no rule can reach says so and offers the missing law.
-3. Guards run first, top to bottom. The first that fails gives the error. Names a guard pattern binds are in scope after it.
+3. Guards run first, top to bottom. The first that fails gives the error; a failure while evaluating a guard's condition gives that guard's error. Names a guard pattern binds are in scope after it.
    A failing call fails its caller and shows in `@fails`; `x else fail E` replaces the error; `match try_call(f) { Ok(v) => ...; Err(e) => ...; }` handles a failure here.
 4. `by` is the caller; a test passes it as an ordinary argument. `@access` is required where someone can call in (http, client, agent tool), as `@access(true)` if there is no `by`. Timers, events, interrupts and the local user of a script have no caller. A direct call in a test checks it too.
 5. Replies may be omitted; `return;` leaves early.
@@ -124,7 +124,7 @@ rule pay(id: Id[Account], n: Cents) = {
 10. On an exposed rule, `Missing` and a denied `@access` give the same `NotFound`, so existence does not leak. A direct call in a test sees `Missing`.
 11. The local disk, clock and device registers are part of the world; another machine or person is outside.
 
-**Traces.** `t.steps` gives `event`, `reply`, `at`, `before`, `after`; with several states write `it.before.accounts[k]`. `t.states` gives whole states, each with `at`. Liveness: `t.eventually(p)`, `t.within(5s, p)`; they assume fair scheduling and say so.
+**Traces.** `t.steps` gives `event`, `reply`, `at`, `before`, `after`; with several states write `it.before.accounts[k]`. `event` is the call: `s.event.no` reads an argument, `s.event.is(board.clear())` matches one; `reply` is `Ok(v)` or `Err(e)`. A rule's name is also its event type, so `type Change = board.add | board.done;` names a set of events for `Trace[Change]`. `t.states` gives whole states, each with `at`. Liveness: `t.eventually(p)`, `t.within(5s, p)`; they assume fair scheduling and say so.
 
 ## Each remaining form, once
 
@@ -216,7 +216,7 @@ app Site(rules: [deliver, sweep]);
 | Step by step | `let`, `var`, `=`, `for x in xs { }`, `while c { }`, `return`, `assert` |
 | Ownership (machine only) | `own`, `ref`, `mut` |
 
-A block's value is its `return`; there is no tail expression. Statements end in `;` or a closing `}`. Name arguments after the first unless the type makes order obvious. No overloading, shadowing, wildcard import, user operator, implicit conversion, null, exception, `+=` or `? :`.
+A block's value is its `return`; there is no tail expression. Statements end in `;` or a closing `}`. Name arguments after the first unless the type makes order obvious. No overloading, shadowing, wildcard import, user operator, implicit conversion, null, exception, `+=` or `? :`. The core free names (`now`, `all`, `race`, ...) are not reserved: a parameter may take one, and that body then cannot call the free one.
 
 **Maths symbols** `≤ ≥ ≠ ∈ ∧ ∨ ¬ ⇒ → × ÷ µs` are accepted; the formatter prints ASCII, which measured no worse. `² ³ ± °C` stay.
 

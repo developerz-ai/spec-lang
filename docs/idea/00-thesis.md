@@ -6,6 +6,8 @@
 
 Pseudocode is how models and people already think about a program: no plumbing, only what happens. Its two faults are that it is vague and that it does not run. spec-lang keeps the form and removes the faults: every program has exactly one meaning, and it is tested the moment it is written.
 
+**An executable whiteboard.** A spec-lang program is theory: it never runs as software. The engine only checks it, by types, laws, tests and traces in a world held in memory, and draws it, as diagrams and pseudocode. What runs is what `build` emits, in languages that already run. The whiteboard is where a design is argued over and proven wrong cheaply; the compiler is how it leaves the room.
+
 Every program is logic: something is true, something happens, something else becomes true. The rest is plumbing between that logic and a machine. In a corpus of ten private repositories, one opinion per person per item (set, clear, list) took about 2k lines in about 50 files, and one reader judged 10 to 20% of its production code essential ([16-corpus](16-corpus.md)). spec-lang is a programming language in which the plumbing is not written.
 
 **The aim is a shorter dev cycle.** Define logic fast, test it at once, find out early whose fault a failure is. Less code, cheaper review and safer software follow from that, and where they conflict with it the cycle wins, except for safety.

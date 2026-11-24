@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fresh clone to a green bin/check. Safe to rerun.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+ok() { printf '\033[0;32m✔\033[0m  %s\n' "$*"; }
+need() { command -v "$1" >/dev/null || { echo "✗ $1 not found: $2"; exit 1; }; }
+
+need bun "https://bun.sh"
+need uv  "https://docs.astral.sh/uv/ (runs the grammar check)"
+(cd scripts && bun install --frozen-lockfile >/dev/null) && ok "scripts deps"
+
+if [ -f src/Cargo.toml ]; then need cargo "https://rustup.rs"; ok "src: cargo $(cargo --version | cut -d' ' -f2)"; fi
+for setup in pocs/*/bin/setup; do "$setup"; done
+ok "setup complete. Next: bin/check"

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class diagram - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1>Class diagram</h1>
+<h2>8 nodes, 6 edges</h2>
+<pre class="mermaid">
+classDiagram
+  class todo_laws_Change[&quot;Change&quot;] {
+    &lt;&lt;rule set&gt;&gt;
+    add
+    done
+    reopen
+    rename
+    remove
+    clear
+  }
+  class todo_model_Title[&quot;Title&quot;] {
+    &lt;&lt;type&gt;&gt;
+    Text
+  }
+  class todo_model_Tag[&quot;Tag&quot;] {
+    &lt;&lt;type&gt;&gt;
+    Text
+  }
+  class todo_model_TaskNo[&quot;TaskNo&quot;] {
+    &lt;&lt;type&gt;&gt;
+    Int
+  }
+  class todo_model_Status[&quot;Status&quot;] {
+    &lt;&lt;enumeration&gt;&gt;
+    Open
+    Done
+  }
+  class todo_model_Priority[&quot;Priority&quot;] {
+    &lt;&lt;enumeration&gt;&gt;
+    Low
+    Normal
+    High
+  }
+  class todo_model_Task[&quot;Task&quot;] {
+    &lt;&lt;record&gt;&gt;
+    no: TaskNo
+    title: Title
+    status: Status = Open
+    priority: Priority = Normal
+    tags: Set[Tag] = Set#40;#41;
+  }
+  class todo_board[&quot;todo.board&quot;] {
+    &lt;&lt;module&gt;&gt;
+    next_no: TaskNo = 1
+    +add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) TaskNo
+    +list(all: Bool = false, tag: Option[Tag] = none)
+    +done(no: TaskNo)
+    +reopen(no: TaskNo)
+    +rename(no: TaskNo, title: Title)
+    +remove(no: TaskNo)
+    +clear() Int
+    +stats()
+  }
+  note for todo_model_Title &quot;{ is_title(self) }&quot;
+  note for todo_model_Tag &quot;{ is_tag(self) }&quot;
+  note for todo_model_TaskNo &quot;{ self #gt;= 1 }&quot;
+  todo_model_Task &quot;1&quot; *-- &quot;1&quot; todo_model_TaskNo : no
+  todo_model_Task &quot;1&quot; *-- &quot;1&quot; todo_model_Title : title
+  todo_model_Task &quot;1&quot; *-- &quot;1&quot; todo_model_Status : status
+  todo_model_Task &quot;1&quot; *-- &quot;1&quot; todo_model_Priority : priority
+  todo_model_Task &quot;1&quot; *-- &quot;0..*&quot; todo_model_Tag : tags
+  todo_board &quot;1&quot; o-- &quot;0..*&quot; todo_model_Task : tasks [TaskNo]
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

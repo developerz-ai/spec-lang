@@ -1,0 +1,5 @@
+BasedOnStyle: Google
+ColumnLimit: 110
+ReflowComments: false
+DerivePointerAlignment: false
+PointerAlignment: Left

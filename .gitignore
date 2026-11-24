@@ -1,7 +1,37 @@
+# Dependencies
 node_modules/
+vendor/bundle/
+.bundle/
+
+# Build output: Rust, C++, Bun, generic
+target/
+build/
+cmake-build-*/
+dist/
+*.o
+*.a
+*.so
+*.dylib
+
+# Test and run leftovers
+coverage/
+*.profraw
+.todo.json
+.todo.json.lock
+*.tmp
+
+# Secrets and local config
 .env
 .env.*
 !.env.example
 .claude/settings.local.json
+
+# Tools
 .codegraph/
 tmp/
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

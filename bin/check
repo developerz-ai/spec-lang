@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# The repository gate. `bin/check docs|src|pocs` runs one area; no argument runs all.
+# CI runs these same commands (.github/workflows/*.yml); a green run here is a green run there.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
+area="${1:-all}"
+
+docs() {
+  step "docs: every slg fence parses"
+  bin/slg-check docs pocs README.md
+  step "docs: scripts lint, types, tests"
+  (cd scripts && bunx biome check . && bunx tsc -p . && bun test)
+  step "docs: links, Limits, private"
+  bun scripts/docs/links.ts
+  bun scripts/docs/limits.ts
+  bun scripts/docs/private.ts
+}
+
+src() {
+  if [ -x src/bin/check ]; then step "src: toolchain gate"; src/bin/check; else step "src: no toolchain yet, skipped"; fi
+}
+
+pocs() {
+  for gate in pocs/*/bin/check; do step "${gate%/bin/check}"; "$gate"; done
+}
+
+case "$area" in
+  docs) docs ;;
+  src) src ;;
+  pocs) pocs ;;
+  all) docs; src; pocs ;;
+  *) echo "usage: bin/check [docs|src|pocs]" >&2; exit 2 ;;
+esac

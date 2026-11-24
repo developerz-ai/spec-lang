@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.board.has_tag - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_board.html"><code>todo.board</code></a></p>
+<h1><span class="kind">fn</span> <code>has_tag</code></h1>
+<p class="dim"><code>todo/board.slg:16</code></p>
+<h2>Source</h2>
+<pre>fn has_tag(t: Task, tag: Option[Tag]) -&gt; Bool = match tag {
+  none =&gt; true;
+  Some(x) =&gt; x in t.tags;
+}</pre>
+<h2>Pseudocode</h2>
+<pre>function has_tag(t: Task, tag: Option[Tag]) → Bool
+  match tag
+    case none: return true
+    case Some(x): return x in t.tags
+  end
+end
+</pre>
+<h2>Diagrams</h2>
+<h3>Calls, reads and writes: 2 nodes, 1 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_has_tag[&quot;has_tag&quot;]
+    todo_board_list([&quot;list&quot;])
+  end
+  todo_board_list --&gt;|&quot;calls&quot;| todo_board_has_tag
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_list rule
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_board_has_tag hot
+</pre>
+<h3>Impact: 10 nodes, 9 edges</h3>
+<p class="dim">An arrow points at what is depended on.</p>
+<pre class="mermaid">
+flowchart RL
+  subgraph g_apps_bun[&quot;apps.bun&quot;]
+    apps_bun_TodoBun[[&quot;TodoBun&quot;]]
+  end
+  subgraph g_apps_cpp[&quot;apps.cpp&quot;]
+    apps_cpp_TodoCpp[[&quot;TodoCpp&quot;]]
+  end
+  subgraph g_apps_ruby[&quot;apps.ruby&quot;]
+    apps_ruby_TodoRuby[[&quot;TodoRuby&quot;]]
+  end
+  subgraph g_apps_rust[&quot;apps.rust&quot;]
+    apps_rust_TodoRust[[&quot;TodoRust&quot;]]
+  end
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_has_tag[&quot;has_tag&quot;]
+    todo_board_list([&quot;list&quot;])
+  end
+  subgraph g_todo_laws[&quot;todo.laws&quot;]
+    todo_laws_reads_change_nothing[\&quot;reads_change_nothing&quot;\]
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_empty_board_says_so[/&quot;empty_board_says_so&quot;/]
+    todo_tests_scenarios_list_ranks_urgent_first[/&quot;list_ranks_urgent_first&quot;/]
+    todo_tests_scenarios_list_all_and_by_tag[/&quot;list_all_and_by_tag&quot;/]
+  end
+  apps_bun_TodoBun --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_cpp_TodoCpp --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_ruby_TodoRuby --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_rust_TodoRust --&gt;|&quot;exposes&quot;| todo_board_list
+  todo_board_list --&gt;|&quot;calls&quot;| todo_board_has_tag
+  todo_laws_reads_change_nothing --&gt;|&quot;traces&quot;| todo_board_list
+  todo_tests_scenarios_empty_board_says_so --&gt;|&quot;calls&quot;| todo_board_list
+  todo_tests_scenarios_list_ranks_urgent_first --&gt;|&quot;calls&quot;| todo_board_list
+  todo_tests_scenarios_list_all_and_by_tag --&gt;|&quot;calls&quot;| todo_board_list
+  classDef app stroke:#db2777,stroke-width:2px
+  class apps_bun_TodoBun,apps_cpp_TodoCpp,apps_ruby_TodoRuby,apps_rust_TodoRust app
+  classDef law stroke:#059669,stroke-width:2px
+  class todo_laws_reads_change_nothing law
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_list rule
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_tests_scenarios_empty_board_says_so,todo_tests_scenarios_list_ranks_urgent_first,todo_tests_scenarios_list_all_and_by_tag test
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_board_has_tag hot
+</pre>
+<h2>Names</h2>
+<table>
+<tr><th>uses</th><td><a href="../decl/todo_model_Task.html"><code>todo.model.Task</code></a>, <a href="../decl/todo_model_Tag.html"><code>todo.model.Tag</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><a href="../decl/todo_board_list.html"><code>todo.board.list</code></a></td></tr>
+<tr><th>tests</th><td><a href="../decl/todo_tests_scenarios_empty_board_says_so.html"><code>todo.tests.scenarios.empty_board_says_so</code></a>, <a href="../decl/todo_tests_scenarios_list_ranks_urgent_first.html"><code>todo.tests.scenarios.list_ranks_urgent_first</code></a>, <a href="../decl/todo_tests_scenarios_list_all_and_by_tag.html"><code>todo.tests.scenarios.list_all_and_by_tag</code></a></td></tr>
+<tr><th>laws</th><td><a href="../decl/todo_laws_reads_change_nothing.html"><code>todo.laws.reads_change_nothing</code></a></td></tr>
+<tr><th>rules</th><td><a href="../decl/todo_board_list.html"><code>todo.board.list</code></a></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><a href="../decl/apps_bun_TodoBun.html"><code>apps.bun.TodoBun</code></a>, <a href="../decl/apps_cpp_TodoCpp.html"><code>apps.cpp.TodoCpp</code></a>, <a href="../decl/apps_ruby_TodoRuby.html"><code>apps.ruby.TodoRuby</code></a>, <a href="../decl/apps_rust_TodoRust.html"><code>apps.rust.TodoRust</code></a></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

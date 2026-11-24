@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.render - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>todo.render</code></h1>
+<p class="dim"><code>todo/render.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">fn</span> <a href="../decl/todo_render_mark.html"><code>mark</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_render_badge.html"><code>badge</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_render_tag_text.html"><code>tag_text</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_render_urgency.html"><code>urgency</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_render_rank.html"><code>rank</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_render_line.html"><code>line</code></a></li>
+</ul>
+<h2>Pseudocode</h2>
+<pre>module todo.render
+
+function mark(s: Status) → Text
+  match s
+    case Open: return &quot; &quot;
+    case Done: return &quot;x&quot;
+  end
+end
+
+function badge(p: Priority) → Text
+  match p
+    case Low: return &quot; !low&quot;
+    case Normal: return &quot;&quot;
+    case High: return &quot; !high&quot;
+  end
+end
+
+function tag_text(tags: Set[Tag]) → Text
+  return tags.list.map(t ↦ &quot; #{t}&quot;).join(&quot;&quot;)
+end
+
+function urgency(p: Priority) → Int
+  match p
+    case High: return 0
+    case Normal: return 1
+    case Low: return 2
+  end
+end
+
+function rank(t: Task) → (Int, Int)
+  because: most urgent first, then oldest first
+  return (urgency(t.priority), t.no)
+end
+
+function line(t: Task) → Text
+  return &quot;{t.no} [{mark(t.status)}] {t.title}{badge(t.priority)}{tag_text(t.tags)}&quot;
+end
+</pre>
+<h2>Source</h2>
+<pre>// todo.render: how a task reads on one line. Pure.
+
+use todo.model.Task;
+use todo.model.Status;
+use todo.model.Priority;
+use todo.model.Tag;
+
+fn mark(s: Status) -&gt; Text = match s {
+  Open =&gt; &quot; &quot;;
+  Done =&gt; &quot;x&quot;;
+}
+
+fn badge(p: Priority) -&gt; Text = match p {
+  Low =&gt; &quot; !low&quot;;
+  Normal =&gt; &quot;&quot;;
+  High =&gt; &quot; !high&quot;;
+}
+
+@cases(Set() -&gt; &quot;&quot;, Set(&quot;work&quot;, &quot;home&quot;) -&gt; &quot; #home #work&quot;)
+fn tag_text(tags: Set[Tag]) -&gt; Text = tags.list.map(t =&gt; &quot; #{t}&quot;).join(&quot;&quot;);
+
+fn urgency(p: Priority) -&gt; Int = match p {
+  High =&gt; 0;
+  Normal =&gt; 1;
+  Low =&gt; 2;
+}
+
+@why(&quot;most urgent first, then oldest first&quot;)
+pub fn rank(t: Task) -&gt; (Int, Int) = (urgency(t.priority), t.no);
+
+@cases(
+  Task(1, title: &quot;milk&quot;) -&gt; &quot;1 [ ] milk&quot;,
+  Task(2, title: &quot;ship&quot;, status: Done, priority: High, tags: Set(&quot;work&quot;)) -&gt; &quot;2 [x] ship !high #work&quot;,
+)
+pub fn line(t: Task) -&gt; Text = &quot;{t.no} [{mark(t.status)}] {t.title}{badge(t.priority)}{tag_text(t.tags)}&quot;;
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

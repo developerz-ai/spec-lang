@@ -1,0 +1,15 @@
+[package]
+name = "spec-lang-engine"
+description = "The spec-lang interpreter: values, worlds, atomic rules, the core library."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-syntax.workspace = true
+spec-lang-ir.workspace = true
+spec-lang-diag.workspace = true
+
+[lints]
+workspace = true

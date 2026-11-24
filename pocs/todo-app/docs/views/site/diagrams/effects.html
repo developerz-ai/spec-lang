@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Effects - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1>Effects</h1>
+<h2>11 nodes (1 effect, 8 rule, 2 state), 23 edges (8 emits, 8 reads, 7 writes)</h2>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_add([&quot;add&quot;])
+    todo_board_list([&quot;list&quot;])
+    todo_board_done([&quot;done&quot;])
+    todo_board_reopen([&quot;reopen&quot;])
+    todo_board_rename([&quot;rename&quot;])
+    todo_board_remove([&quot;remove&quot;])
+    todo_board_clear([&quot;clear&quot;])
+    todo_board_stats([&quot;stats&quot;])
+    todo_board_tasks[(&quot;tasks&quot;)]
+    todo_board_next_no[(&quot;next_no&quot;)]
+  end
+  fx_out&gt;&quot;out&quot;]
+  todo_board_add -.-&gt;|&quot;reads&quot;| todo_board_next_no
+  todo_board_add ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_add ==&gt;|&quot;writes&quot;| todo_board_next_no
+  todo_board_add --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_list -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_list --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_done -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_done ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_done --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_reopen -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_reopen ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_reopen --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_rename -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_rename ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_rename --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_remove -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_remove ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_remove --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_clear -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_clear ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_clear --&gt;|&quot;emits line&quot;| fx_out
+  todo_board_stats -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_stats --&gt;|&quot;emits line&quot;| fx_out
+  classDef effect stroke:#6b7280,stroke-width:1px,stroke-dasharray:4 3
+  class fx_out effect
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_add,todo_board_list,todo_board_done,todo_board_reopen,todo_board_rename,todo_board_remove,todo_board_clear,todo_board_stats rule
+  classDef state stroke:#d97706,stroke-width:2px
+  class todo_board_tasks,todo_board_next_no state
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_board_tasks,todo_board_next_no hot
+</pre>
+<h2>Rules whose order matters: 33 pairs</h2>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_add([&quot;add&quot;])
+    todo_board_list([&quot;list&quot;])
+    todo_board_done([&quot;done&quot;])
+    todo_board_reopen([&quot;reopen&quot;])
+    todo_board_rename([&quot;rename&quot;])
+    todo_board_remove([&quot;remove&quot;])
+    todo_board_clear([&quot;clear&quot;])
+    todo_board_stats([&quot;stats&quot;])
+  end
+  todo_board_add &lt;--&gt;|&quot;can race on tasks, next_no&quot;| todo_board_add
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_list
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_done
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_reopen
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_rename
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_add &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  todo_board_list &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_done
+  todo_board_list &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_reopen
+  todo_board_list &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_rename
+  todo_board_list &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_list &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_done
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_reopen
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_rename
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_done &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  todo_board_reopen &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_reopen
+  todo_board_reopen &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_rename
+  todo_board_reopen &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_reopen &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_reopen &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  todo_board_rename &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_rename
+  todo_board_rename &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_rename &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_rename &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  todo_board_remove &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_remove
+  todo_board_remove &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_remove &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  todo_board_clear &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_clear
+  todo_board_clear &lt;--&gt;|&quot;can race on tasks&quot;| todo_board_stats
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_add,todo_board_list,todo_board_done,todo_board_reopen,todo_board_rename,todo_board_remove,todo_board_clear,todo_board_stats rule
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

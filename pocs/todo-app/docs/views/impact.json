@@ -1,0 +1,776 @@
+{
+  "view": "impact",
+  "count": 47,
+  "declarations": [
+    {
+      "target": "apps.bun.TodoBun",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"app": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "apps.cpp.TodoCpp",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"app": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "apps.ruby.TodoRuby",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"app": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "apps.rust.TodoRust",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"app": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.board.tasks",
+      "direct": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats", "todo.board.three_open_one_done", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 31,
+        "edges": 103,
+        "nodes_by_kind": {"app": 4, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 1},
+        "edges_by_kind": {"calls": 13, "exposes": 32, "given": 4, "matches": 1, "reads": 9, "sets": 1, "traces": 37, "writes": 6}
+      }
+    },
+    {
+      "target": "todo.board.next_no",
+      "direct": ["todo.board.add", "todo.board.three_open_one_done"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "rules": ["todo.board.add"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 21,
+        "edges": 21,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "state": 1, "test": 9, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "given": 6, "reads": 1, "sets": 1, "traces": 6, "writes": 1}
+      }
+    },
+    {
+      "target": "todo.board.has_tag",
+      "direct": ["todo.board.list"],
+      "dependents": {
+        "rules": ["todo.board.list"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag"],
+        "laws": ["todo.laws.reads_change_nothing"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 10,
+        "edges": 9,
+        "nodes_by_kind": {"app": 4, "fn": 1, "law": 1, "rule": 1, "test": 3},
+        "edges_by_kind": {"calls": 4, "exposes": 4, "traces": 1}
+      }
+    },
+    {
+      "target": "todo.board.add",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 13,
+        "edges": 12,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "test": 2, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 6}
+      }
+    },
+    {
+      "target": "todo.board.list",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.reads_change_nothing", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag"],
+      "dependents": {
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag"],
+        "laws": ["todo.laws.reads_change_nothing"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 9,
+        "edges": 8,
+        "nodes_by_kind": {"app": 4, "law": 1, "rule": 1, "test": 3},
+        "edges_by_kind": {"calls": 3, "exposes": 4, "traces": 1}
+      }
+    },
+    {
+      "target": "todo.board.done",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 13,
+        "edges": 12,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "test": 2, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 6}
+      }
+    },
+    {
+      "target": "todo.board.reopen",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 13,
+        "edges": 12,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "test": 2, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 6}
+      }
+    },
+    {
+      "target": "todo.board.rename",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 13,
+        "edges": 12,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "test": 2, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 6}
+      }
+    },
+    {
+      "target": "todo.board.remove",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 13,
+        "edges": 12,
+        "nodes_by_kind": {"app": 4, "law": 5, "rule": 1, "test": 2, "type": 1},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 6}
+      }
+    },
+    {
+      "target": "todo.board.clear",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.Change", "todo.laws.numbers_below_next", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number", "todo.tests.scenarios.clear_removes_only_done"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "tests": ["todo.tests.scenarios.clear_removes_only_done"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.clear_keeps_every_open_task", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 11,
+        "edges": 11,
+        "nodes_by_kind": {"app": 4, "law": 4, "rule": 1, "test": 1, "type": 1},
+        "edges_by_kind": {"calls": 1, "exposes": 4, "matches": 1, "traces": 5}
+      }
+    },
+    {
+      "target": "todo.board.stats",
+      "direct": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust", "todo.laws.reads_change_nothing", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.clear_removes_only_done"],
+      "dependents": {
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.clear_removes_only_done"],
+        "laws": ["todo.laws.reads_change_nothing"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 8,
+        "edges": 7,
+        "nodes_by_kind": {"app": 4, "law": 1, "rule": 1, "test": 2},
+        "edges_by_kind": {"calls": 2, "exposes": 4, "traces": 1}
+      }
+    },
+    {
+      "target": "todo.board.three_open_one_done",
+      "direct": ["todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "tests": ["todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 7,
+        "edges": 6,
+        "nodes_by_kind": {"test": 7},
+        "edges_by_kind": {"given": 6}
+      }
+    },
+    {
+      "target": "todo.laws.Change",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"type": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.numbers_below_next",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.next_only_grows",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.others_untouched",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.clear_keeps_every_open_task",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.reads_change_nothing",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.refusal_changes_nothing",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.laws.stored_under_its_number",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"law": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.model.is_title",
+      "direct": ["todo.model.Title"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Title", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.model.is_title", "todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 37,
+        "edges": 58,
+        "nodes_by_kind": {"app": 4, "fn": 4, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 12, "constructs": 2, "exposes": 8, "given": 4, "reads": 7, "traces": 14, "uses": 7, "writes": 4}
+      }
+    },
+    {
+      "target": "todo.model.is_tag",
+      "direct": ["todo.model.Tag"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Tag", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.tag_text", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.model.is_tag", "todo.render.tag_text", "todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 38,
+        "edges": 54,
+        "nodes_by_kind": {"app": 4, "fn": 5, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 10, "constructs": 2, "exposes": 8, "given": 3, "reads": 7, "traces": 11, "uses": 8, "writes": 5}
+      }
+    },
+    {
+      "target": "todo.model.Title",
+      "direct": ["todo.board.add", "todo.board.rename", "todo.model.Task"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 36,
+        "edges": 57,
+        "nodes_by_kind": {"app": 4, "fn": 3, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 11, "constructs": 2, "exposes": 8, "given": 4, "reads": 7, "traces": 14, "uses": 7, "writes": 4}
+      }
+    },
+    {
+      "target": "todo.model.Tag",
+      "direct": ["todo.board.has_tag", "todo.board.add", "todo.board.list", "todo.model.Task", "todo.render.tag_text"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.tag_text", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.tag_text", "todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 37,
+        "edges": 53,
+        "nodes_by_kind": {"app": 4, "fn": 4, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 9, "constructs": 2, "exposes": 8, "given": 3, "reads": 7, "traces": 11, "uses": 8, "writes": 5}
+      }
+    },
+    {
+      "target": "todo.model.TaskNo",
+      "direct": ["todo.board.tasks", "todo.board.next_no", "todo.board.add", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.laws.others_untouched", "todo.model.Task", "todo.tests.scenarios.unknown_numbers_are_refused"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Task"],
+        "states": ["todo.board.tasks", "todo.board.next_no"],
+        "fns": ["todo.board.has_tag", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 37,
+        "edges": 83,
+        "nodes_by_kind": {"app": 4, "fn": 3, "law": 7, "rule": 8, "state": 2, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 10, "constructs": 2, "exposes": 20, "given": 2, "reads": 5, "sets": 2, "traces": 28, "uses": 13, "writes": 1}
+      }
+    },
+    {
+      "target": "todo.model.Status",
+      "direct": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.clear", "todo.board.stats", "todo.board.three_open_one_done", "todo.laws.clear_keeps_every_open_task", "todo.model.Task", "todo.render.mark"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.mark", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 37,
+        "edges": 78,
+        "nodes_by_kind": {"app": 4, "fn": 4, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 14, "constructs": 10, "exposes": 20, "given": 6, "matches": 1, "reads": 2, "traces": 17, "uses": 6, "writes": 2}
+      }
+    },
+    {
+      "target": "todo.model.Priority",
+      "direct": ["todo.board.add", "todo.board.three_open_one_done", "todo.model.Task", "todo.render.badge", "todo.render.urgency", "todo.tests.scenarios.rename_keeps_the_rest"],
+      "dependents": {
+        "types": ["todo.laws.Change", "todo.model.Task"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.badge", "todo.render.urgency", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 38,
+        "edges": 59,
+        "nodes_by_kind": {"app": 4, "fn": 5, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 3},
+        "edges_by_kind": {"calls": 12, "constructs": 4, "exposes": 4, "given": 5, "matches": 2, "reads": 7, "traces": 12, "uses": 8, "writes": 5}
+      }
+    },
+    {
+      "target": "todo.model.Task",
+      "direct": ["todo.board.tasks", "todo.board.has_tag", "todo.board.add", "todo.board.three_open_one_done", "todo.render.rank", "todo.render.line", "todo.tests.scenarios.rename_keeps_the_rest"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "states": ["todo.board.tasks"],
+        "fns": ["todo.board.has_tag", "todo.render.rank", "todo.render.line"],
+        "rules": ["todo.board.add", "todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename", "todo.board.remove", "todo.board.clear", "todo.board.stats"],
+        "tests": ["todo.board.three_open_one_done", "todo.tests.scenarios.numbers_start_at_one", "todo.tests.scenarios.numbers_are_never_reused", "todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.clear_removes_only_done", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.next_only_grows", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 35,
+        "edges": 51,
+        "nodes_by_kind": {"app": 4, "fn": 3, "law": 7, "rule": 8, "state": 1, "test": 10, "type": 2},
+        "edges_by_kind": {"calls": 10, "constructs": 3, "exposes": 4, "given": 5, "reads": 8, "traces": 12, "uses": 4, "writes": 5}
+      }
+    },
+    {
+      "target": "todo.render.mark",
+      "direct": ["todo.render.line"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "fns": ["todo.render.line"],
+        "rules": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 23,
+        "edges": 49,
+        "nodes_by_kind": {"app": 4, "fn": 2, "law": 6, "rule": 4, "test": 6, "type": 1},
+        "edges_by_kind": {"calls": 14, "exposes": 16, "traces": 19}
+      }
+    },
+    {
+      "target": "todo.render.badge",
+      "direct": ["todo.render.line"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "fns": ["todo.render.line"],
+        "rules": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 23,
+        "edges": 49,
+        "nodes_by_kind": {"app": 4, "fn": 2, "law": 6, "rule": 4, "test": 6, "type": 1},
+        "edges_by_kind": {"calls": 14, "exposes": 16, "traces": 19}
+      }
+    },
+    {
+      "target": "todo.render.tag_text",
+      "direct": ["todo.render.line"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "fns": ["todo.render.line"],
+        "rules": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.tag_text", "todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 23,
+        "edges": 49,
+        "nodes_by_kind": {"app": 4, "fn": 2, "law": 6, "rule": 4, "test": 6, "type": 1},
+        "edges_by_kind": {"calls": 14, "exposes": 16, "traces": 19}
+      }
+    },
+    {
+      "target": "todo.render.urgency",
+      "direct": ["todo.render.rank"],
+      "dependents": {
+        "fns": ["todo.render.rank"],
+        "rules": ["todo.board.list"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag"],
+        "laws": ["todo.laws.reads_change_nothing"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 11,
+        "edges": 10,
+        "nodes_by_kind": {"app": 4, "fn": 2, "law": 1, "rule": 1, "test": 3},
+        "edges_by_kind": {"calls": 5, "exposes": 4, "traces": 1}
+      }
+    },
+    {
+      "target": "todo.render.rank",
+      "direct": ["todo.board.list"],
+      "dependents": {
+        "rules": ["todo.board.list"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag"],
+        "laws": ["todo.laws.reads_change_nothing"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 10,
+        "edges": 9,
+        "nodes_by_kind": {"app": 4, "fn": 1, "law": 1, "rule": 1, "test": 3},
+        "edges_by_kind": {"calls": 4, "exposes": 4, "traces": 1}
+      }
+    },
+    {
+      "target": "todo.render.line",
+      "direct": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename"],
+      "dependents": {
+        "types": ["todo.laws.Change"],
+        "rules": ["todo.board.list", "todo.board.done", "todo.board.reopen", "todo.board.rename"],
+        "tests": ["todo.tests.scenarios.empty_board_says_so", "todo.tests.scenarios.list_ranks_urgent_first", "todo.tests.scenarios.list_all_and_by_tag", "todo.tests.scenarios.done_and_reopen_move_once", "todo.tests.scenarios.rename_keeps_the_rest", "todo.tests.scenarios.unknown_numbers_are_refused"],
+        "laws": ["todo.laws.numbers_below_next", "todo.laws.others_untouched", "todo.laws.clear_keeps_every_open_task", "todo.laws.reads_change_nothing", "todo.laws.refusal_changes_nothing", "todo.laws.stored_under_its_number"],
+        "apps": ["apps.bun.TodoBun", "apps.cpp.TodoCpp", "apps.ruby.TodoRuby", "apps.rust.TodoRust"]
+      },
+      "cases": ["todo.render.line"],
+      "generated": [],
+      "counts": {
+        "nodes": 22,
+        "edges": 48,
+        "nodes_by_kind": {"app": 4, "fn": 1, "law": 6, "rule": 4, "test": 6, "type": 1},
+        "edges_by_kind": {"calls": 13, "exposes": 16, "traces": 19}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.numbers_start_at_one",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.numbers_are_never_reused",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.empty_board_says_so",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.list_ranks_urgent_first",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.list_all_and_by_tag",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.done_and_reopen_move_once",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.rename_keeps_the_rest",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.clear_removes_only_done",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    },
+    {
+      "target": "todo.tests.scenarios.unknown_numbers_are_refused",
+      "direct": [],
+      "dependents": {},
+      "cases": [],
+      "generated": [],
+      "counts": {
+        "nodes": 1,
+        "edges": 0,
+        "nodes_by_kind": {"test": 1},
+        "edges_by_kind": {}
+      }
+    }
+  ]
+}

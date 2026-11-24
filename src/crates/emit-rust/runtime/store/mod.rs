@@ -1,0 +1,16 @@
+//! `@store(file(...))`: the world between runs. `codec` is generated from the
+//! program's states; everything else here is the runtime shim.
+
+mod atomic;
+pub mod codec;
+pub mod cursor;
+mod error;
+mod file;
+pub mod lock;
+pub mod path;
+mod unreadable;
+pub mod writer;
+
+pub use error::StoreError;
+pub use file::{Codec, Decode, Store};
+pub use unreadable::Unreadable;

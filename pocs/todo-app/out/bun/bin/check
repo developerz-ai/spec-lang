@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Projected by hand from the gate for the bun target (docs/contract.md section 4). Stand-in for spec-lang build output; change the spec, not this file.
+# The whole gate: lint and format, types, tests, build.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bun install --frozen-lockfile
+bunx biome check .
+bunx tsc --noEmit -p .
+bun test
+bin/build

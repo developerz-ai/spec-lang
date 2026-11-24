@@ -65,7 +65,7 @@ The caller passes the request key on. A key made inside `pay` would be new on ev
 
 ## Real libraries
 
-Real software stands on npm packages, crates, gems, system libraries and SDKs. Nobody rewrites those. A library enters as a **contract with two handlers**: the real one, used by a backend, and a simulated one, used by the engine.
+Real software stands on npm packages, crates, gems, system libraries and SDKs. Nobody rewrites those. A library enters as a **contract with two handlers**: the real one, used by a backend, and a simulated one, used by the engine. The library's own author publishes them, beside its code and tested by its CI against the real thing; a contract written by a user is the fallback, and reports lower evidence ([008](../decisions/008-libraries-ship-their-spec.md)).
 
 ```slg
 type Charged = Ok(id: Text) | Declined | Unknown;

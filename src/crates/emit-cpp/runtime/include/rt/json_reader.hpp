@@ -1,0 +1,113 @@
+// Reading a document the schema fixes (docs/contract.md section 3, "Accepted on read"): objects whose keys a
+// generated reader takes one by one, arrays, and slots that fill once. No tree of values is built; anything
+// the schema does not expect rejects the document where it stands.
+#pragma once
+
+#include <algorithm>
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "rt/json_lexer.hpp"
+
+namespace rt::json {
+
+class Reader {
+ public:
+  explicit Reader(std::string_view text) : lex_(text) {}
+
+  // A string; the view is valid until the next string is read.
+  [[nodiscard]] std::optional<std::string_view> string() { return lex_.string(scratch_); }
+
+  // A JSON integer from 0 to max, never rounded.
+  [[nodiscard]] std::optional<std::uint64_t> integer(std::uint64_t max) { return lex_.integer(max); }
+
+  // An object; member(key) compares the key first, then reads the value of each key and says whether it was accepted.
+  template <class F>
+  [[nodiscard]] bool object(F&& member) {
+    if (!lex_.eat('{')) {
+      return false;
+    }
+    for (bool first = true; !lex_.eat('}'); first = false) {
+      if (!first && !lex_.eat(',')) {
+        return false;
+      }
+      // The key may point into the scratch buffer the value's strings reuse: member() compares it
+      // before it reads the value, which every generated reader does.
+      const auto key = lex_.string(scratch_);
+      if (!key || !lex_.eat(':') || !member(*key)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // An array; item() reads each element and says whether it was accepted.
+  template <class F>
+  [[nodiscard]] bool array(F&& item) {
+    if (!lex_.eat('[')) {
+      return false;
+    }
+    for (bool first = true; !lex_.eat(']'); first = false) {
+      if (!first && !lex_.eat(',')) {
+        return false;
+      }
+      if (!item()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // An array of strings that admits(text) accepts, none twice, checked on the borrowed text: nothing is
+  // built but a reused buffer of copies for the uniqueness check.
+  template <class F>
+  [[nodiscard]] bool string_set(F&& admits) {
+    seen_.clear();
+    const bool ok = array([&] {
+      const auto s = string();
+      if (!s || !admits(*s)) {
+        return false;
+      }
+      seen_.emplace_back(*s);
+      return true;
+    });
+    if (!ok) {
+      return false;
+    }
+    std::ranges::sort(seen_);
+    return std::ranges::adjacent_find(seen_) == seen_.end();
+  }
+
+  // Nothing but white space is left.
+  [[nodiscard]] bool at_end() { return lex_.at_end(); }
+
+ private:
+  Lexer lex_;
+  std::string scratch_;
+  std::vector<std::string> seen_;
+};
+
+// Fills a key's slot; a slot already full is the key given twice.
+template <class T, class F>
+[[nodiscard]] bool fill(std::optional<T>& slot, F&& read) {
+  if (slot) {
+    return false;
+  }
+  slot = read();
+  return slot.has_value();
+}
+
+// A key whose value is checked and not kept; a key already seen is the key given twice.
+template <class F>
+[[nodiscard]] bool once(bool& seen, F&& check) {
+  if (seen) {
+    return false;
+  }
+  seen = true;
+  return check();
+}
+
+}  // namespace rt::json

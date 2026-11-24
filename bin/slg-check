@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Parse .slg files and ```slg fences with the grammar in docs/idea/25-grammar.md. Form only.
+# Usage: bin/slg-check <path>...   (default: docs pocs)
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+[ $# -eq 0 ] && set -- "$root/docs" "$root/pocs"
+exec uv run -q --with 'lark[interegular]' python "$root/scripts/slg/check.py" "$@"

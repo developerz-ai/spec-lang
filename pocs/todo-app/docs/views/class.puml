@@ -1,0 +1,56 @@
+@startuml
+hide empty members
+class "Change" as todo_laws_Change <<rule set>> {
+  {field} add
+  {field} done
+  {field} reopen
+  {field} rename
+  {field} remove
+  {field} clear
+}
+class "Title" as todo_model_Title <<type>> {
+  {field} Text
+}
+class "Tag" as todo_model_Tag <<type>> {
+  {field} Text
+}
+class "TaskNo" as todo_model_TaskNo <<type>> {
+  {field} Int
+}
+class "Status" as todo_model_Status <<enumeration>> {
+  {field} Open
+  {field} Done
+}
+class "Priority" as todo_model_Priority <<enumeration>> {
+  {field} Low
+  {field} Normal
+  {field} High
+}
+class "Task" as todo_model_Task <<record>> {
+  {field} no: TaskNo
+  {field} title: Title
+  {field} status: Status = Open
+  {field} priority: Priority = Normal
+  {field} tags: Set[Tag] = Set()
+}
+class "todo.board" as todo_board <<module>> {
+  {field} next_no: TaskNo = 1
+  {method} +add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) TaskNo
+  {method} +list(all: Bool = false, tag: Option[Tag] = none)
+  {method} +done(no: TaskNo)
+  {method} +reopen(no: TaskNo)
+  {method} +rename(no: TaskNo, title: Title)
+  {method} +remove(no: TaskNo)
+  {method} +clear() Int
+  {method} +stats()
+}
+note right of todo_model_Title : { is_title(self) }
+note right of todo_model_Tag : { is_tag(self) }
+note right of todo_model_TaskNo : { self >= 1 }
+todo_model_Task "1" *-- "1" todo_model_TaskNo : no
+todo_model_Task "1" *-- "1" todo_model_Title : title
+todo_model_Task "1" *-- "1" todo_model_Status : status
+todo_model_Task "1" *-- "1" todo_model_Priority : priority
+todo_model_Task "1" *-- "0..*" todo_model_Tag : tags
+todo_board "1" o-- "0..*" todo_model_Task : tasks [TaskNo]
+@enduml

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# The gate for src/: format, lint, unit and integration tests of every crate
+# in the workspace, then the toolchain run on this repository itself.
+# CI runs exactly this (.github/workflows/compiler.yml). Locally: `heavy src/bin/check`.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo build --release -p spec-lang-cli
+
+spec=target/release/spec-lang
+"$spec" parse ../docs ../pocs/todo-app/src ../README.md
+"$spec" test ../pocs/todo-app/src

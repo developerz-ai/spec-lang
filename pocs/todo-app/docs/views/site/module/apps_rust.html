@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apps.rust - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>apps.rust</code></h1>
+<p class="dim"><code>apps/rust.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">app</span> <a href="../decl/apps_rust_TodoRust.html"><code>TodoRust</code></a></li>
+</ul>
+<h2>Source</h2>
+<pre>use cli;
+use todo.board;
+
+@why(&quot;the board as one static binary&quot;)
+@target(rust)
+@bin(&quot;todo&quot;)
+@store(file(&quot;.todo.json&quot;))
+app TodoRust(rules: [board.add, board.list, board.done, board.reopen, board.rename, board.remove, board.clear, board.stats]);
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

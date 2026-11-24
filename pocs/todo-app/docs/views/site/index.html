@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explorer - todo-app</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><strong><a href="index.html">todo-app</a></strong><a href="diagrams/class.html">class</a><a href="diagrams/state.html">state</a><a href="diagrams/sequence.html">sequence</a><a href="diagrams/modules.html">modules</a><a href="diagrams/effects.html">effects</a><a href="diagrams/calls.html">calls</a><a href="pseudo.html">pseudocode</a></header>
+<main>
+<h1>todo-app</h1>
+<p>9 modules: 7 types, 2 states, 9 functions, 8 rules, 10 tests, 7 laws, 4 apps. Every page is computed from the source; only the source is edited.</p>
+<h2>Modules</h2>
+<pre class="mermaid">
+flowchart LR
+  mod_apps_bun[&quot;apps.bun&quot;]
+  mod_apps_cpp[&quot;apps.cpp&quot;]
+  mod_apps_ruby[&quot;apps.ruby&quot;]
+  mod_apps_rust[&quot;apps.rust&quot;]
+  mod_todo_board[&quot;todo.board&quot;]
+  mod_todo_laws[&quot;todo.laws&quot;]
+  mod_todo_model[&quot;todo.model&quot;]
+  mod_todo_render[&quot;todo.render&quot;]
+  mod_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+  vocab_cli((&quot;cli&quot;))
+  apps_bun_TodoBun[[&quot;TodoBun&quot;]]
+  target_bun((&quot;bun&quot;))
+  apps_cpp_TodoCpp[[&quot;TodoCpp&quot;]]
+  target_cpp((&quot;cpp&quot;))
+  apps_ruby_TodoRuby[[&quot;TodoRuby&quot;]]
+  target_ruby((&quot;ruby&quot;))
+  apps_rust_TodoRust[[&quot;TodoRust&quot;]]
+  target_rust((&quot;rust&quot;))
+  todo_board_tasks[(&quot;tasks&quot;)]
+  todo_board_next_no[(&quot;next_no&quot;)]
+  mod_apps_bun -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_bun -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_cpp -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_cpp -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_ruby -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_ruby -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_rust -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_rust -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_board -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_todo_board -.-&gt;|&quot;uses Task, TaskNo, Title, Tag, Priority, Status&quot;| mod_todo_model
+  mod_todo_board -.-&gt;|&quot;uses line, rank&quot;| mod_todo_render
+  mod_todo_laws -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_laws -.-&gt;|&quot;uses TaskNo, Status&quot;| mod_todo_model
+  mod_todo_render -.-&gt;|&quot;uses Task, Status, Priority, Tag&quot;| mod_todo_model
+  mod_todo_tests_scenarios -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_tests_scenarios -.-&gt;|&quot;uses Task, TaskNo, Priority&quot;| mod_todo_model
+  mod_apps_bun --&gt;|&quot;declares&quot;| apps_bun_TodoBun
+  apps_bun_TodoBun --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_bun_TodoBun --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_bun
+  mod_apps_cpp --&gt;|&quot;declares&quot;| apps_cpp_TodoCpp
+  apps_cpp_TodoCpp --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_cpp_TodoCpp --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_cpp
+  mod_apps_ruby --&gt;|&quot;declares&quot;| apps_ruby_TodoRuby
+  apps_ruby_TodoRuby --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_ruby_TodoRuby --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_ruby
+  mod_apps_rust --&gt;|&quot;declares&quot;| apps_rust_TodoRust
+  apps_rust_TodoRust --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_rust_TodoRust --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_rust
+  mod_todo_board ==&gt;|&quot;owns&quot;| todo_board_tasks
+  mod_todo_board ==&gt;|&quot;owns&quot;| todo_board_next_no
+  classDef app stroke:#db2777,stroke-width:2px
+  class apps_bun_TodoBun,apps_cpp_TodoCpp,apps_ruby_TodoRuby,apps_rust_TodoRust app
+  classDef state stroke:#d97706,stroke-width:2px
+  class todo_board_tasks,todo_board_next_no state
+  classDef target stroke:#db2777,stroke-width:2px
+  class target_bun,target_cpp,target_ruby,target_rust target
+</pre>
+<h3><a href="module/apps_bun.html"><code>apps.bun</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">app</span> <a href="decl/apps_bun_TodoBun.html"><code>TodoBun</code></a></li>
+</ul>
+<h3><a href="module/apps_cpp.html"><code>apps.cpp</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">app</span> <a href="decl/apps_cpp_TodoCpp.html"><code>TodoCpp</code></a></li>
+</ul>
+<h3><a href="module/apps_ruby.html"><code>apps.ruby</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">app</span> <a href="decl/apps_ruby_TodoRuby.html"><code>TodoRuby</code></a></li>
+</ul>
+<h3><a href="module/apps_rust.html"><code>apps.rust</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">app</span> <a href="decl/apps_rust_TodoRust.html"><code>TodoRust</code></a></li>
+</ul>
+<h3><a href="module/todo_board.html"><code>todo.board</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">state</span> <a href="decl/todo_board_tasks.html"><code>tasks</code></a></li>
+<li><span class="kind">state</span> <a href="decl/todo_board_next_no.html"><code>next_no</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_board_has_tag.html"><code>has_tag</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_add.html"><code>add</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_list.html"><code>list</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_done.html"><code>done</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_reopen.html"><code>reopen</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_rename.html"><code>rename</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_remove.html"><code>remove</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_clear.html"><code>clear</code></a></li>
+<li><span class="kind">rule</span> <a href="decl/todo_board_stats.html"><code>stats</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_board_three_open_one_done.html"><code>three_open_one_done</code></a></li>
+</ul>
+<h3><a href="module/todo_laws.html"><code>todo.laws</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">type</span> <a href="decl/todo_laws_Change.html"><code>Change</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_numbers_below_next.html"><code>numbers_below_next</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_next_only_grows.html"><code>next_only_grows</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_others_untouched.html"><code>others_untouched</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_clear_keeps_every_open_task.html"><code>clear_keeps_every_open_task</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_reads_change_nothing.html"><code>reads_change_nothing</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_refusal_changes_nothing.html"><code>refusal_changes_nothing</code></a></li>
+<li><span class="kind">law</span> <a href="decl/todo_laws_stored_under_its_number.html"><code>stored_under_its_number</code></a></li>
+</ul>
+<h3><a href="module/todo_model.html"><code>todo.model</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">fn</span> <a href="decl/todo_model_is_title.html"><code>is_title</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_model_is_tag.html"><code>is_tag</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_Title.html"><code>Title</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_Tag.html"><code>Tag</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_TaskNo.html"><code>TaskNo</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_Status.html"><code>Status</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_Priority.html"><code>Priority</code></a></li>
+<li><span class="kind">type</span> <a href="decl/todo_model_Task.html"><code>Task</code></a></li>
+</ul>
+<h3><a href="module/todo_render.html"><code>todo.render</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">fn</span> <a href="decl/todo_render_mark.html"><code>mark</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_render_badge.html"><code>badge</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_render_tag_text.html"><code>tag_text</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_render_urgency.html"><code>urgency</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_render_rank.html"><code>rank</code></a></li>
+<li><span class="kind">fn</span> <a href="decl/todo_render_line.html"><code>line</code></a></li>
+</ul>
+<h3><a href="module/todo_tests_scenarios.html"><code>todo.tests.scenarios</code></a></h3>
+<ul class="plain cols">
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_numbers_start_at_one.html"><code>numbers_start_at_one</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_numbers_are_never_reused.html"><code>numbers_are_never_reused</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_empty_board_says_so.html"><code>empty_board_says_so</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_list_ranks_urgent_first.html"><code>list_ranks_urgent_first</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_list_all_and_by_tag.html"><code>list_all_and_by_tag</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_done_and_reopen_move_once.html"><code>done_and_reopen_move_once</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_rename_keeps_the_rest.html"><code>rename_keeps_the_rest</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_clear_removes_only_done.html"><code>clear_removes_only_done</code></a></li>
+<li><span class="kind">test</span> <a href="decl/todo_tests_scenarios_unknown_numbers_are_refused.html"><code>unknown_numbers_are_refused</code></a></li>
+</ul>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

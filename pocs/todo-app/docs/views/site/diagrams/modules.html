@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modules - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1>Modules</h1>
+<h2>20 nodes (4 app, 9 module, 2 state, 4 target, 1 vocabulary), 30 edges (4 declares, 4 exposes, 2 owns, 4 targets, 16 uses)</h2>
+<pre class="mermaid">
+flowchart LR
+  mod_apps_bun[&quot;apps.bun&quot;]
+  mod_apps_cpp[&quot;apps.cpp&quot;]
+  mod_apps_ruby[&quot;apps.ruby&quot;]
+  mod_apps_rust[&quot;apps.rust&quot;]
+  mod_todo_board[&quot;todo.board&quot;]
+  mod_todo_laws[&quot;todo.laws&quot;]
+  mod_todo_model[&quot;todo.model&quot;]
+  mod_todo_render[&quot;todo.render&quot;]
+  mod_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+  vocab_cli((&quot;cli&quot;))
+  apps_bun_TodoBun[[&quot;TodoBun&quot;]]
+  target_bun((&quot;bun&quot;))
+  apps_cpp_TodoCpp[[&quot;TodoCpp&quot;]]
+  target_cpp((&quot;cpp&quot;))
+  apps_ruby_TodoRuby[[&quot;TodoRuby&quot;]]
+  target_ruby((&quot;ruby&quot;))
+  apps_rust_TodoRust[[&quot;TodoRust&quot;]]
+  target_rust((&quot;rust&quot;))
+  todo_board_tasks[(&quot;tasks&quot;)]
+  todo_board_next_no[(&quot;next_no&quot;)]
+  mod_apps_bun -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_bun -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_cpp -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_cpp -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_ruby -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_ruby -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_apps_rust -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_apps_rust -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_board -.-&gt;|&quot;uses&quot;| vocab_cli
+  mod_todo_board -.-&gt;|&quot;uses Task, TaskNo, Title, Tag, Priority, Status&quot;| mod_todo_model
+  mod_todo_board -.-&gt;|&quot;uses line, rank&quot;| mod_todo_render
+  mod_todo_laws -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_laws -.-&gt;|&quot;uses TaskNo, Status&quot;| mod_todo_model
+  mod_todo_render -.-&gt;|&quot;uses Task, Status, Priority, Tag&quot;| mod_todo_model
+  mod_todo_tests_scenarios -.-&gt;|&quot;uses&quot;| mod_todo_board
+  mod_todo_tests_scenarios -.-&gt;|&quot;uses Task, TaskNo, Priority&quot;| mod_todo_model
+  mod_apps_bun --&gt;|&quot;declares&quot;| apps_bun_TodoBun
+  apps_bun_TodoBun --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_bun_TodoBun --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_bun
+  mod_apps_cpp --&gt;|&quot;declares&quot;| apps_cpp_TodoCpp
+  apps_cpp_TodoCpp --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_cpp_TodoCpp --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_cpp
+  mod_apps_ruby --&gt;|&quot;declares&quot;| apps_ruby_TodoRuby
+  apps_ruby_TodoRuby --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_ruby_TodoRuby --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_ruby
+  mod_apps_rust --&gt;|&quot;declares&quot;| apps_rust_TodoRust
+  apps_rust_TodoRust --&gt;|&quot;exposes 8 rules&quot;| mod_todo_board
+  apps_rust_TodoRust --&gt;|&quot;targets bin todo, store file .todo.json&quot;| target_rust
+  mod_todo_board ==&gt;|&quot;owns&quot;| todo_board_tasks
+  mod_todo_board ==&gt;|&quot;owns&quot;| todo_board_next_no
+  classDef app stroke:#db2777,stroke-width:2px
+  class apps_bun_TodoBun,apps_cpp_TodoCpp,apps_ruby_TodoRuby,apps_rust_TodoRust app
+  classDef state stroke:#d97706,stroke-width:2px
+  class todo_board_tasks,todo_board_next_no state
+  classDef target stroke:#db2777,stroke-width:2px
+  class target_bun,target_cpp,target_ruby,target_rust target
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+// The core library's Text as the cpp backend carries it: size in code points, trim of White_Space, and
+// building text from parts (docs/contract.md section 1).
+#pragma once
+
+#include <charconv>
+#include <concepts>
+#include <cstdint>
+#include <string>
+#include <string_view>
+
+#include "rt/unicode.hpp"
+
+namespace rt::text {
+
+// Text.size: code points. Text is always valid UTF-8 here: every edge checks it.
+[[nodiscard]] inline std::int64_t size(std::string_view t) noexcept {
+  return static_cast<std::int64_t>(unicode::code_points(t));
+}
+
+// Text.size <= n, without counting when the bytes alone decide it: a code point is at least one byte.
+[[nodiscard]] inline bool size_at_most(std::string_view t, std::int64_t n) noexcept {
+  return static_cast<std::int64_t>(t.size()) <= n || size(t) <= n;
+}
+
+// Text.trim: White_Space from both ends.
+[[nodiscard]] std::string_view trim(std::string_view t) noexcept;
+
+inline void append(std::string& out, std::string_view s) { out += s; }
+
+template <std::integral I>
+  requires(!std::same_as<I, bool> && !std::same_as<I, char>)
+void append(std::string& out, I n) {
+  char digits[24];
+  const auto r = std::to_chars(digits, digits + sizeof digits, n);
+  out.append(digits, r.ptr);
+}
+
+// "{a}{b}..." with every part appended once into one buffer.
+template <class... Parts>
+[[nodiscard]] std::string concat(const Parts&... parts) {
+  std::string out;
+  (append(out, parts), ...);
+  return out;
+}
+
+// texts.join(sep).
+template <class Range>
+[[nodiscard]] std::string join(Range&& texts, std::string_view sep) {
+  std::string out;
+  bool first = true;
+  for (const auto& t : texts) {
+    if (!first) {
+      out += sep;
+    }
+    first = false;
+    out += t;
+  }
+  return out;
+}
+
+}  // namespace rt::text

@@ -1,0 +1,288 @@
+# The store: what is read, what is written, what is refused.
+
+# case: a blank file is unreadable
+< 
+$ ["stats"]
+! error: store .todo.json: unreadable
+? 3
+
+# case: unreadable: empty object
+< {}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {}
+
+# case: unreadable: version 2
+< {"version":2,"next_no":1,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":2,"next_no":1,"tasks":[]}
+
+# case: unreadable: next_no zero
+< {"version":1,"next_no":0,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":0,"tasks":[]}
+
+# case: unreadable: next_no not an integer
+< {"version":1,"next_no":1.0,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1.0,"tasks":[]}
+
+# case: unreadable: next_no exponent
+< {"version":1,"next_no":1e0,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1e0,"tasks":[]}
+
+# case: unreadable: next_no a string
+< {"version":1,"next_no":"1","tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":"1","tasks":[]}
+
+# case: unreadable: next_no above 2^53
+< {"version":1,"next_no":9007199254740993,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":9007199254740993,"tasks":[]}
+
+# case: unreadable: tasks not an array
+< {"version":1,"next_no":1,"tasks":{}}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1,"tasks":{}}
+
+# case: unreadable: extra top-level key
+< {"version":1,"next_no":1,"tasks":[],"x":0}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1,"tasks":[],"x":0}
+
+# case: unreadable: missing key
+< {"version":1,"next_no":1}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1}
+
+# case: unreadable: duplicate key
+< {"version":1,"next_no":1,"next_no":1,"tasks":[]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1,"next_no":1,"tasks":[]}
+
+# case: unreadable: duplicate key in a task
+< {"version":1,"next_no":2,"tasks":[{"no":1,"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: unreadable: task number not below next_no
+< {"version":1,"next_no":1,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: unreadable: task number twice
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]},{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]},{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: unreadable: blank title
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":" ","status":"Open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":" ","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: unreadable: status in lower case
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"open","priority":"Normal","tags":[]}]}
+
+# case: unreadable: bad tag
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":["Home"]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":["Home"]}]}
+
+# case: unreadable: tag twice
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":["a","a"]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":["a","a"]}]}
+
+# case: unreadable: extra task key
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[],"due":null}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[],"due":null}]}
+
+# case: unreadable: trailing garbage
+< {"version":1,"next_no":1,"tasks":[]} x
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":1,"tasks":[]} x
+
+# case: unreadable: not JSON
+< todo
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= todo
+
+# case: unreadable: lone surrogate
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"\ud800","status":"Open","priority":"Normal","tags":[]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+$ ["add", "x"]
+! error: store .todo.json: unreadable
+? 3
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"\ud800","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: readable but not canonical; reads leave it alone, a write makes it canonical
+< { "tasks" : [ {"tags":["b","a"],"priority":"High","status":"Done","title":"caf\u00e9 \ud83d\ude00","no":2}, {"no":1,"title":"x","status":"Open","priority":"Low","tags":[]} ], "next_no" : 7, "version" : 1 }
+$ ["list", "--all"]
+> 2 [x] café 😀 !high #a #b
+> 1 [ ] x !low
+$ ["stats"]
+> 1 open, 1 done
+= { "tasks" : [ {"tags":["b","a"],"priority":"High","status":"Done","title":"caf\u00e9 \ud83d\ude00","no":2}, {"no":1,"title":"x","status":"Open","priority":"Low","tags":[]} ], "next_no" : 7, "version" : 1 }
+$ ["add", "y"]
+> added 7
+= {"version":1,"next_no":8,"tasks":[{"no":1,"title":"x","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"café 😀","status":"Done","priority":"High","tags":["a","b"]},{"no":7,"title":"y","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: the last number below 2^53, then full
+< {"version":1,"next_no":9007199254740991,"tasks":[]}
+$ ["add", "a"]
+> added 9007199254740991
+$ ["done", "9007199254740991"]
+> 9007199254740991 [x] a
+$ ["add", "b"]
+! error: store .todo.json: full
+? 3
+= {"version":1,"next_no":9007199254740992,"tasks":[{"no":9007199254740991,"title":"a","status":"Done","priority":"Normal","tags":[]}]}
+
+# case: TODO_STORE moves the store
+& TODO_STORE=lists/home.json
+$ ["add", "a"]
+! error: store lists/home.json: unwritable
+? 3
+$ ["list"]
+! error: store lists/home.json: unwritable
+? 3
+& TODO_STORE=home.json
+$ ["add", "a"]
+> added 1
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: an unreadable store named by TODO_STORE is named in the error
+& TODO_STORE=bad.json
+< [1]
+$ ["list"]
+! error: store bad.json: unreadable
+? 3
+
+# case: an empty TODO_STORE is unset
+& TODO_STORE=
+$ ["add", "a"]
+> added 1
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":[]}]}
+
+# case: a stored title with a line break is unreadable
+<j "{\"version\":1,\"next_no\":2,\"tasks\":[{\"no\":1,\"title\":\"a\u2028b\",\"status\":\"Open\",\"priority\":\"Normal\",\"tags\":[]}]}"
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3
+
+# case: a stored tag starting with a dash is unreadable
+< {"version":1,"next_no":2,"tasks":[{"no":1,"title":"a","status":"Open","priority":"Normal","tags":["-x"]}]}
+$ ["list"]
+! error: store .todo.json: unreadable
+? 3

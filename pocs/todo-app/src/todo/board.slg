@@ -1,0 +1,108 @@
+// todo.board: the one place tasks live, and every rule that changes them.
+
+use cli;
+use todo.model.Task;
+use todo.model.TaskNo;
+use todo.model.Title;
+use todo.model.Tag;
+use todo.model.Priority;
+use todo.model.Status;
+use todo.render.line;
+use todo.render.rank;
+
+state tasks: Map[TaskNo, Task];
+state next_no: TaskNo = 1;
+
+fn has_tag(t: Task, tag: Option[Tag]) -> Bool = match tag {
+  none => true;
+  Some(x) => x in t.tags;
+}
+
+@why("a number is never reused, so an old note that says 'task 3' never names a new task")
+@on(cli("add"))
+@uses(tasks.write, next_no.write, out.write)
+pub rule add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) -> TaskNo = {
+  let no = next_no;
+  tasks[no] = Task(no, title: title, priority: priority, tags: tags);
+  next_no = no + 1;
+  out.line("added {no}");
+  return no;
+}
+
+@why("open work first; finished work only when asked for")
+@on(cli("list"))
+@uses(tasks.read, out.write)
+pub rule list(all: Bool = false, tag: Option[Tag] = none) = {
+  let shown = tasks.values.filter(t => (all or t.status == Open) and has_tag(t, tag: tag)).sort(t => rank(t));
+  if shown.size == 0 {
+    out.line("nothing to do");
+    return;
+  }
+  for t in shown { out.line(line(t)); }
+}
+
+@why("finishing is one step, and only open work can finish")
+@on(cli("done"))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask, tasks[no].status == Open else AlreadyDone)
+pub rule done(no: TaskNo) = {
+  tasks[no].status = Done;
+  out.line(line(tasks[no]));
+}
+
+@why("a mistaken done is undone, not re-added under a new number")
+@on(cli("reopen"))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask, tasks[no].status == Done else NotDone)
+pub rule reopen(no: TaskNo) = {
+  tasks[no].status = Open;
+  out.line(line(tasks[no]));
+}
+
+@why("a title changes without losing its number, status or tags")
+@on(cli("rename"))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask)
+pub rule rename(no: TaskNo, title: Title) = {
+  tasks[no].title = title;
+  out.line(line(tasks[no]));
+}
+
+@why("removing frees nothing: the number stays used")
+@on(cli("remove"))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask)
+pub rule remove(no: TaskNo) = {
+  tasks.remove(no);
+  out.line("removed {no}");
+}
+
+@why("finished work leaves the list in one step")
+@on(cli("clear"))
+@uses(tasks.write, out.write)
+pub rule clear() -> Int = {
+  let gone = tasks.values.filter(it.status == Done);
+  for t in gone { tasks.remove(t.no); }
+  out.line("cleared {gone.size}");
+  return gone.size;
+}
+
+@why("a count at a glance, without listing")
+@on(cli("stats"))
+@uses(tasks.read, out.write)
+pub rule stats() = {
+  let open = tasks.values.filter(it.status == Open).size;
+  out.line("{open} open, {tasks.size - open} done");
+}
+
+@why("a named start world for tests in other modules: three open tasks, one done")
+@given(
+  tasks -> Map(
+    1 -> Task(1, title: "low one", priority: Low),
+    2 -> Task(2, title: "plain"),
+    3 -> Task(3, title: "urgent", priority: High, tags: Set("work")),
+    4 -> Task(4, title: "finished", status: Done, tags: Set("work", "home")),
+  ),
+  next_no -> 5,
+)
+test three_open_one_done = {}

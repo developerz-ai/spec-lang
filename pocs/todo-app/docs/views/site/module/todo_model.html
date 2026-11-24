@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.model - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>todo.model</code></h1>
+<p class="dim"><code>todo/model.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">fn</span> <a href="../decl/todo_model_is_title.html"><code>is_title</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_model_is_tag.html"><code>is_tag</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_Title.html"><code>Title</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_Tag.html"><code>Tag</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_TaskNo.html"><code>TaskNo</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_Status.html"><code>Status</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_Priority.html"><code>Priority</code></a></li>
+<li><span class="kind">type</span> <a href="../decl/todo_model_Task.html"><code>Task</code></a></li>
+</ul>
+<h2>Pseudocode</h2>
+<pre>module todo.model
+
+function is_title(t: Text) → Bool
+  because: a title fits on one line of a terminal list
+  return t.trim().size ≥ 1 and t.size ≤ 200 and t.bytes.all(it ↦ it ≥ 32 and it ≠ 127) and not t.contains(&quot;&quot;) and not t.contains(&quot; &quot;) and not t.contains(&quot; &quot;)
+end
+
+function is_tag(t: Text) → Bool
+  because: a tag is typed in a shell without quotes, and never reads as a flag
+  return 1 ≤ t.size ≤ 32 and t.bytes.all(it ↦ 97 ≤ it ≤ 122 or 48 ≤ it ≤ 57 or it = 45) and not t.starts_with(&quot;-&quot;)
+end
+</pre>
+<h2>Source</h2>
+<pre>// todo.model: what a task is. Data and the claims on it; no state, no effects.
+
+@why(&quot;a title fits on one line of a terminal list&quot;)
+@cases(&quot;milk&quot; -&gt; true, &quot;&quot; -&gt; false, &quot;   &quot; -&gt; false, &quot;a\tb&quot; -&gt; false, &quot;\u{3000}&quot; -&gt; false, &quot;a\u{2028}b&quot; -&gt; false, &quot;a\u{0085}b&quot; -&gt; false)
+pub fn is_title(t: Text) -&gt; Bool =
+  t.trim().size &gt;= 1 and t.size &lt;= 200 and t.bytes.all(it &gt;= 32 and it != 127)
+  and not t.contains(&quot;\u{0085}&quot;) and not t.contains(&quot;\u{2028}&quot;) and not t.contains(&quot;\u{2029}&quot;);
+
+@why(&quot;a tag is typed in a shell without quotes, and never reads as a flag&quot;)
+@cases(&quot;home&quot; -&gt; true, &quot;deep-work&quot; -&gt; true, &quot;Home&quot; -&gt; false, &quot;&quot; -&gt; false, &quot;a b&quot; -&gt; false, &quot;-x&quot; -&gt; false, &quot;--all&quot; -&gt; false)
+pub fn is_tag(t: Text) -&gt; Bool =
+  1 &lt;= t.size &lt;= 32 and t.bytes.all(97 &lt;= it &lt;= 122 or 48 &lt;= it &lt;= 57 or it == 45) and not t.starts_with(&quot;-&quot;);
+
+pub type Title = Text where is_title(self);
+pub type Tag = Text where is_tag(self);
+pub type TaskNo = Int where self &gt;= 1;
+
+pub type Status = Open | Done;
+pub type Priority = Low | Normal | High;
+
+pub type Task(
+  no: TaskNo,
+  title: Title,
+  status: Status = Open,
+  priority: Priority = Normal,
+  tags: Set[Tag] = Set(),
+);
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

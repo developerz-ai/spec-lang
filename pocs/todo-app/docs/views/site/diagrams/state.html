@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State diagrams - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1>State diagrams</h1>
+<h2><code>todo.model.Task.status</code>: 3 nodes, 5 edges</h2>
+<pre class="mermaid">
+stateDiagram-v2
+  state &quot;todo.model.Task.status #58; Status&quot; as machine {
+    state &quot;Open&quot; as Open
+    state &quot;Done&quot; as Done
+    [*] --&gt; Open : add / out.line
+    Open --&gt; Done : done [no in tasks] / out.line
+    Done --&gt; Open : reopen [no in tasks] / out.line
+  }
+  machine --&gt; [*] : remove [no in tasks] / out.line
+  machine --&gt; [*] : clear / out.line
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

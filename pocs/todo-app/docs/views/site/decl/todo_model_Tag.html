@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.model.Tag - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_model.html"><code>todo.model</code></a></p>
+<h1><span class="kind">type</span> <code>Tag</code></h1>
+<p class="dim"><code>todo/model.slg:15</code> · pub</p>
+<h2>Source</h2>
+<pre>pub type Tag = Text where is_tag(self);</pre>
+<h2>Diagrams</h2>
+<h3>Class: 2 classes, 1 relations</h3>
+<pre class="mermaid">
+classDiagram
+  class todo_model_Tag[&quot;Tag&quot;] {
+    &lt;&lt;type&gt;&gt;
+    Text
+  }
+  class todo_model_Task[&quot;Task&quot;] {
+    &lt;&lt;record&gt;&gt;
+    no: TaskNo
+    title: Title
+    status: Status = Open
+    priority: Priority = Normal
+    tags: Set[Tag] = Set#40;#41;
+  }
+  note for todo_model_Tag &quot;{ is_tag(self) }&quot;
+  todo_model_Task &quot;1&quot; *-- &quot;0..*&quot; todo_model_Tag : tags
+</pre>
+<h3>Calls, reads and writes: 2 nodes, 1 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_model[&quot;todo.model&quot;]
+    todo_model_is_tag[&quot;is_tag&quot;]
+    todo_model_Tag{{&quot;Tag&quot;}}
+  end
+  todo_model_Tag --&gt;|&quot;calls&quot;| todo_model_is_tag
+  classDef type stroke:#7c3aed,stroke-width:1px
+  class todo_model_Tag type
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_model_Tag hot
+</pre>
+<h3>Impact: 37 nodes, 53 edges</h3>
+<p class="dim">An arrow points at what is depended on.</p>
+<pre class="mermaid">
+flowchart RL
+  subgraph g_apps_bun[&quot;apps.bun&quot;]
+    apps_bun_TodoBun[[&quot;TodoBun&quot;]]
+  end
+  subgraph g_apps_cpp[&quot;apps.cpp&quot;]
+    apps_cpp_TodoCpp[[&quot;TodoCpp&quot;]]
+  end
+  subgraph g_apps_ruby[&quot;apps.ruby&quot;]
+    apps_ruby_TodoRuby[[&quot;TodoRuby&quot;]]
+  end
+  subgraph g_apps_rust[&quot;apps.rust&quot;]
+    apps_rust_TodoRust[[&quot;TodoRust&quot;]]
+  end
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_tasks[(&quot;tasks&quot;)]
+    todo_board_has_tag[&quot;has_tag&quot;]
+    todo_board_add([&quot;add&quot;])
+    todo_board_list([&quot;list&quot;])
+    todo_board_done([&quot;done&quot;])
+    todo_board_reopen([&quot;reopen&quot;])
+    todo_board_rename([&quot;rename&quot;])
+    todo_board_remove([&quot;remove&quot;])
+    todo_board_clear([&quot;clear&quot;])
+    todo_board_stats([&quot;stats&quot;])
+    todo_board_three_open_one_done[/&quot;three_open_one_done&quot;/]
+  end
+  subgraph g_todo_laws[&quot;todo.laws&quot;]
+    todo_laws_Change{{&quot;Change&quot;}}
+    todo_laws_numbers_below_next[\&quot;numbers_below_next&quot;\]
+    todo_laws_next_only_grows[\&quot;next_only_grows&quot;\]
+    todo_laws_others_untouched[\&quot;others_untouched&quot;\]
+    todo_laws_clear_keeps_every_open_task[\&quot;clear_keeps_every_open_task&quot;\]
+    todo_laws_reads_change_nothing[\&quot;reads_change_nothing&quot;\]
+    todo_laws_refusal_changes_nothing[\&quot;refusal_changes_nothing&quot;\]
+    todo_laws_stored_under_its_number[\&quot;stored_under_its_number&quot;\]
+  end
+  subgraph g_todo_model[&quot;todo.model&quot;]
+    todo_model_Tag{{&quot;Tag&quot;}}
+    todo_model_Task{{&quot;Task&quot;}}
+  end
+  subgraph g_todo_render[&quot;todo.render&quot;]
+    todo_render_tag_text[&quot;tag_text&quot;]
+    todo_render_rank[&quot;rank&quot;]
+    todo_render_line[&quot;line&quot;]
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_numbers_start_at_one[/&quot;numbers_start_at_one&quot;/]
+    todo_tests_scenarios_numbers_are_never_reused[/&quot;numbers_are_never_reused&quot;/]
+    todo_tests_scenarios_empty_board_says_so[/&quot;empty_board_says_so&quot;/]
+    todo_tests_scenarios_list_ranks_urgent_first[/&quot;list_ranks_urgent_first&quot;/]
+    todo_tests_scenarios_list_all_and_by_tag[/&quot;list_all_and_by_tag&quot;/]
+    todo_tests_scenarios_done_and_reopen_move_once[/&quot;done_and_reopen_move_once&quot;/]
+    todo_tests_scenarios_rename_keeps_the_rest[/&quot;rename_keeps_the_rest&quot;/]
+    todo_tests_scenarios_clear_removes_only_done[/&quot;clear_removes_only_done&quot;/]
+    todo_tests_scenarios_unknown_numbers_are_refused[/&quot;unknown_numbers_are_refused&quot;/]
+  end
+  apps_bun_TodoBun --&gt;|&quot;exposes&quot;| todo_board_add
+  apps_bun_TodoBun --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_cpp_TodoCpp --&gt;|&quot;exposes&quot;| todo_board_add
+  apps_cpp_TodoCpp --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_ruby_TodoRuby --&gt;|&quot;exposes&quot;| todo_board_add
+  apps_ruby_TodoRuby --&gt;|&quot;exposes&quot;| todo_board_list
+  apps_rust_TodoRust --&gt;|&quot;exposes&quot;| todo_board_add
+  apps_rust_TodoRust --&gt;|&quot;exposes&quot;| todo_board_list
+  todo_board_tasks -.-&gt;|&quot;uses&quot;| todo_model_Task
+  todo_board_has_tag -.-&gt;|&quot;uses&quot;| todo_model_Tag
+  todo_board_add -.-&gt;|&quot;uses&quot;| todo_model_Tag
+  todo_board_list -.-&gt;|&quot;uses&quot;| todo_model_Tag
+  todo_board_done -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_done ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_done --&gt;|&quot;calls&quot;| todo_render_line
+  todo_board_reopen -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_reopen ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_reopen --&gt;|&quot;calls&quot;| todo_render_line
+  todo_board_rename -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_rename ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_rename --&gt;|&quot;calls&quot;| todo_render_line
+  todo_board_remove -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_remove ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_clear -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_clear ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_stats -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_three_open_one_done --o|&quot;constructs&quot;| todo_model_Task
+  todo_laws_Change --&gt;|&quot;traces&quot;| todo_board_add
+  todo_laws_numbers_below_next --&gt;|&quot;traces&quot;| todo_board_add
+  todo_laws_next_only_grows --&gt;|&quot;traces&quot;| todo_board_add
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_reopen
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_rename
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_remove
+  todo_laws_clear_keeps_every_open_task --&gt;|&quot;traces&quot;| todo_board_add
+  todo_laws_reads_change_nothing --&gt;|&quot;traces&quot;| todo_board_list
+  todo_laws_refusal_changes_nothing --&gt;|&quot;traces&quot;| todo_board_add
+  todo_laws_stored_under_its_number --&gt;|&quot;traces&quot;| todo_board_add
+  todo_model_Task -.-&gt;|&quot;uses&quot;| todo_model_Tag
+  todo_render_tag_text -.-&gt;|&quot;uses&quot;| todo_model_Tag
+  todo_render_rank -.-&gt;|&quot;uses&quot;| todo_model_Task
+  todo_render_line -.-&gt;|&quot;uses&quot;| todo_model_Task
+  todo_render_line --&gt;|&quot;calls&quot;| todo_render_tag_text
+  todo_tests_scenarios_numbers_start_at_one --&gt;|&quot;calls&quot;| todo_board_add
+  todo_tests_scenarios_numbers_are_never_reused --&gt;|&quot;calls&quot;| todo_board_add
+  todo_tests_scenarios_empty_board_says_so --&gt;|&quot;calls&quot;| todo_board_list
+  todo_tests_scenarios_list_ranks_urgent_first --&gt;|&quot;calls&quot;| todo_board_list
+  todo_tests_scenarios_list_all_and_by_tag --&gt;|&quot;calls&quot;| todo_board_list
+  todo_tests_scenarios_done_and_reopen_move_once --&gt;|&quot;given&quot;| todo_board_three_open_one_done
+  todo_tests_scenarios_rename_keeps_the_rest --o|&quot;constructs&quot;| todo_model_Task
+  todo_tests_scenarios_clear_removes_only_done --&gt;|&quot;given&quot;| todo_board_three_open_one_done
+  todo_tests_scenarios_clear_removes_only_done -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;given&quot;| todo_board_three_open_one_done
+  classDef app stroke:#db2777,stroke-width:2px
+  class apps_bun_TodoBun,apps_cpp_TodoCpp,apps_ruby_TodoRuby,apps_rust_TodoRust app
+  classDef law stroke:#059669,stroke-width:2px
+  class todo_laws_numbers_below_next,todo_laws_next_only_grows,todo_laws_others_untouched,todo_laws_clear_keeps_every_open_task,todo_laws_reads_change_nothing,todo_laws_refusal_changes_nothing,todo_laws_stored_under_its_number law
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_add,todo_board_list,todo_board_done,todo_board_reopen,todo_board_rename,todo_board_remove,todo_board_clear,todo_board_stats rule
+  classDef state stroke:#d97706,stroke-width:2px
+  class todo_board_tasks state
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_board_three_open_one_done,todo_tests_scenarios_numbers_start_at_one,todo_tests_scenarios_numbers_are_never_reused,todo_tests_scenarios_empty_board_says_so,todo_tests_scenarios_list_ranks_urgent_first,todo_tests_scenarios_list_all_and_by_tag,todo_tests_scenarios_done_and_reopen_move_once,todo_tests_scenarios_rename_keeps_the_rest,todo_tests_scenarios_clear_removes_only_done,todo_tests_scenarios_unknown_numbers_are_refused test
+  classDef type stroke:#7c3aed,stroke-width:1px
+  class todo_laws_Change,todo_model_Tag,todo_model_Task type
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_model_Tag hot
+</pre>
+<h2>Names</h2>
+<table>
+<tr><th>calls</th><td><a href="../decl/todo_model_is_tag.html"><code>todo.model.is_tag</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><a href="../decl/todo_board_has_tag.html"><code>todo.board.has_tag</code></a>, <a href="../decl/todo_board_add.html"><code>todo.board.add</code></a>, <a href="../decl/todo_board_list.html"><code>todo.board.list</code></a>, <a href="../decl/todo_model_Task.html"><code>todo.model.Task</code></a>, <a href="../decl/todo_render_tag_text.html"><code>todo.render.tag_text</code></a></td></tr>
+<tr><th>tests</th><td><a href="../decl/todo_board_three_open_one_done.html"><code>todo.board.three_open_one_done</code></a>, <a href="../decl/todo_tests_scenarios_numbers_start_at_one.html"><code>todo.tests.scenarios.numbers_start_at_one</code></a>, <a href="../decl/todo_tests_scenarios_numbers_are_never_reused.html"><code>todo.tests.scenarios.numbers_are_never_reused</code></a>, <a href="../decl/todo_tests_scenarios_empty_board_says_so.html"><code>todo.tests.scenarios.empty_board_says_so</code></a>, <a href="../decl/todo_tests_scenarios_list_ranks_urgent_first.html"><code>todo.tests.scenarios.list_ranks_urgent_first</code></a>, <a href="../decl/todo_tests_scenarios_list_all_and_by_tag.html"><code>todo.tests.scenarios.list_all_and_by_tag</code></a>, <a href="../decl/todo_tests_scenarios_done_and_reopen_move_once.html"><code>todo.tests.scenarios.done_and_reopen_move_once</code></a>, <a href="../decl/todo_tests_scenarios_rename_keeps_the_rest.html"><code>todo.tests.scenarios.rename_keeps_the_rest</code></a>, <a href="../decl/todo_tests_scenarios_clear_removes_only_done.html"><code>todo.tests.scenarios.clear_removes_only_done</code></a>, <a href="../decl/todo_tests_scenarios_unknown_numbers_are_refused.html"><code>todo.tests.scenarios.unknown_numbers_are_refused</code></a></td></tr>
+<tr><th>laws</th><td><a href="../decl/todo_laws_numbers_below_next.html"><code>todo.laws.numbers_below_next</code></a>, <a href="../decl/todo_laws_next_only_grows.html"><code>todo.laws.next_only_grows</code></a>, <a href="../decl/todo_laws_others_untouched.html"><code>todo.laws.others_untouched</code></a>, <a href="../decl/todo_laws_clear_keeps_every_open_task.html"><code>todo.laws.clear_keeps_every_open_task</code></a>, <a href="../decl/todo_laws_reads_change_nothing.html"><code>todo.laws.reads_change_nothing</code></a>, <a href="../decl/todo_laws_refusal_changes_nothing.html"><code>todo.laws.refusal_changes_nothing</code></a>, <a href="../decl/todo_laws_stored_under_its_number.html"><code>todo.laws.stored_under_its_number</code></a></td></tr>
+<tr><th>rules</th><td><a href="../decl/todo_board_add.html"><code>todo.board.add</code></a>, <a href="../decl/todo_board_list.html"><code>todo.board.list</code></a>, <a href="../decl/todo_board_done.html"><code>todo.board.done</code></a>, <a href="../decl/todo_board_reopen.html"><code>todo.board.reopen</code></a>, <a href="../decl/todo_board_rename.html"><code>todo.board.rename</code></a>, <a href="../decl/todo_board_remove.html"><code>todo.board.remove</code></a>, <a href="../decl/todo_board_clear.html"><code>todo.board.clear</code></a>, <a href="../decl/todo_board_stats.html"><code>todo.board.stats</code></a></td></tr>
+<tr><th>functions</th><td><a href="../decl/todo_board_has_tag.html"><code>todo.board.has_tag</code></a>, <a href="../decl/todo_render_tag_text.html"><code>todo.render.tag_text</code></a>, <a href="../decl/todo_render_rank.html"><code>todo.render.rank</code></a>, <a href="../decl/todo_render_line.html"><code>todo.render.line</code></a></td></tr>
+<tr><th>apps</th><td><a href="../decl/apps_bun_TodoBun.html"><code>apps.bun.TodoBun</code></a>, <a href="../decl/apps_cpp_TodoCpp.html"><code>apps.cpp.TodoCpp</code></a>, <a href="../decl/apps_ruby_TodoRuby.html"><code>apps.ruby.TodoRuby</code></a>, <a href="../decl/apps_rust_TodoRust.html"><code>apps.rust.TodoRust</code></a></td></tr>
+<tr><th><code>@cases</code> of</th><td><a href="../decl/todo_render_tag_text.html"><code>todo.render.tag_text</code></a>, <a href="../decl/todo_render_line.html"><code>todo.render.line</code></a></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

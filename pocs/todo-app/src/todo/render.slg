@@ -1,0 +1,35 @@
+// todo.render: how a task reads on one line. Pure.
+
+use todo.model.Task;
+use todo.model.Status;
+use todo.model.Priority;
+use todo.model.Tag;
+
+fn mark(s: Status) -> Text = match s {
+  Open => " ";
+  Done => "x";
+}
+
+fn badge(p: Priority) -> Text = match p {
+  Low => " !low";
+  Normal => "";
+  High => " !high";
+}
+
+@cases(Set() -> "", Set("work", "home") -> " #home #work")
+fn tag_text(tags: Set[Tag]) -> Text = tags.list.map(t => " #{t}").join("");
+
+fn urgency(p: Priority) -> Int = match p {
+  High => 0;
+  Normal => 1;
+  Low => 2;
+}
+
+@why("most urgent first, then oldest first")
+pub fn rank(t: Task) -> (Int, Int) = (urgency(t.priority), t.no);
+
+@cases(
+  Task(1, title: "milk") -> "1 [ ] milk",
+  Task(2, title: "ship", status: Done, priority: High, tags: Set("work")) -> "2 [x] ship !high #work",
+)
+pub fn line(t: Task) -> Text = "{t.no} [{mark(t.status)}] {t.title}{badge(t.priority)}{tag_text(t.tags)}";

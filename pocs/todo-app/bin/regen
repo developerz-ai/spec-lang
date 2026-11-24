@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Regenerate gen/<backend> from src/ with the real compiler, or check that the committed copy is current.
+# Usage: bin/regen            rewrite gen/{rust,bun,ruby,cpp} (build output inside them is kept)
+#        bin/regen --check    fail if any committed generated file differs from a fresh build
+set -euo pipefail
+cd "$(dirname "$0")/.."
+root="$(pwd)"
+
+(cd ../../src && cargo build --release -q -p spec-lang-cli -p emit-ts)
+slg="$root/../../src/target/release/spec-lang"
+emit_ts="$root/../../src/target/release/emit-ts"
+
+scratch="$(mktemp -d)"
+trap 'rm -rf "$scratch"' EXIT
+keep=(target build node_modules dist .bundle vendor)
+
+generate() { # backend app dir
+  case "$1" in
+    bun)
+      # The emitter's own --normalize runs the project's formatter and re-anchors provenance.json to the moved lines;
+      # `spec-lang build` does not yet, so the TypeScript target goes through emit-ts directly.
+      mkdir -p "$3"
+      [ -d "$root/gen/bun/node_modules" ] && ln -s "$root/gen/bun/node_modules" "$3/node_modules"
+      "$emit_ts" src "$3" --normalize >/dev/null
+      rm -rf "$3/node_modules" ;;
+    *) "$slg" build src --app "$2" --out "$3" >/dev/null ;;
+  esac
+}
+
+stale=0
+for pair in rust:TodoRust bun:TodoBun ruby:TodoRuby cpp:TodoCpp; do
+  b="${pair%%:*}"; app="${pair##*:}"
+  generate "$b" "$app" "$scratch/$b"
+  excludes=(); for k in "${keep[@]}"; do excludes+=(-x "$k"); done
+  if [ "${1:-}" = "--check" ]; then
+    if ! diff -rq "${excludes[@]}" -x '*.lock' -x 'bun.lock' "$scratch/$b" "gen/$b" >/dev/null; then
+      echo "gen/$b is stale against src/: run pocs/todo-app/bin/regen" >&2
+      diff -rq "${excludes[@]}" -x '*.lock' -x 'bun.lock' "$scratch/$b" "gen/$b" | head -5 >&2
+      stale=1
+    fi
+  else
+    find "gen/$b" -mindepth 1 -maxdepth 1 $(printf -- '-not -name %s ' "${keep[@]}" '*.lock' bun.lock) -exec rm -rf {} +
+    cp -a "$scratch/$b/." "gen/$b/"
+    echo "gen/$b regenerated"
+  fi
+done
+exit "$stale"
