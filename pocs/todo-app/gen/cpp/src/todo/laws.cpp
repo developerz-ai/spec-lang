@@ -3,4 +3,4 @@
 
 #include "program/machine.hpp"
 
-namespace todo::laws {}  // namespace todo::laws
+namespace slg_program::todo::laws {}  // namespace slg_program::todo::laws

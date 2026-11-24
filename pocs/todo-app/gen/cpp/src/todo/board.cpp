@@ -4,12 +4,12 @@
 #include "program/machine.hpp"
 #include "todo/render.hpp"
 
-namespace todo::board {
+namespace slg_program::todo::board {
 
 // fn todo.board.has_tag (todo/board.slg:16)
-bool has_tag(const todo::model::Task& t, const rt::Option<todo::model::Tag>& tag) {
-  rt::claim(todo::model::valid_task(t), "argument `t`");
-  rt::claim((!tag.has_value() || todo::model::valid_tag((*tag))), "argument `tag`");
+bool has_tag(const slg_program::todo::model::Task& t, const rt::Option<slg_program::todo::model::Tag>& tag) {
+  rt::claim(slg_program::todo::model::valid_task(t), "argument `t`");
+  rt::claim((!tag.has_value() || slg_program::todo::model::valid_tag((*tag))), "argument `tag`");
   if (!tag.has_value()) {
     return true;
   }
@@ -23,26 +23,27 @@ bool has_tag(const todo::model::Task& t, const rt::Option<todo::model::Tag>& tag
 // a number is never reused, so an old note that says 'task 3' never names a new task
 // rule todo.board.add (todo/board.slg:21)
 // @on(cli("add"))
-todo::model::TaskNo add(program::Machine& ctx, const todo::model::Title& title, todo::model::Priority priority,
-                        const rt::Set<todo::model::Tag>& tags) {
+slg_program::todo::model::TaskNo add(program::Machine& ctx, const slg_program::todo::model::Title& title,
+                                     slg_program::todo::model::Priority priority,
+                                     const rt::Set<slg_program::todo::model::Tag>& tags) {
   return ctx.atomic([&]() -> rt::Int {
-    rt::claim(todo::model::valid_title(title), "argument `title`");
-    rt::claim(std::ranges::all_of(tags, [](const auto& item) { return todo::model::valid_tag(item); }),
+    rt::claim(slg_program::todo::model::valid_title(title), "argument `title`");
+    rt::claim(std::ranges::all_of(tags, [](const auto& item) { return slg_program::todo::model::valid_tag(item); }),
               "argument `tags`");
     const auto result_4 = [&]() -> rt::Int {
       const auto no = ctx.world.next_no;
-      todo::model::Task value_2 =
-          rt::conforming(todo::model::Task{.no = no, .title = title, .priority = priority, .tags = tags},
-                         todo::model::valid_task, "a new Task");
-      rt::claim(todo::model::valid_task(value_2), "a write to todo.board.tasks");
+      slg_program::todo::model::Task value_2 =
+          rt::conforming(slg_program::todo::model::Task{.no = no, .title = title, .priority = priority, .tags = tags},
+                         slg_program::todo::model::valid_task, "a new Task");
+      rt::claim(slg_program::todo::model::valid_task(value_2), "a write to todo.board.tasks");
       ctx.world.tasks.insert_or_assign(no, std::move(value_2));
       rt::Int value_3 = no + 1_i;
-      rt::claim(todo::model::valid_task_no(value_3), "a write to todo.board.next_no");
+      rt::claim(slg_program::todo::model::valid_task_no(value_3), "a write to todo.board.next_no");
       ctx.world.next_no = std::move(value_3);
       ctx.out->line(rt::concat({"added ", rt::str(no)}));
       return no;
     }();
-    rt::claim(todo::model::valid_task_no(result_4), "the result");
+    rt::claim(slg_program::todo::model::valid_task_no(result_4), "the result");
     return result_4;
   });
 }
@@ -50,22 +51,23 @@ todo::model::TaskNo add(program::Machine& ctx, const todo::model::Title& title, 
 // open work first; finished work only when asked for
 // rule todo.board.list (todo/board.slg:32)
 // @on(cli("list"))
-void list(program::Machine& ctx, bool all, const rt::Option<todo::model::Tag>& tag) {
+void list(program::Machine& ctx, bool all, const rt::Option<slg_program::todo::model::Tag>& tag) {
   ctx.atomic([&] {
-    rt::claim((!tag.has_value() || todo::model::valid_tag((*tag))), "argument `tag`");
+    rt::claim((!tag.has_value() || slg_program::todo::model::valid_tag((*tag))), "argument `tag`");
     const auto shown =
         rt::sort_by(rt::filter(rt::values(ctx.world.tasks),
-                               [&](const todo::model::Task& t) {
-                                 return (all || t.status == todo::model::Status::Open) && todo::board::has_tag(t, tag);
+                               [&](const slg_program::todo::model::Task& t) {
+                                 return (all || t.status == slg_program::todo::model::Status::Open) &&
+                                        slg_program::todo::board::has_tag(t, tag);
                                }),
-                    [&](const todo::model::Task& t_2) { return todo::render::rank(t_2); });
+                    [&](const slg_program::todo::model::Task& t_2) { return slg_program::todo::render::rank(t_2); });
     if (rt::size(shown) == 0_i) {
       ctx.out->line("nothing to do"s);
       return;
     }
     const auto items = shown;
     for (const auto& t_3 : items) {
-      ctx.out->line(todo::render::line(t_3));
+      ctx.out->line(slg_program::todo::render::line(t_3));
     }
   });
 }
@@ -73,56 +75,58 @@ void list(program::Machine& ctx, bool all, const rt::Option<todo::model::Tag>& t
 // finishing is one step, and only open work can finish
 // rule todo.board.done (todo/board.slg:44)
 // @on(cli("done"))
-void done(program::Machine& ctx, todo::model::TaskNo no) {
+void done(program::Machine& ctx, slg_program::todo::model::TaskNo no) {
   ctx.atomic([&] {
-    rt::claim(todo::model::valid_task_no(no), "argument `no`");
+    rt::claim(slg_program::todo::model::valid_task_no(no), "argument `no`");
     rt::guard(rt::contains(ctx.world.tasks, no), "NoTask");
-    rt::guard([&] { return rt::at(ctx.world.tasks, no).status == todo::model::Status::Open; }, "AlreadyDone");
-    rt::at(ctx.world.tasks, no).status = todo::model::Status::Done;
-    ctx.out->line(todo::render::line(rt::at(ctx.world.tasks, no)));
+    rt::guard([&] { return rt::at(ctx.world.tasks, no).status == slg_program::todo::model::Status::Open; },
+              "AlreadyDone");
+    rt::at(ctx.world.tasks, no).status = slg_program::todo::model::Status::Done;
+    ctx.out->line(slg_program::todo::render::line(rt::at(ctx.world.tasks, no)));
   });
 }
 
 // a mistaken done is undone, not re-added under a new number
 // rule todo.board.reopen (todo/board.slg:53)
 // @on(cli("reopen"))
-void reopen(program::Machine& ctx, todo::model::TaskNo no) {
+void reopen(program::Machine& ctx, slg_program::todo::model::TaskNo no) {
   ctx.atomic([&] {
-    rt::claim(todo::model::valid_task_no(no), "argument `no`");
+    rt::claim(slg_program::todo::model::valid_task_no(no), "argument `no`");
     rt::guard(rt::contains(ctx.world.tasks, no), "NoTask");
-    rt::guard([&] { return rt::at(ctx.world.tasks, no).status == todo::model::Status::Done; }, "NotDone");
-    rt::at(ctx.world.tasks, no).status = todo::model::Status::Open;
-    ctx.out->line(todo::render::line(rt::at(ctx.world.tasks, no)));
+    rt::guard([&] { return rt::at(ctx.world.tasks, no).status == slg_program::todo::model::Status::Done; }, "NotDone");
+    rt::at(ctx.world.tasks, no).status = slg_program::todo::model::Status::Open;
+    ctx.out->line(slg_program::todo::render::line(rt::at(ctx.world.tasks, no)));
   });
 }
 
 // a title changes without losing its number, status or tags
 // rule todo.board.rename (todo/board.slg:62)
 // @on(cli("rename"))
-void rename(program::Machine& ctx, todo::model::TaskNo no, const todo::model::Title& title) {
+void rename(program::Machine& ctx, slg_program::todo::model::TaskNo no, const slg_program::todo::model::Title& title) {
   ctx.atomic([&] {
-    rt::claim(todo::model::valid_task_no(no), "argument `no`");
-    rt::claim(todo::model::valid_title(title), "argument `title`");
+    rt::claim(slg_program::todo::model::valid_task_no(no), "argument `no`");
+    rt::claim(slg_program::todo::model::valid_title(title), "argument `title`");
     rt::guard(rt::contains(ctx.world.tasks, no), "NoTask");
     rt::Text value = title;
-    rt::claim(todo::model::valid_title(value), "a write to todo.board.tasks");
+    rt::claim(slg_program::todo::model::valid_title(value), "a write to todo.board.tasks");
     rt::at(ctx.world.tasks, no).title = std::move(value);
-    ctx.out->line(todo::render::line(rt::at(ctx.world.tasks, no)));
+    ctx.out->line(slg_program::todo::render::line(rt::at(ctx.world.tasks, no)));
   });
 }
 
 // removing frees nothing: the number stays used
 // rule todo.board.remove (todo/board.slg:71)
 // @on(cli("remove"))
-void remove(program::Machine& ctx, todo::model::TaskNo no) {
+void remove(program::Machine& ctx, slg_program::todo::model::TaskNo no) {
   ctx.atomic([&] {
-    rt::claim(todo::model::valid_task_no(no), "argument `no`");
+    rt::claim(slg_program::todo::model::valid_task_no(no), "argument `no`");
     rt::guard(rt::contains(ctx.world.tasks, no), "NoTask");
     ctx.world.tasks.erase(no);
     rt::claim(
         (std::ranges::all_of(ctx.world.tasks,
-                             [](const auto& entry) { return todo::model::valid_task_no(entry.first); }) &&
-         std::ranges::all_of(ctx.world.tasks, [](const auto& entry) { return todo::model::valid_task(entry.second); })),
+                             [](const auto& entry) { return slg_program::todo::model::valid_task_no(entry.first); }) &&
+         std::ranges::all_of(ctx.world.tasks,
+                             [](const auto& entry) { return slg_program::todo::model::valid_task(entry.second); })),
         "a write to todo.board.tasks");
     ctx.out->line(rt::concat({"removed ", rt::str(no)}));
   });
@@ -133,15 +137,18 @@ void remove(program::Machine& ctx, todo::model::TaskNo no) {
 // @on(cli("clear"))
 rt::Int clear(program::Machine& ctx) {
   return ctx.atomic([&]() -> rt::Int {
-    const auto gone = rt::filter(rt::values(ctx.world.tasks),
-                                 [&](const todo::model::Task& it) { return it.status == todo::model::Status::Done; });
+    const auto gone = rt::filter(rt::values(ctx.world.tasks), [&](const slg_program::todo::model::Task& it) {
+      return it.status == slg_program::todo::model::Status::Done;
+    });
     const auto items = gone;
     for (const auto& t : items) {
       ctx.world.tasks.erase(t.no);
-      rt::claim((std::ranges::all_of(ctx.world.tasks,
-                                     [](const auto& entry_2) { return todo::model::valid_task_no(entry_2.first); }) &&
-                 std::ranges::all_of(ctx.world.tasks,
-                                     [](const auto& entry_2) { return todo::model::valid_task(entry_2.second); })),
+      rt::claim((std::ranges::all_of(
+                     ctx.world.tasks,
+                     [](const auto& entry_2) { return slg_program::todo::model::valid_task_no(entry_2.first); }) &&
+                 std::ranges::all_of(
+                     ctx.world.tasks,
+                     [](const auto& entry_2) { return slg_program::todo::model::valid_task(entry_2.second); })),
                 "a write to todo.board.tasks");
     }
     ctx.out->line(rt::concat({"cleared ", rt::str(rt::size(gone))}));
@@ -154,11 +161,11 @@ rt::Int clear(program::Machine& ctx) {
 // @on(cli("stats"))
 void stats(program::Machine& ctx) {
   ctx.atomic([&] {
-    const auto open = rt::size(rt::filter(rt::values(ctx.world.tasks), [&](const todo::model::Task& it) {
-      return it.status == todo::model::Status::Open;
+    const auto open = rt::size(rt::filter(rt::values(ctx.world.tasks), [&](const slg_program::todo::model::Task& it) {
+      return it.status == slg_program::todo::model::Status::Open;
     }));
     ctx.out->line(rt::concat({rt::str(open), " open, ", rt::str(rt::size(ctx.world.tasks) - open), " done"}));
   });
 }
 
-}  // namespace todo::board
+}  // namespace slg_program::todo::board

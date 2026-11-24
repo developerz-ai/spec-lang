@@ -60,7 +60,7 @@ fn panic_at(p: &Path, why: Option<String>) -> ! {
 fn an_app_is_its_program_its_manifest_and_its_libraries_runtimes() {
     for (poc, app, exe, lib) in [
         ("todo-app", "TodoRust", "todo", "src/libs/cli/mod.rs"),
-        ("platformer", "SkyhopRust", "skyhop", "build/raylib.rs"),
+        ("platformer", "SkyhopRust", "skyhop", "link/raylib.rs"),
     ] {
         let p = root().join("pocs").join(poc).join("src");
         let Ok(lir) = lowered(&p) else { panic_at(&p, None) };

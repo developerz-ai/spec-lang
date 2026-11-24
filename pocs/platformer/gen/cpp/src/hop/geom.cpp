@@ -3,7 +3,7 @@
 
 #include "program/machine.hpp"
 
-namespace hop::geom {
+namespace slg_program::hop::geom {
 
 bool valid_sub(const Sub& value) {
   return (value >= -1048576_i && value <= 1048576_i);
@@ -14,7 +14,8 @@ rt::Text show(const Vec3& value) {
 }
 
 bool valid_vec3(const Vec3& value) {
-  return hop::geom::valid_sub(value.x) && hop::geom::valid_sub(value.y) && hop::geom::valid_sub(value.z);
+  return slg_program::hop::geom::valid_sub(value.x) && slg_program::hop::geom::valid_sub(value.y) &&
+         slg_program::hop::geom::valid_sub(value.z);
 }
 
 rt::Text show(const Box& value) {
@@ -22,112 +23,116 @@ rt::Text show(const Box& value) {
 }
 
 bool valid_box(const Box& value) {
-  return hop::geom::valid_vec3(value.lo) && hop::geom::valid_vec3(value.hi);
+  return slg_program::hop::geom::valid_vec3(value.lo) && slg_program::hop::geom::valid_vec3(value.hi);
 }
 
 // fn hop.geom.plus (hop/geom.slg:14)
-hop::geom::Vec3 plus(const hop::geom::Vec3& a, const hop::geom::Vec3& b) {
-  rt::claim(hop::geom::valid_vec3(a), "argument `a`");
-  rt::claim(hop::geom::valid_vec3(b), "argument `b`");
-  const auto result = [&]() -> hop::geom::Vec3 {
-    return rt::conforming(hop::geom::Vec3{.x = a.x + b.x, .y = a.y + b.y, .z = a.z + b.z}, hop::geom::valid_vec3,
-                          "a new Vec3");
+slg_program::hop::geom::Vec3 plus(const slg_program::hop::geom::Vec3& a, const slg_program::hop::geom::Vec3& b) {
+  rt::claim(slg_program::hop::geom::valid_vec3(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_vec3(b), "argument `b`");
+  const auto result = [&]() -> slg_program::hop::geom::Vec3 {
+    return rt::conforming(slg_program::hop::geom::Vec3{.x = a.x + b.x, .y = a.y + b.y, .z = a.z + b.z},
+                          slg_program::hop::geom::valid_vec3, "a new Vec3");
   }();
-  rt::claim(hop::geom::valid_vec3(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_vec3(result), "the result");
   return result;
 }
 
 // fn hop.geom.minus (hop/geom.slg:17)
-hop::geom::Vec3 minus(const hop::geom::Vec3& a, const hop::geom::Vec3& b) {
-  rt::claim(hop::geom::valid_vec3(a), "argument `a`");
-  rt::claim(hop::geom::valid_vec3(b), "argument `b`");
-  const auto result = [&]() -> hop::geom::Vec3 {
-    return rt::conforming(hop::geom::Vec3{.x = a.x - b.x, .y = a.y - b.y, .z = a.z - b.z}, hop::geom::valid_vec3,
-                          "a new Vec3");
+slg_program::hop::geom::Vec3 minus(const slg_program::hop::geom::Vec3& a, const slg_program::hop::geom::Vec3& b) {
+  rt::claim(slg_program::hop::geom::valid_vec3(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_vec3(b), "argument `b`");
+  const auto result = [&]() -> slg_program::hop::geom::Vec3 {
+    return rt::conforming(slg_program::hop::geom::Vec3{.x = a.x - b.x, .y = a.y - b.y, .z = a.z - b.z},
+                          slg_program::hop::geom::valid_vec3, "a new Vec3");
   }();
-  rt::claim(hop::geom::valid_vec3(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_vec3(result), "the result");
   return result;
 }
 
 // fn hop.geom.scaled (hop/geom.slg:19)
-hop::geom::Vec3 scaled(const hop::geom::Vec3& v, rt::Int k) {
-  rt::claim(hop::geom::valid_vec3(v), "argument `v`");
-  const auto result = [&]() -> hop::geom::Vec3 {
-    return rt::conforming(hop::geom::Vec3{.x = v.x * k, .y = v.y * k, .z = v.z * k}, hop::geom::valid_vec3,
-                          "a new Vec3");
+slg_program::hop::geom::Vec3 scaled(const slg_program::hop::geom::Vec3& v, rt::Int k) {
+  rt::claim(slg_program::hop::geom::valid_vec3(v), "argument `v`");
+  const auto result = [&]() -> slg_program::hop::geom::Vec3 {
+    return rt::conforming(slg_program::hop::geom::Vec3{.x = v.x * k, .y = v.y * k, .z = v.z * k},
+                          slg_program::hop::geom::valid_vec3, "a new Vec3");
   }();
-  rt::claim(hop::geom::valid_vec3(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_vec3(result), "the result");
   return result;
 }
 
 // fn hop.geom.shifted (hop/geom.slg:21)
-hop::geom::Box shifted(const hop::geom::Box& b, const hop::geom::Vec3& by) {
-  rt::claim(hop::geom::valid_box(b), "argument `b`");
-  rt::claim(hop::geom::valid_vec3(by), "argument `by`");
-  const auto result = [&]() -> hop::geom::Box {
-    return rt::conforming(hop::geom::Box{.lo = hop::geom::plus(b.lo, by), .hi = hop::geom::plus(b.hi, by)},
-                          hop::geom::valid_box, "a new Box");
+slg_program::hop::geom::Box shifted(const slg_program::hop::geom::Box& b, const slg_program::hop::geom::Vec3& by) {
+  rt::claim(slg_program::hop::geom::valid_box(b), "argument `b`");
+  rt::claim(slg_program::hop::geom::valid_vec3(by), "argument `by`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
+    return rt::conforming(slg_program::hop::geom::Box{.lo = slg_program::hop::geom::plus(b.lo, by),
+                                                      .hi = slg_program::hop::geom::plus(b.hi, by)},
+                          slg_program::hop::geom::valid_box, "a new Box");
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // a body is placed by the centre of its base: its feet
 // fn hop.geom.around_feet (hop/geom.slg:23)
-hop::geom::Box around_feet(const hop::geom::Vec3& feet, const hop::geom::Vec3& half) {
-  rt::claim(hop::geom::valid_vec3(feet), "argument `feet`");
-  rt::claim(hop::geom::valid_vec3(half), "argument `half`");
-  const auto result = [&]() -> hop::geom::Box {
+slg_program::hop::geom::Box around_feet(const slg_program::hop::geom::Vec3& feet,
+                                        const slg_program::hop::geom::Vec3& half) {
+  rt::claim(slg_program::hop::geom::valid_vec3(feet), "argument `feet`");
+  rt::claim(slg_program::hop::geom::valid_vec3(half), "argument `half`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
     return rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = feet.x - half.x, .y = feet.y, .z = feet.z - half.z},
-                                 hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = feet.x + half.x, .y = feet.y + half.y, .z = feet.z + half.z},
-                                 hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{
+            .lo = rt::conforming(slg_program::hop::geom::Vec3{.x = feet.x - half.x, .y = feet.y, .z = feet.z - half.z},
+                                 slg_program::hop::geom::valid_vec3, "a new Vec3"),
+            .hi = rt::conforming(
+                slg_program::hop::geom::Vec3{.x = feet.x + half.x, .y = feet.y + half.y, .z = feet.z + half.z},
+                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // a gem is placed by its centre
 // fn hop.geom.around_centre (hop/geom.slg:28)
-hop::geom::Box around_centre(const hop::geom::Vec3& c, rt::Int half) {
-  rt::claim(hop::geom::valid_vec3(c), "argument `c`");
-  const auto result = [&]() -> hop::geom::Box {
+slg_program::hop::geom::Box around_centre(const slg_program::hop::geom::Vec3& c, rt::Int half) {
+  rt::claim(slg_program::hop::geom::valid_vec3(c), "argument `c`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
     return rt::conforming(
-        hop::geom::Box{.lo = rt::conforming(hop::geom::Vec3{.x = c.x - half, .y = c.y - half, .z = c.z - half},
-                                            hop::geom::valid_vec3, "a new Vec3"),
-                       .hi = rt::conforming(hop::geom::Vec3{.x = c.x + half, .y = c.y + half, .z = c.z + half},
-                                            hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{
+            .lo = rt::conforming(slg_program::hop::geom::Vec3{.x = c.x - half, .y = c.y - half, .z = c.z - half},
+                                 slg_program::hop::geom::valid_vec3, "a new Vec3"),
+            .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = c.x + half, .y = c.y + half, .z = c.z + half},
+                                 slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // solids block only when they share volume: a body standing on a floor touches it and is not inside it
 // fn hop.geom.overlaps (hop/geom.slg:32)
-bool overlaps(const hop::geom::Box& a, const hop::geom::Box& b) {
-  rt::claim(hop::geom::valid_box(a), "argument `a`");
-  rt::claim(hop::geom::valid_box(b), "argument `b`");
+bool overlaps(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b) {
+  rt::claim(slg_program::hop::geom::valid_box(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_box(b), "argument `b`");
   return a.lo.x < b.hi.x && b.lo.x < a.hi.x && a.lo.y < b.hi.y && b.lo.y < a.hi.y && a.lo.z < b.hi.z && b.lo.z < a.hi.z;
 }
 
 // pickups and hits count a touch, faces included: the same test raylib's CheckCollisionBoxes makes
 // fn hop.geom.touches (hop/geom.slg:40)
-bool touches(const hop::geom::Box& a, const hop::geom::Box& b) {
-  rt::claim(hop::geom::valid_box(a), "argument `a`");
-  rt::claim(hop::geom::valid_box(b), "argument `b`");
+bool touches(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b) {
+  rt::claim(slg_program::hop::geom::valid_box(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_box(b), "argument `b`");
   return a.lo.x <= b.hi.x && b.lo.x <= a.hi.x && a.lo.y <= b.hi.y && b.lo.y <= a.hi.y && a.lo.z <= b.hi.z &&
          b.lo.z <= a.hi.z;
 }
 
 // the footprints meet strictly: standing needs some floor under the feet, not an edge
 // fn hop.geom.over (hop/geom.slg:48)
-bool over(const hop::geom::Box& a, const hop::geom::Box& b) {
-  rt::claim(hop::geom::valid_box(a), "argument `a`");
-  rt::claim(hop::geom::valid_box(b), "argument `b`");
+bool over(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b) {
+  rt::claim(slg_program::hop::geom::valid_box(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_box(b), "argument `b`");
   return a.lo.x < b.hi.x && b.lo.x < a.hi.x && a.lo.z < b.hi.z && b.lo.z < a.hi.z;
 }
 
@@ -144,9 +149,9 @@ rt::Int approach(rt::Int v, rt::Int target, rt::Int step_2) {
 }
 
 // fn hop.geom.vec_text (hop/geom.slg:62)
-rt::Text vec_text(const hop::geom::Vec3& v) {
-  rt::claim(hop::geom::valid_vec3(v), "argument `v`");
+rt::Text vec_text(const slg_program::hop::geom::Vec3& v) {
+  rt::claim(slg_program::hop::geom::valid_vec3(v), "argument `v`");
   return rt::concat({rt::str(v.x), ",", rt::str(v.y), ",", rt::str(v.z)});
 }
 
-}  // namespace hop::geom
+}  // namespace slg_program::hop::geom

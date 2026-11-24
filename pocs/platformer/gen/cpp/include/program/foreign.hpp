@@ -12,11 +12,11 @@ namespace foreign::raylib {
 // hop.screen.key_down (hop/screen.slg:42) = foreign c "raylib#IsKeyDown"
 bool IsKeyDown(rt::Int key);
 // hop.screen.check_collision_boxes (hop/screen.slg:45) = foreign c "raylib#CheckCollisionBoxes"
-bool CheckCollisionBoxes(const hop::geom::Box& a, const hop::geom::Box& b);
+bool CheckCollisionBoxes(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b);
 // hop.screen.clear_background (hop/screen.slg:13) = foreign c "raylib#ClearBackground"
-void ClearBackground(const hop::model::Rgb& color);
+void ClearBackground(const slg_program::hop::model::Rgb& color);
 // hop.screen.begin_mode_3d (hop/screen.slg:16) = foreign c "raylib#BeginMode3D"
-void BeginMode3D(const hop::geom::Vec3& eye, const hop::geom::Vec3& target);
+void BeginMode3D(const slg_program::hop::geom::Vec3& eye, const slg_program::hop::geom::Vec3& target);
 // hop.screen.end_mode_3d (hop/screen.slg:20) = foreign c "raylib#EndMode3D"
 void EndMode3D();
 // hop.screen.begin_lit (hop/screen.slg:23) = foreign c "raylib#BeginShaderMode"
@@ -24,11 +24,11 @@ void BeginShaderMode(rt::Int time);
 // hop.screen.end_lit (hop/screen.slg:27) = foreign c "raylib#EndShaderMode"
 void EndShaderMode();
 // hop.screen.draw_cube (hop/screen.slg:30) = foreign c "raylib#DrawCube"
-void DrawCube(const hop::geom::Box& box, const hop::model::Rgb& color);
+void DrawCube(const slg_program::hop::geom::Box& box, const slg_program::hop::model::Rgb& color);
 // hop.screen.draw_cube_wires (hop/screen.slg:33) = foreign c "raylib#DrawCubeWires"
-void DrawCubeWires(const hop::geom::Box& box, const hop::model::Rgb& color);
+void DrawCubeWires(const slg_program::hop::geom::Box& box, const slg_program::hop::model::Rgb& color);
 // hop.screen.draw_model (hop/screen.slg:36) = foreign c "raylib#DrawModelEx"
-void DrawModelEx(hop::render::Asset asset, const hop::geom::Vec3& at, rt::Int yaw);
+void DrawModelEx(slg_program::hop::render::Asset asset, const slg_program::hop::geom::Vec3& at, rt::Int yaw);
 // hop.screen.draw_text (hop/screen.slg:39) = foreign c "raylib#DrawText"
-void DrawText(const rt::Text& text, rt::Int x, rt::Int y, rt::Int size, const hop::model::Rgb& color);
+void DrawText(const rt::Text& text, rt::Int x, rt::Int y, rt::Int size, const slg_program::hop::model::Rgb& color);
 }  // namespace foreign::raylib

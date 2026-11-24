@@ -6,13 +6,13 @@ namespace foreign::raylib {
 bool IsKeyDown(rt::Int) {
   rt::foreign("hop.screen.key_down", "foreign c \"raylib#IsKeyDown\"");
 }
-bool CheckCollisionBoxes(const hop::geom::Box&, const hop::geom::Box&) {
+bool CheckCollisionBoxes(const slg_program::hop::geom::Box&, const slg_program::hop::geom::Box&) {
   rt::foreign("hop.screen.check_collision_boxes", "foreign c \"raylib#CheckCollisionBoxes\"");
 }
-void ClearBackground(const hop::model::Rgb&) {
+void ClearBackground(const slg_program::hop::model::Rgb&) {
   rt::foreign("hop.screen.clear_background", "foreign c \"raylib#ClearBackground\"");
 }
-void BeginMode3D(const hop::geom::Vec3&, const hop::geom::Vec3&) {
+void BeginMode3D(const slg_program::hop::geom::Vec3&, const slg_program::hop::geom::Vec3&) {
   rt::foreign("hop.screen.begin_mode_3d", "foreign c \"raylib#BeginMode3D\"");
 }
 void EndMode3D() {
@@ -24,16 +24,16 @@ void BeginShaderMode(rt::Int) {
 void EndShaderMode() {
   rt::foreign("hop.screen.end_lit", "foreign c \"raylib#EndShaderMode\"");
 }
-void DrawCube(const hop::geom::Box&, const hop::model::Rgb&) {
+void DrawCube(const slg_program::hop::geom::Box&, const slg_program::hop::model::Rgb&) {
   rt::foreign("hop.screen.draw_cube", "foreign c \"raylib#DrawCube\"");
 }
-void DrawCubeWires(const hop::geom::Box&, const hop::model::Rgb&) {
+void DrawCubeWires(const slg_program::hop::geom::Box&, const slg_program::hop::model::Rgb&) {
   rt::foreign("hop.screen.draw_cube_wires", "foreign c \"raylib#DrawCubeWires\"");
 }
-void DrawModelEx(hop::render::Asset, const hop::geom::Vec3&, rt::Int) {
+void DrawModelEx(slg_program::hop::render::Asset, const slg_program::hop::geom::Vec3&, rt::Int) {
   rt::foreign("hop.screen.draw_model", "foreign c \"raylib#DrawModelEx\"");
 }
-void DrawText(const rt::Text&, rt::Int, rt::Int, rt::Int, const hop::model::Rgb&) {
+void DrawText(const rt::Text&, rt::Int, rt::Int, rt::Int, const slg_program::hop::model::Rgb&) {
   rt::foreign("hop.screen.draw_text", "foreign c \"raylib#DrawText\"");
 }
 }  // namespace foreign::raylib

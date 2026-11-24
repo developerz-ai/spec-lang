@@ -4,7 +4,7 @@
 #include "hop/geom.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::model {
+namespace slg_program::hop::model {
 
 // one frame of controls, sampled once per tick
 // type hop.model.Pad (hop/model.slg:6)
@@ -33,8 +33,8 @@ bool valid_rgb(const Rgb& value);
 
 // type hop.model.Solid (hop/model.slg:11)
 struct Solid {
-  hop::geom::Box box;
-  hop::model::Rgb color;
+  slg_program::hop::geom::Box box;
+  slg_program::hop::model::Rgb color;
   friend std::strong_ordering operator<=>(const Solid&, const Solid&) = default;
   friend bool operator==(const Solid&, const Solid&) = default;
   friend rt::Text show(const Solid& value);
@@ -46,10 +46,10 @@ bool valid_solid(const Solid& value);
 // type hop.model.Mover (hop/model.slg:13)
 struct Mover {
   rt::Int no;
-  hop::geom::Box home;
-  hop::geom::Vec3 step;
+  slg_program::hop::geom::Box home;
+  slg_program::hop::geom::Vec3 step;
   rt::Int span;
-  hop::model::Rgb color;
+  slg_program::hop::model::Rgb color;
   friend std::strong_ordering operator<=>(const Mover&, const Mover&) = default;
   friend bool operator==(const Mover&, const Mover&) = default;
   friend rt::Text show(const Mover& value);
@@ -60,7 +60,7 @@ bool valid_mover(const Mover& value);
 // type hop.model.Gem (hop/model.slg:16)
 struct Gem {
   rt::Int no;
-  hop::geom::Vec3 at;
+  slg_program::hop::geom::Vec3 at;
   friend std::strong_ordering operator<=>(const Gem&, const Gem&) = default;
   friend bool operator==(const Gem&, const Gem&) = default;
   friend rt::Text show(const Gem& value);
@@ -72,7 +72,7 @@ bool valid_gem(const Gem& value);
 // type hop.model.Crawler (hop/model.slg:18)
 struct Crawler {
   rt::Int no;
-  hop::geom::Vec3 at;
+  slg_program::hop::geom::Vec3 at;
   rt::Int lo;
   rt::Int hi;
   rt::Int dir;
@@ -87,12 +87,12 @@ bool valid_crawler(const Crawler& value);
 // type hop.model.Level (hop/model.slg:21)
 struct Level {
   rt::Text name;
-  hop::geom::Vec3 start;
-  rt::List<hop::model::Solid> solids;
-  rt::List<hop::model::Mover> movers = {};
-  rt::List<hop::model::Gem> gems = {};
-  rt::List<hop::model::Crawler> crawlers = {};
-  hop::geom::Vec3 goal;
+  slg_program::hop::geom::Vec3 start;
+  rt::List<slg_program::hop::model::Solid> solids;
+  rt::List<slg_program::hop::model::Mover> movers = {};
+  rt::List<slg_program::hop::model::Gem> gems = {};
+  rt::List<slg_program::hop::model::Crawler> crawlers = {};
+  slg_program::hop::geom::Vec3 goal;
   friend std::strong_ordering operator<=>(const Level&, const Level&) = default;
   friend bool operator==(const Level&, const Level&) = default;
   friend rt::Text show(const Level& value);
@@ -107,9 +107,9 @@ rt::Text show(Mode value);
 // riding names the mover the feet are on, so the body moves with it
 // type hop.model.Player (hop/model.slg:33)
 struct Player {
-  hop::geom::Vec3 at;
-  hop::geom::Vec3 vel =
-      rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3");
+  slg_program::hop::geom::Vec3 at;
+  slg_program::hop::geom::Vec3 vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                    slg_program::hop::geom::valid_vec3, "a new Vec3");
   bool grounded = false;
   rt::Int coyote = 0_i;
   bool jump_held = false;
@@ -122,4 +122,4 @@ struct Player {
 // Whether a value conforms to Player: its claims and its fields'.
 bool valid_player(const Player& value);
 
-}  // namespace hop::model
+}  // namespace slg_program::hop::model

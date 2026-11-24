@@ -1,6 +1,6 @@
 # The corpus
 
-> **Status `As of 2026-11-24`.** 38 programs, each green under `spec-lang test <program> --deny warnings`, and a judge, `src/bin/corpus`, that runs them. The engine is the only side that exists: the LIR evaluator and every printer report `not built`.
+> **Status `As of 2026-11-24`.** 39 programs, each green under `spec-lang test <program> --deny warnings`, and a judge, `src/bin/corpus`, that runs them. The engine is the only side that exists: the LIR evaluator and every printer report `not built`.
 
 What "any program" means for the compiler of [decision 009](../../docs/decisions/009-one-compiler-any-language.md): the programs whose every check the LIR evaluator and each printer's output must report as the engine does. The engine says what a program means; the corpus says which programs.
 
@@ -62,6 +62,7 @@ One per feature of the card the engine runs. Each file starts with a comment tha
 | `f31-foreign` | 19 (7 blocked) | a check that reaches a `foreign` body is blocked, one that does not runs; guards first; blocked parents and laws |
 | `f32-effects-out` | 7 | `out.line`: one `\n` per call, call order, raw text, nothing from a refused call |
 | `f33-modules-consts` | 23 | path is the module, `use` of a module and of a declaration, a sum's variants, constants of every shape |
+| `f34-host-names` | 4 | modules, functions, types, fields, variants, states and a rule named like host-language and C-library names |
 
 Expected values in the number and text programs were computed outside the engine (Python's integers, `str` methods and Unicode data) before they were written down. Where the engine and that oracle differed the row was wrong, never the engine.
 

@@ -26,19 +26,19 @@ inline constexpr int hop_world_step = 12;
 // Every state of the program at one moment.
 struct World {
   // state hop.world.stage (hop/world.slg:18)
-  hop::model::Level stage;
+  slg_program::hop::model::Level stage;
   // state hop.world.ticks (hop/world.slg:19)
   rt::Int ticks;
   // state hop.world.player (hop/world.slg:20)
-  hop::model::Player player;
+  slg_program::hop::model::Player player;
   // state hop.world.taken (hop/world.slg:21)
   rt::Set<rt::Int> taken;
   // state hop.world.crawlers (hop/world.slg:22)
-  rt::Map<rt::Int, hop::model::Crawler> crawlers;
+  rt::Map<rt::Int, slg_program::hop::model::Crawler> crawlers;
   // state hop.world.lives (hop/world.slg:23)
   rt::Int lives;
   // state hop.world.mode (hop/world.slg:24)
-  hop::model::Mode mode;
+  slg_program::hop::model::Mode mode;
   friend std::strong_ordering operator<=>(const World&, const World&) = default;
   friend bool operator==(const World&, const World&) = default;
   friend rt::Text show(const World& value);

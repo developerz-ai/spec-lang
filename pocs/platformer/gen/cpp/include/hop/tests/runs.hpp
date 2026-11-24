@@ -4,7 +4,7 @@
 #include "hop/model.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::tests::runs {
+namespace slg_program::hop::tests::runs {
 
 // type hop.tests.runs.Hold (hop/tests/runs.slg:8)
 struct Hold {
@@ -19,14 +19,14 @@ bool valid_hold(const Hold& value);
 
 // run right, with four held jumps: the gap, the first gem, the step past the crawler, the gap with the second gem
 // const hop.tests.runs.meadow_win (hop/tests/runs.slg:20)
-const rt::List<hop::tests::runs::Hold>& meadow_win();
+const rt::List<slg_program::hop::tests::runs::Hold>& meadow_win();
 
 // found by a search over pad scripts: wait for the mover, ride it, hop the gem, then the high ground
 // const hop.tests.runs.ridge_win (hop/tests/runs.slg:27)
-const rt::List<hop::tests::runs::Hold>& ridge_win();
+const rt::List<slg_program::hop::tests::runs::Hold>& ridge_win();
 
 // one letter per Pad field, as the game vocabulary reads a script: L R F B J, or - for none
 // fn hop.tests.runs.pad_of (hop/tests/runs.slg:10)
-hop::model::Pad pad_of(const rt::Text& keys);
+slg_program::hop::model::Pad pad_of(const rt::Text& keys);
 
-}  // namespace hop::tests::runs
+}  // namespace slg_program::hop::tests::runs

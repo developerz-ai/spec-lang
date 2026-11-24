@@ -5,7 +5,7 @@
 #include "program/foreign.hpp"
 #include "program/machine.hpp"
 
-namespace hop::screen {
+namespace slg_program::hop::screen {
 
 // fn hop.screen.key_down (hop/screen.slg:42)
 bool key_down(rt::Int key) {
@@ -14,37 +14,42 @@ bool key_down(rt::Int key) {
 
 // raylib's own box test, so the game's rule can be checked against the library's
 // fn hop.screen.check_collision_boxes (hop/screen.slg:45)
-bool check_collision_boxes(const hop::geom::Box& a, const hop::geom::Box& b) {
-  rt::claim(hop::geom::valid_box(a), "argument `a`");
-  rt::claim(hop::geom::valid_box(b), "argument `b`");
+bool check_collision_boxes(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b) {
+  rt::claim(slg_program::hop::geom::valid_box(a), "argument `a`");
+  rt::claim(slg_program::hop::geom::valid_box(b), "argument `b`");
   return foreign::raylib::CheckCollisionBoxes(a, b);
 }
 
 // arrows or WASD to run, space to jump
 // fn hop.screen.read_pad (hop/screen.slg:58)
-hop::model::Pad read_pad() {
-  return hop::model::Pad{
-      .left = hop::screen::key_down(hop::screen::key_left) || hop::screen::key_down(hop::screen::key_a),
-      .right = hop::screen::key_down(hop::screen::key_right) || hop::screen::key_down(hop::screen::key_d),
-      .forward = hop::screen::key_down(hop::screen::key_up) || hop::screen::key_down(hop::screen::key_w),
-      .back = hop::screen::key_down(hop::screen::key_down_arrow) || hop::screen::key_down(hop::screen::key_s),
-      .jump = hop::screen::key_down(hop::screen::key_space)};
+slg_program::hop::model::Pad read_pad() {
+  return slg_program::hop::model::Pad{
+      .left = slg_program::hop::screen::key_down(slg_program::hop::screen::key_left) ||
+              slg_program::hop::screen::key_down(slg_program::hop::screen::key_a),
+      .right = slg_program::hop::screen::key_down(slg_program::hop::screen::key_right) ||
+               slg_program::hop::screen::key_down(slg_program::hop::screen::key_d),
+      .forward = slg_program::hop::screen::key_down(slg_program::hop::screen::key_up) ||
+                 slg_program::hop::screen::key_down(slg_program::hop::screen::key_w),
+      .back = slg_program::hop::screen::key_down(slg_program::hop::screen::key_down_arrow) ||
+              slg_program::hop::screen::key_down(slg_program::hop::screen::key_s),
+      .jump = slg_program::hop::screen::key_down(slg_program::hop::screen::key_space)};
 }
 
 // rule hop.screen.clear_background (hop/screen.slg:13)
-void clear_background(program::Machine& ctx, const hop::model::Rgb& color) {
+void clear_background(program::Machine& ctx, const slg_program::hop::model::Rgb& color) {
   ctx.atomic([&] {
-    rt::claim(hop::model::valid_rgb(color), "argument `color`");
+    rt::claim(slg_program::hop::model::valid_rgb(color), "argument `color`");
     foreign::raylib::ClearBackground(color);
   });
 }
 
 // a perspective camera, y up, 45 degrees of vertical view
 // rule hop.screen.begin_mode_3d (hop/screen.slg:16)
-void begin_mode_3d(program::Machine& ctx, const hop::geom::Vec3& eye, const hop::geom::Vec3& target) {
+void begin_mode_3d(program::Machine& ctx, const slg_program::hop::geom::Vec3& eye,
+                   const slg_program::hop::geom::Vec3& target) {
   ctx.atomic([&] {
-    rt::claim(hop::geom::valid_vec3(eye), "argument `eye`");
-    rt::claim(hop::geom::valid_vec3(target), "argument `target`");
+    rt::claim(slg_program::hop::geom::valid_vec3(eye), "argument `eye`");
+    rt::claim(slg_program::hop::geom::valid_vec3(target), "argument `target`");
     foreign::raylib::BeginMode3D(eye, target);
   });
 }
@@ -66,27 +71,30 @@ void end_lit(program::Machine& ctx) {
 }
 
 // rule hop.screen.draw_cube (hop/screen.slg:30)
-void draw_cube(program::Machine& ctx, const hop::geom::Box& box, const hop::model::Rgb& color) {
+void draw_cube(program::Machine& ctx, const slg_program::hop::geom::Box& box,
+               const slg_program::hop::model::Rgb& color) {
   ctx.atomic([&] {
-    rt::claim(hop::geom::valid_box(box), "argument `box`");
-    rt::claim(hop::model::valid_rgb(color), "argument `color`");
+    rt::claim(slg_program::hop::geom::valid_box(box), "argument `box`");
+    rt::claim(slg_program::hop::model::valid_rgb(color), "argument `color`");
     foreign::raylib::DrawCube(box, color);
   });
 }
 
 // rule hop.screen.draw_cube_wires (hop/screen.slg:33)
-void draw_cube_wires(program::Machine& ctx, const hop::geom::Box& box, const hop::model::Rgb& color) {
+void draw_cube_wires(program::Machine& ctx, const slg_program::hop::geom::Box& box,
+                     const slg_program::hop::model::Rgb& color) {
   ctx.atomic([&] {
-    rt::claim(hop::geom::valid_box(box), "argument `box`");
-    rt::claim(hop::model::valid_rgb(color), "argument `color`");
+    rt::claim(slg_program::hop::geom::valid_box(box), "argument `box`");
+    rt::claim(slg_program::hop::model::valid_rgb(color), "argument `color`");
     foreign::raylib::DrawCubeWires(box, color);
   });
 }
 
 // rule hop.screen.draw_model (hop/screen.slg:36)
-void draw_model(program::Machine& ctx, hop::render::Asset asset, const hop::geom::Vec3& at_2, rt::Int yaw) {
+void draw_model(program::Machine& ctx, slg_program::hop::render::Asset asset, const slg_program::hop::geom::Vec3& at_2,
+                rt::Int yaw) {
   ctx.atomic([&] {
-    rt::claim(hop::geom::valid_vec3(at_2), "argument `at`");
+    rt::claim(slg_program::hop::geom::valid_vec3(at_2), "argument `at`");
     rt::claim((yaw >= 0_i && yaw <= 359_i), "argument `yaw`");
     foreign::raylib::DrawModelEx(asset, at_2, yaw);
   });
@@ -94,9 +102,9 @@ void draw_model(program::Machine& ctx, hop::render::Asset asset, const hop::geom
 
 // rule hop.screen.draw_text (hop/screen.slg:39)
 void draw_text(program::Machine& ctx, const rt::Text& text, rt::Int x, rt::Int y, rt::Int size,
-               const hop::model::Rgb& color) {
+               const slg_program::hop::model::Rgb& color) {
   ctx.atomic([&] {
-    rt::claim(hop::model::valid_rgb(color), "argument `color`");
+    rt::claim(slg_program::hop::model::valid_rgb(color), "argument `color`");
     foreign::raylib::DrawText(text, x, y, size, color);
   });
 }
@@ -105,36 +113,36 @@ void draw_text(program::Machine& ctx, const rt::Text& text, rt::Int x, rt::Int y
 // rule hop.screen.present (hop/screen.slg:68)
 void present(program::Machine& ctx) {
   ctx.atomic([&] {
-    const auto f = hop::render::scene(hop::world::view(ctx));
-    hop::screen::clear_background(ctx, f.sky);
-    hop::screen::begin_mode_3d(ctx, f.eye, f.target);
-    hop::screen::begin_lit(ctx, f.time);
+    const auto f = slg_program::hop::render::scene(slg_program::hop::world::view(ctx));
+    slg_program::hop::screen::clear_background(ctx, f.sky);
+    slg_program::hop::screen::begin_mode_3d(ctx, f.eye, f.target);
+    slg_program::hop::screen::begin_lit(ctx, f.time);
     const auto items = f.world;
     for (const auto& d : items) {
-      if (std::holds_alternative<hop::render::Draw::Cube>(d.alt)) {
-        const auto b = std::get<hop::render::Draw::Cube>(d.alt).box;
-        const auto color = std::get<hop::render::Draw::Cube>(d.alt).color;
-        hop::screen::draw_cube(ctx, b, color);
-      } else if (std::holds_alternative<hop::render::Draw::Wires>(d.alt)) {
-        const auto b_2 = std::get<hop::render::Draw::Wires>(d.alt).box;
-        const auto color_2 = std::get<hop::render::Draw::Wires>(d.alt).color;
-        hop::screen::draw_cube_wires(ctx, b_2, color_2);
-      } else if (std::holds_alternative<hop::render::Draw::Mesh>(d.alt)) {
-        const auto asset = std::get<hop::render::Draw::Mesh>(d.alt).asset;
-        const auto at_2 = std::get<hop::render::Draw::Mesh>(d.alt).at;
-        const auto yaw = std::get<hop::render::Draw::Mesh>(d.alt).yaw;
-        hop::screen::draw_model(ctx, asset, at_2, yaw);
+      if (std::holds_alternative<slg_program::hop::render::Draw::Cube>(d.alt)) {
+        const auto b = std::get<slg_program::hop::render::Draw::Cube>(d.alt).box;
+        const auto color = std::get<slg_program::hop::render::Draw::Cube>(d.alt).color;
+        slg_program::hop::screen::draw_cube(ctx, b, color);
+      } else if (std::holds_alternative<slg_program::hop::render::Draw::Wires>(d.alt)) {
+        const auto b_2 = std::get<slg_program::hop::render::Draw::Wires>(d.alt).box;
+        const auto color_2 = std::get<slg_program::hop::render::Draw::Wires>(d.alt).color;
+        slg_program::hop::screen::draw_cube_wires(ctx, b_2, color_2);
+      } else if (std::holds_alternative<slg_program::hop::render::Draw::Mesh>(d.alt)) {
+        const auto asset = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).asset;
+        const auto at_2 = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).at;
+        const auto yaw = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).yaw;
+        slg_program::hop::screen::draw_model(ctx, asset, at_2, yaw);
       } else {
         rt::no_arm(rt::str(d));
       }
     }
-    hop::screen::end_lit(ctx);
-    hop::screen::end_mode_3d(ctx);
+    slg_program::hop::screen::end_lit(ctx);
+    slg_program::hop::screen::end_mode_3d(ctx);
     const auto items_2 = f.labels;
     for (const auto& l : items_2) {
-      hop::screen::draw_text(ctx, l.text, l.x, l.y, l.size, l.color);
+      slg_program::hop::screen::draw_text(ctx, l.text, l.x, l.y, l.size, l.color);
     }
   });
 }
 
-}  // namespace hop::screen
+}  // namespace slg_program::hop::screen

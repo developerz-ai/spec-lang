@@ -16,25 +16,25 @@ using rt::from_data;
 using rt::to_data;
 
 // The declared types the app's rules and states name.
-const rt::meta::Type& type_0();   // todo::model::Title
-const rt::meta::Type& type_1();   // todo::model::Priority
-const rt::meta::Type& type_2();   // rt::Set<todo::model::Tag>
-const rt::meta::Type& type_3();   // todo::model::TaskNo
+const rt::meta::Type& type_0();   // slg_program::todo::model::Title
+const rt::meta::Type& type_1();   // slg_program::todo::model::Priority
+const rt::meta::Type& type_2();   // rt::Set<slg_program::todo::model::Tag>
+const rt::meta::Type& type_3();   // slg_program::todo::model::TaskNo
 const rt::meta::Type& type_4();   // bool
-const rt::meta::Type& type_5();   // rt::Option<todo::model::Tag>
+const rt::meta::Type& type_5();   // rt::Option<slg_program::todo::model::Tag>
 const rt::meta::Type& type_6();   // rt::Unit
 const rt::meta::Type& type_7();   // rt::Int
 const rt::meta::Type& type_8();   // rt::Text
-const rt::meta::Type& type_9();   // todo::model::Task
+const rt::meta::Type& type_9();   // slg_program::todo::model::Task
 const rt::meta::Type& type_10();  // std::tuple<rt::Int, rt::Int>
-const rt::meta::Type& type_11();  // rt::Map<todo::model::TaskNo, todo::model::Task>
-const rt::meta::Type& type_12();  // todo::model::Tag
-const rt::meta::Type& type_13();  // todo::model::Status
+const rt::meta::Type& type_11();  // rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>
+const rt::meta::Type& type_12();  // slg_program::todo::model::Tag
+const rt::meta::Type& type_13();  // slg_program::todo::model::Status
 
 const rt::meta::Type& type_0() {
   static const rt::meta::Type type{.kind = rt::meta::Kind::Text, .name = "Title", .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<todo::model::Title>(data);
-                                     return todo::model::valid_title(value);
+                                     const auto value = rt::from<slg_program::todo::model::Title>(data);
+                                     return slg_program::todo::model::valid_title(value);
                                    }};
   return type;
 }
@@ -48,16 +48,16 @@ const rt::meta::Type& type_1() {
 const rt::meta::Type& type_2() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::Set, .args = {&type_12}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::Set<todo::model::Tag>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return todo::model::valid_tag(item); });
+        const auto value = rt::from<rt::Set<slg_program::todo::model::Tag>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::todo::model::valid_tag(item); });
       }};
   return type;
 }
 
 const rt::meta::Type& type_3() {
   static const rt::meta::Type type{.kind = rt::meta::Kind::Int, .name = "TaskNo", .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<todo::model::TaskNo>(data);
-                                     return todo::model::valid_task_no(value);
+                                     const auto value = rt::from<slg_program::todo::model::TaskNo>(data);
+                                     return slg_program::todo::model::valid_task_no(value);
                                    }};
   return type;
 }
@@ -70,8 +70,8 @@ const rt::meta::Type& type_4() {
 const rt::meta::Type& type_5() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::Option, .args = {&type_12}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::Option<todo::model::Tag>>(data);
-        return (!value.has_value() || todo::model::valid_tag((*value)));
+        const auto value = rt::from<rt::Option<slg_program::todo::model::Tag>>(data);
+        return (!value.has_value() || slg_program::todo::model::valid_tag((*value)));
       }};
   return type;
 }
@@ -97,8 +97,8 @@ const rt::meta::Type& type_9() {
       .name = "Task",
       .fields = {{"no", &type_3}, {"title", &type_0}, {"status", &type_13}, {"priority", &type_1}, {"tags", &type_2}},
       .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<todo::model::Task>(data);
-        return todo::model::valid_task(value);
+        const auto value = rt::from<slg_program::todo::model::Task>(data);
+        return slg_program::todo::model::valid_task(value);
       }};
   return type;
 }
@@ -111,17 +111,19 @@ const rt::meta::Type& type_10() {
 const rt::meta::Type& type_11() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::Map, .args = {&type_3, &type_9}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::Map<todo::model::TaskNo, todo::model::Task>>(data);
-        return (std::ranges::all_of(value, [](const auto& entry) { return todo::model::valid_task_no(entry.first); }) &&
-                std::ranges::all_of(value, [](const auto& entry) { return todo::model::valid_task(entry.second); }));
+        const auto value = rt::from<rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>>(data);
+        return (std::ranges::all_of(
+                    value, [](const auto& entry) { return slg_program::todo::model::valid_task_no(entry.first); }) &&
+                std::ranges::all_of(
+                    value, [](const auto& entry) { return slg_program::todo::model::valid_task(entry.second); }));
       }};
   return type;
 }
 
 const rt::meta::Type& type_12() {
   static const rt::meta::Type type{.kind = rt::meta::Kind::Text, .name = "Tag", .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<todo::model::Tag>(data);
-                                     return todo::model::valid_tag(value);
+                                     const auto value = rt::from<slg_program::todo::model::Tag>(data);
+                                     return slg_program::todo::model::valid_tag(value);
                                    }};
   return type;
 }
@@ -150,10 +152,12 @@ const std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {
       return rt::all(t.steps, [&](const rt::Step<program::World>& s) {
         return !(s.event.rule == program::rule::todo_board_clear) ||
                (rt::all(rt::values(s.after.tasks),
-                        [&](const todo::model::Task& it) { return it.status == todo::model::Status::Open; }) &&
+                        [&](const slg_program::todo::model::Task& it) {
+                          return it.status == slg_program::todo::model::Status::Open;
+                        }) &&
                 rt::size(s.after.tasks) ==
-                    rt::size(rt::filter(rt::values(s.before.tasks), [&](const todo::model::Task& it_2) {
-                      return it_2.status == todo::model::Status::Open;
+                    rt::size(rt::filter(rt::values(s.before.tasks), [&](const slg_program::todo::model::Task& it_2) {
+                      return it_2.status == slg_program::todo::model::Status::Open;
                     })));
       });
     },
@@ -206,13 +210,13 @@ const rt::meta::App& app() {
                .writes = true,
                .triggers = {{"cli", "cli", {{"command", {.kind = rt::meta::NoteValue::Kind::Text, .text = "add"}}}}},
                .params = {{"title", &type_0, false},
-                          {"priority", &type_1, true, to_data(todo::model::Priority::Normal)},
+                          {"priority", &type_1, true, to_data(slg_program::todo::model::Priority::Normal)},
                           {"tags", &type_2, true, to_data(rt::Set<rt::Text>{})}},
                .result = &type_3,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::board::add(ctx, rt::from<rt::Text>(args.at(0)),
-                                                 rt::from<todo::model::Priority>(args.at(1)),
-                                                 rt::from<rt::Set<rt::Text>>(args.at(2))));
+                 return to_data(slg_program::todo::board::add(ctx, rt::from<rt::Text>(args.at(0)),
+                                                              rt::from<slg_program::todo::model::Priority>(args.at(1)),
+                                                              rt::from<rt::Set<rt::Text>>(args.at(2))));
                }},
               // rule todo.board.list (todo/board.slg:32)
               {.qualified = "todo.board.list",
@@ -227,7 +231,8 @@ const rt::meta::App& app() {
                           {"tag", &type_5, true, to_data(rt::Option<rt::Text>{})}},
                .result = &type_6,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::list(ctx, rt::from<bool>(args.at(0)), rt::from<rt::Option<rt::Text>>(args.at(1)));
+                 slg_program::todo::board::list(ctx, rt::from<bool>(args.at(0)),
+                                                rt::from<rt::Option<rt::Text>>(args.at(1)));
                  return rt::Data{rt::unit};
                }},
               // rule todo.board.done (todo/board.slg:44)
@@ -242,7 +247,7 @@ const rt::meta::App& app() {
                .params = {{"no", &type_3, false}},
                .result = &type_6,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::done(ctx, rt::from<rt::Int>(args.at(0)));
+                 slg_program::todo::board::done(ctx, rt::from<rt::Int>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule todo.board.reopen (todo/board.slg:53)
@@ -257,7 +262,7 @@ const rt::meta::App& app() {
                .params = {{"no", &type_3, false}},
                .result = &type_6,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::reopen(ctx, rt::from<rt::Int>(args.at(0)));
+                 slg_program::todo::board::reopen(ctx, rt::from<rt::Int>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule todo.board.rename (todo/board.slg:62)
@@ -272,7 +277,7 @@ const rt::meta::App& app() {
                .params = {{"no", &type_3, false}, {"title", &type_0, false}},
                .result = &type_6,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::rename(ctx, rt::from<rt::Int>(args.at(0)), rt::from<rt::Text>(args.at(1)));
+                 slg_program::todo::board::rename(ctx, rt::from<rt::Int>(args.at(0)), rt::from<rt::Text>(args.at(1)));
                  return rt::Data{rt::unit};
                }},
               // rule todo.board.remove (todo/board.slg:71)
@@ -287,7 +292,7 @@ const rt::meta::App& app() {
                .params = {{"no", &type_3, false}},
                .result = &type_6,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::remove(ctx, rt::from<rt::Int>(args.at(0)));
+                 slg_program::todo::board::remove(ctx, rt::from<rt::Int>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule todo.board.clear (todo/board.slg:80)
@@ -302,7 +307,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_7,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::board::clear(ctx));
+                 return to_data(slg_program::todo::board::clear(ctx));
                }},
               // rule todo.board.stats (todo/board.slg:90)
               {.qualified = "todo.board.stats",
@@ -316,7 +321,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_6,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 todo::board::stats(ctx);
+                 slg_program::todo::board::stats(ctx);
                  return rt::Data{rt::unit};
                }},
           },
@@ -334,7 +339,7 @@ const rt::meta::App& app() {
                .params = {{"t", &type_8, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::model::is_title(rt::from<rt::Text>(args.at(0))));
+                 return to_data(slg_program::todo::model::is_title(rt::from<rt::Text>(args.at(0))));
                }},
               // fn todo.model.is_tag (todo/model.slg:9)
               {.qualified = "todo.model.is_tag",
@@ -348,7 +353,7 @@ const rt::meta::App& app() {
                .params = {{"t", &type_8, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::model::is_tag(rt::from<rt::Text>(args.at(0))));
+                 return to_data(slg_program::todo::model::is_tag(rt::from<rt::Text>(args.at(0))));
                }},
               // fn todo.render.rank (todo/render.slg:28)
               {.qualified = "todo.render.rank",
@@ -362,7 +367,7 @@ const rt::meta::App& app() {
                .params = {{"t", &type_9, false}},
                .result = &type_10,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::render::rank(rt::from<todo::model::Task>(args.at(0))));
+                 return to_data(slg_program::todo::render::rank(rt::from<slg_program::todo::model::Task>(args.at(0))));
                }},
               // fn todo.render.line (todo/render.slg:31)
               {.qualified = "todo.render.line",
@@ -376,7 +381,7 @@ const rt::meta::App& app() {
                .params = {{"t", &type_9, false}},
                .result = &type_8,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(todo::render::line(rt::from<todo::model::Task>(args.at(0))));
+                 return to_data(slg_program::todo::render::line(rt::from<slg_program::todo::model::Task>(args.at(0))));
                }},
           },
       .states = {{"todo.board.tasks", "tasks", &type_11}, {"todo.board.next_no", "next_no", &type_3}},

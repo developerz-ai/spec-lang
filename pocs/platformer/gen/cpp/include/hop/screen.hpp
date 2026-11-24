@@ -11,7 +11,7 @@ struct Machine;
 struct World;
 }  // namespace program
 
-namespace hop::screen {
+namespace slg_program::hop::screen {
 
 // const hop.screen.key_right (hop/screen.slg:48)
 inline const rt::Int key_right = 262_i;
@@ -45,18 +45,19 @@ bool key_down(rt::Int key);
 
 // raylib's own box test, so the game's rule can be checked against the library's
 // fn hop.screen.check_collision_boxes (hop/screen.slg:45)
-bool check_collision_boxes(const hop::geom::Box& a, const hop::geom::Box& b);
+bool check_collision_boxes(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b);
 
 // arrows or WASD to run, space to jump
 // fn hop.screen.read_pad (hop/screen.slg:58)
-hop::model::Pad read_pad();
+slg_program::hop::model::Pad read_pad();
 
 // rule hop.screen.clear_background (hop/screen.slg:13)
-void clear_background(program::Machine& ctx, const hop::model::Rgb& color);
+void clear_background(program::Machine& ctx, const slg_program::hop::model::Rgb& color);
 
 // a perspective camera, y up, 45 degrees of vertical view
 // rule hop.screen.begin_mode_3d (hop/screen.slg:16)
-void begin_mode_3d(program::Machine& ctx, const hop::geom::Vec3& eye, const hop::geom::Vec3& target);
+void begin_mode_3d(program::Machine& ctx, const slg_program::hop::geom::Vec3& eye,
+                   const slg_program::hop::geom::Vec3& target);
 
 // rule hop.screen.end_mode_3d (hop/screen.slg:20)
 void end_mode_3d(program::Machine& ctx);
@@ -69,20 +70,23 @@ void begin_lit(program::Machine& ctx, rt::Int time);
 void end_lit(program::Machine& ctx);
 
 // rule hop.screen.draw_cube (hop/screen.slg:30)
-void draw_cube(program::Machine& ctx, const hop::geom::Box& box, const hop::model::Rgb& color);
+void draw_cube(program::Machine& ctx, const slg_program::hop::geom::Box& box,
+               const slg_program::hop::model::Rgb& color);
 
 // rule hop.screen.draw_cube_wires (hop/screen.slg:33)
-void draw_cube_wires(program::Machine& ctx, const hop::geom::Box& box, const hop::model::Rgb& color);
+void draw_cube_wires(program::Machine& ctx, const slg_program::hop::geom::Box& box,
+                     const slg_program::hop::model::Rgb& color);
 
 // rule hop.screen.draw_model (hop/screen.slg:36)
-void draw_model(program::Machine& ctx, hop::render::Asset asset, const hop::geom::Vec3& at_2, rt::Int yaw);
+void draw_model(program::Machine& ctx, slg_program::hop::render::Asset asset, const slg_program::hop::geom::Vec3& at_2,
+                rt::Int yaw);
 
 // rule hop.screen.draw_text (hop/screen.slg:39)
 void draw_text(program::Machine& ctx, const rt::Text& text, rt::Int x, rt::Int y, rt::Int size,
-               const hop::model::Rgb& color);
+               const slg_program::hop::model::Rgb& color);
 
 // the frame as data goes to raylib in its own order: background, 3D pass under the lit shader, then the HUD
 // rule hop.screen.present (hop/screen.slg:68)
 void present(program::Machine& ctx);
 
-}  // namespace hop::screen
+}  // namespace slg_program::hop::screen

@@ -6,11 +6,11 @@
 #include "rt/prelude.hpp"
 #include "todo/model.hpp"
 
-namespace todo::model {
+namespace slg_program::todo::model {
 rt::Data to_data(Status value);
 void from_data(const rt::Data& data, Status& value);
 rt::Data to_data(Priority value);
 void from_data(const rt::Data& data, Priority& value);
 rt::Data to_data(const Task& value);
 void from_data(const rt::Data& data, Task& value);
-}  // namespace todo::model
+}  // namespace slg_program::todo::model

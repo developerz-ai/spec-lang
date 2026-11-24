@@ -4,9 +4,9 @@
 #include "hop/model.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::tests::touches {
+namespace slg_program::hop::tests::touches {
 
 // const hop.tests.touches.rest (hop/tests/touches.slg:8)
-inline const hop::model::Pad rest = hop::model::Pad{};
+inline const slg_program::hop::model::Pad rest = slg_program::hop::model::Pad{};
 
-}  // namespace hop::tests::touches
+}  // namespace slg_program::hop::tests::touches

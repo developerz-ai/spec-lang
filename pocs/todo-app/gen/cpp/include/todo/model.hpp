@@ -3,7 +3,7 @@
 
 #include "rt/prelude.hpp"
 
-namespace todo::model {
+namespace slg_program::todo::model {
 
 // type todo.model.Title (todo/model.slg:14)
 using Title = rt::Text;
@@ -30,11 +30,11 @@ rt::Text show(Priority value);
 
 // type todo.model.Task (todo/model.slg:21)
 struct Task {
-  todo::model::TaskNo no;
-  todo::model::Title title;
-  todo::model::Status status = todo::model::Status::Open;
-  todo::model::Priority priority = todo::model::Priority::Normal;
-  rt::Set<todo::model::Tag> tags = {};
+  slg_program::todo::model::TaskNo no;
+  slg_program::todo::model::Title title;
+  slg_program::todo::model::Status status = slg_program::todo::model::Status::Open;
+  slg_program::todo::model::Priority priority = slg_program::todo::model::Priority::Normal;
+  rt::Set<slg_program::todo::model::Tag> tags = {};
   friend std::strong_ordering operator<=>(const Task&, const Task&) = default;
   friend bool operator==(const Task&, const Task&) = default;
   friend rt::Text show(const Task& value);
@@ -50,4 +50,4 @@ bool is_title(const rt::Text& t);
 // fn todo.model.is_tag (todo/model.slg:9)
 bool is_tag(const rt::Text& t);
 
-}  // namespace todo::model
+}  // namespace slg_program::todo::model

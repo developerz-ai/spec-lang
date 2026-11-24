@@ -5,7 +5,7 @@
 #include "hop/model.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::levels {
+namespace slg_program::hop::levels {
 
 // type hop.levels.LevelNo (hop/levels.slg:12)
 using LevelNo = rt::Int;
@@ -13,33 +13,34 @@ using LevelNo = rt::Int;
 bool valid_level_no(const LevelNo& value);
 
 // const hop.levels.grass (hop/levels.slg:14)
-const hop::model::Rgb& grass();
+const slg_program::hop::model::Rgb& grass();
 
 // const hop.levels.stone (hop/levels.slg:15)
-const hop::model::Rgb& stone();
+const slg_program::hop::model::Rgb& stone();
 
 // const hop.levels.wood (hop/levels.slg:16)
-const hop::model::Rgb& wood();
+const slg_program::hop::model::Rgb& wood();
 
 // teaches running, a gap, a step up, a crawler and the flag
 // const hop.levels.meadow (hop/levels.slg:26)
-const hop::model::Level& meadow();
+const slg_program::hop::model::Level& meadow();
 
 // a moving platform over a wide gap, then two crawlers on high ground a jump can reach
 // const hop.levels.ridge (hop/levels.slg:41)
-const hop::model::Level& ridge();
+const slg_program::hop::model::Level& ridge();
 
 // levels are laid out on a quarter-metre grid: 64 sub-metres
 // fn hop.levels.q (hop/levels.slg:18)
 rt::Int q(rt::Int n);
 
 // fn hop.levels.at (hop/levels.slg:22)
-hop::geom::Vec3 at(rt::Int x, rt::Int y, rt::Int z);
+slg_program::hop::geom::Vec3 at(rt::Int x, rt::Int y, rt::Int z);
 
 // fn hop.levels.slab (hop/levels.slg:24)
-hop::model::Solid slab(const hop::geom::Vec3& from, const hop::geom::Vec3& to, const hop::model::Rgb& color);
+slg_program::hop::model::Solid slab(const slg_program::hop::geom::Vec3& from, const slg_program::hop::geom::Vec3& to,
+                                    const slg_program::hop::model::Rgb& color);
 
 // fn hop.levels.level (hop/levels.slg:60)
-hop::model::Level level(hop::levels::LevelNo n);
+slg_program::hop::model::Level level(slg_program::hop::levels::LevelNo n);
 
-}  // namespace hop::levels
+}  // namespace slg_program::hop::levels

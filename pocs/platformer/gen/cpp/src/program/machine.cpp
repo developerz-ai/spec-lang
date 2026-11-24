@@ -44,16 +44,17 @@ std::unique_ptr<Out> PretendOut::clone() const {
 
 Machine::Machine() {
   out = std::make_unique<PretendOut>();
-  world.stage = hop::levels::meadow();
+  world.stage = slg_program::hop::levels::meadow();
   world.ticks = 0_i;
-  world.player =
-      rt::conforming(hop::model::Player{.at = hop::levels::meadow().start}, hop::model::valid_player, "a new Player");
+  world.player = rt::conforming(slg_program::hop::model::Player{.at = slg_program::hop::levels::meadow().start},
+                                slg_program::hop::model::valid_player, "a new Player");
   world.lives = 3_i;
-  world.mode = hop::model::Mode::Playing;
-  rt::claim(hop::model::valid_level(world.stage), "the initial value of hop.world.stage");
-  rt::claim(hop::model::valid_player(world.player), "the initial value of hop.world.player");
+  world.mode = slg_program::hop::model::Mode::Playing;
+  rt::claim(slg_program::hop::model::valid_level(world.stage), "the initial value of hop.world.stage");
+  rt::claim(slg_program::hop::model::valid_player(world.player), "the initial value of hop.world.player");
   rt::claim(
-      (std::ranges::all_of(world.crawlers, [](const auto& entry) { return hop::model::valid_crawler(entry.second); })),
+      (std::ranges::all_of(world.crawlers,
+                           [](const auto& entry) { return slg_program::hop::model::valid_crawler(entry.second); })),
       "the initial value of hop.world.crawlers");
   rt::claim((world.lives >= 0_i && world.lives <= 3_i), "the initial value of hop.world.lives");
 }

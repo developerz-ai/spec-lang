@@ -11,7 +11,7 @@ struct Machine;
 struct World;
 }  // namespace program
 
-namespace hop::render {
+namespace slg_program::hop::render {
 
 // each mesh is one model file the game loads at start
 // type hop.render.Asset (hop/render.slg:12)
@@ -21,20 +21,20 @@ rt::Text show(Asset value);
 // type hop.render.Draw (hop/render.slg:15)
 struct Draw {
   struct Cube {
-    hop::geom::Box box;
-    hop::model::Rgb color;
+    slg_program::hop::geom::Box box;
+    slg_program::hop::model::Rgb color;
     friend std::strong_ordering operator<=>(const Cube&, const Cube&) = default;
     friend bool operator==(const Cube&, const Cube&) = default;
   };
   struct Wires {
-    hop::geom::Box box;
-    hop::model::Rgb color;
+    slg_program::hop::geom::Box box;
+    slg_program::hop::model::Rgb color;
     friend std::strong_ordering operator<=>(const Wires&, const Wires&) = default;
     friend bool operator==(const Wires&, const Wires&) = default;
   };
   struct Mesh {
-    hop::render::Asset asset;
-    hop::geom::Vec3 at;
+    slg_program::hop::render::Asset asset;
+    slg_program::hop::geom::Vec3 at;
     rt::Int yaw;
     friend std::strong_ordering operator<=>(const Mesh&, const Mesh&) = default;
     friend bool operator==(const Mesh&, const Mesh&) = default;
@@ -53,7 +53,7 @@ struct Label {
   rt::Int y;
   rt::Int size;
   rt::Text text;
-  hop::model::Rgb color;
+  slg_program::hop::model::Rgb color;
   friend std::strong_ordering operator<=>(const Label&, const Label&) = default;
   friend bool operator==(const Label&, const Label&) = default;
   friend rt::Text show(const Label& value);
@@ -64,12 +64,12 @@ bool valid_label(const Label& value);
 // time is the tick count, an exact integer; the shader divides it into seconds
 // type hop.render.Frame (hop/render.slg:19)
 struct Frame {
-  hop::model::Rgb sky;
-  hop::geom::Vec3 eye;
-  hop::geom::Vec3 target;
+  slg_program::hop::model::Rgb sky;
+  slg_program::hop::geom::Vec3 eye;
+  slg_program::hop::geom::Vec3 target;
   rt::Int time;
-  rt::List<hop::render::Draw> world;
-  rt::List<hop::render::Label> labels;
+  rt::List<slg_program::hop::render::Draw> world;
+  rt::List<slg_program::hop::render::Label> labels;
   friend std::strong_ordering operator<=>(const Frame&, const Frame&) = default;
   friend bool operator==(const Frame&, const Frame&) = default;
   friend rt::Text show(const Frame& value);
@@ -78,49 +78,50 @@ struct Frame {
 bool valid_frame(const Frame& value);
 
 // const hop.render.sky (hop/render.slg:22)
-const hop::model::Rgb& sky();
+const slg_program::hop::model::Rgb& sky();
 
 // const hop.render.edge (hop/render.slg:23)
-const hop::model::Rgb& edge();
+const slg_program::hop::model::Rgb& edge();
 
 // const hop.render.ink (hop/render.slg:24)
-const hop::model::Rgb& ink();
+const slg_program::hop::model::Rgb& ink();
 
 // the camera looks at the hero from the side and a little above, at a fixed distance
 // const hop.render.eye_offset (hop/render.slg:26)
-const hop::geom::Vec3& eye_offset();
+const slg_program::hop::geom::Vec3& eye_offset();
 
 // const hop.render.look_height (hop/render.slg:28)
 inline const rt::Int look_height = 192_i;
 
 // fn hop.render.asset_name (hop/render.slg:30)
-rt::Text asset_name(hop::render::Asset a);
+rt::Text asset_name(slg_program::hop::render::Asset a);
 
 // a gem bobs a quarter of a metre and turns three degrees a tick
 // fn hop.render.bob (hop/render.slg:38)
 rt::Int bob(rt::Int t);
 
 // fn hop.render.block (hop/render.slg:42)
-rt::List<hop::render::Draw> block(const hop::geom::Box& box, const hop::model::Rgb& color);
+rt::List<slg_program::hop::render::Draw> block(const slg_program::hop::geom::Box& box,
+                                               const slg_program::hop::model::Rgb& color);
 
 // fn hop.render.banner (hop/render.slg:44)
-rt::List<hop::render::Label> banner(hop::model::Mode m);
+rt::List<slg_program::hop::render::Label> banner(slg_program::hop::model::Mode m);
 
 // solids, then movers, gems, crawlers, the flag and last the hero, so the order of the frame is fixed
 // fn hop.render.scene (hop/render.slg:50)
-hop::render::Frame scene(const hop::world::View& v);
+slg_program::hop::render::Frame scene(const slg_program::hop::world::View& v);
 
 // fn hop.render.rgb_text (hop/render.slg:69)
-rt::Text rgb_text(const hop::model::Rgb& c);
+rt::Text rgb_text(const slg_program::hop::model::Rgb& c);
 
 // fn hop.render.draw_text (hop/render.slg:71)
-rt::Text draw_text(const hop::render::Draw& d);
+rt::Text draw_text(const slg_program::hop::render::Draw& d);
 
 // a frame as text, one line per call the screen will make, so four backends can be compared without a GPU
 // fn hop.render.frame_lines (hop/render.slg:81)
-rt::List<rt::Text> frame_lines(const hop::render::Frame& f);
+rt::List<rt::Text> frame_lines(const slg_program::hop::render::Frame& f);
 
 // fn hop.render.dump (hop/render.slg:87)
 rt::List<rt::Text> dump(program::Machine& ctx);
 
-}  // namespace hop::render
+}  // namespace slg_program::hop::render

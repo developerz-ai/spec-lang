@@ -37,11 +37,12 @@ std::unique_ptr<Out> PretendOut::clone() const {
 Machine::Machine() {
   out = std::make_unique<PretendOut>();
   world.next_no = 1_i;
-  rt::claim(
-      (std::ranges::all_of(world.tasks, [](const auto& entry) { return todo::model::valid_task_no(entry.first); }) &&
-       std::ranges::all_of(world.tasks, [](const auto& entry) { return todo::model::valid_task(entry.second); })),
-      "the initial value of todo.board.tasks");
-  rt::claim(todo::model::valid_task_no(world.next_no), "the initial value of todo.board.next_no");
+  rt::claim((std::ranges::all_of(
+                 world.tasks, [](const auto& entry) { return slg_program::todo::model::valid_task_no(entry.first); }) &&
+             std::ranges::all_of(world.tasks,
+                                 [](const auto& entry) { return slg_program::todo::model::valid_task(entry.second); })),
+            "the initial value of todo.board.tasks");
+  rt::claim(slg_program::todo::model::valid_task_no(world.next_no), "the initial value of todo.board.next_no");
 }
 
 }  // namespace program

@@ -3,9 +3,9 @@
 
 #include "rt/prelude.hpp"
 
-namespace hop::laws {
+namespace slg_program::hop::laws {
 
 // type hop.laws.Play (hop/laws.slg:8)
 using Play = rt::Event;
 
-}  // namespace hop::laws
+}  // namespace slg_program::hop::laws

@@ -35,60 +35,63 @@ using Gen = rt::test::Gen<Machine, Pools>;
 using Run = rt::test::Run<World>;
 
 // One generator per declared type a property or a law draws: the engine's algorithm, step for step.
-hop::levels::LevelNo draw_0(Gen& g);
+slg_program::hop::levels::LevelNo draw_0(Gen& g);
 rt::Text draw_1(Gen& g);
-hop::model::Pad draw_2(Gen& g);
-hop::model::Level draw_3(Gen& g);
+slg_program::hop::model::Pad draw_2(Gen& g);
+slg_program::hop::model::Level draw_3(Gen& g);
 rt::Int draw_4(Gen& g);
-hop::model::Player draw_5(Gen& g);
+slg_program::hop::model::Player draw_5(Gen& g);
 rt::Set<rt::Int> draw_6(Gen& g);
-rt::Map<rt::Int, hop::model::Crawler> draw_7(Gen& g);
+rt::Map<rt::Int, slg_program::hop::model::Crawler> draw_7(Gen& g);
 rt::Int draw_8(Gen& g);
-hop::model::Mode draw_9(Gen& g);
-hop::geom::Box draw_10(Gen& g);
+slg_program::hop::model::Mode draw_9(Gen& g);
+slg_program::hop::geom::Box draw_10(Gen& g);
 rt::Int draw_11(Gen& g);
 bool draw_12(Gen& g);
-hop::geom::Vec3 draw_13(Gen& g);
-rt::List<hop::model::Solid> draw_14(Gen& g);
-rt::List<hop::model::Mover> draw_15(Gen& g);
-rt::List<hop::model::Gem> draw_16(Gen& g);
-rt::List<hop::model::Crawler> draw_17(Gen& g);
+slg_program::hop::geom::Vec3 draw_13(Gen& g);
+rt::List<slg_program::hop::model::Solid> draw_14(Gen& g);
+rt::List<slg_program::hop::model::Mover> draw_15(Gen& g);
+rt::List<slg_program::hop::model::Gem> draw_16(Gen& g);
+rt::List<slg_program::hop::model::Crawler> draw_17(Gen& g);
 rt::Int draw_18(Gen& g);
 rt::Option<rt::Int> draw_19(Gen& g);
 rt::Int draw_20(Gen& g);
-hop::model::Crawler draw_21(Gen& g);
-hop::geom::Sub draw_22(Gen& g);
-hop::model::Solid draw_23(Gen& g);
-hop::model::Mover draw_24(Gen& g);
-hop::model::Gem draw_25(Gen& g);
+slg_program::hop::model::Crawler draw_21(Gen& g);
+slg_program::hop::geom::Sub draw_22(Gen& g);
+slg_program::hop::model::Solid draw_23(Gen& g);
+slg_program::hop::model::Mover draw_24(Gen& g);
+slg_program::hop::model::Gem draw_25(Gen& g);
 rt::Int draw_26(Gen& g);
 rt::Int draw_27(Gen& g);
 rt::Int draw_28(Gen& g);
-hop::model::Rgb draw_29(Gen& g);
+slg_program::hop::model::Rgb draw_29(Gen& g);
 rt::Int draw_30(Gen& g);
 rt::Int draw_31(Gen& g);
 
-hop::levels::LevelNo draw_0([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::levels::LevelNo>(
-      g.rng, nullptr, [&]() -> hop::levels::LevelNo { return draw_11(g); },
-      [&](const hop::levels::LevelNo& value) { return hop::levels::valid_level_no(value); }, "hop::levels::LevelNo");
+slg_program::hop::levels::LevelNo draw_0([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::levels::LevelNo>(
+      g.rng, nullptr, [&]() -> slg_program::hop::levels::LevelNo { return draw_11(g); },
+      [&](const slg_program::hop::levels::LevelNo& value) { return slg_program::hop::levels::valid_level_no(value); },
+      "slg_program::hop::levels::LevelNo");
 }
 
 rt::Text draw_1([[maybe_unused]] Gen& g) {
   return rt::test::draw_text(g.rng);
 }
 
-hop::model::Pad draw_2([[maybe_unused]] Gen& g) {
-  return hop::model::Pad{draw_12(g), draw_12(g), draw_12(g), draw_12(g), draw_12(g)};
+slg_program::hop::model::Pad draw_2([[maybe_unused]] Gen& g) {
+  return slg_program::hop::model::Pad{draw_12(g), draw_12(g), draw_12(g), draw_12(g), draw_12(g)};
 }
 
-hop::model::Level draw_3([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Level>(
+slg_program::hop::model::Level draw_3([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Level>(
       g.rng, nullptr,
-      [&]() -> hop::model::Level {
-        return hop::model::Level{draw_1(g), draw_13(g), draw_14(g), draw_15(g), draw_16(g), draw_17(g), draw_13(g)};
+      [&]() -> slg_program::hop::model::Level {
+        return slg_program::hop::model::Level{draw_1(g),  draw_13(g), draw_14(g), draw_15(g),
+                                              draw_16(g), draw_17(g), draw_13(g)};
       },
-      [&](const hop::model::Level& value) { return hop::model::valid_level(value); }, "hop::model::Level");
+      [&](const slg_program::hop::model::Level& value) { return slg_program::hop::model::valid_level(value); },
+      "slg_program::hop::model::Level");
 }
 
 rt::Int draw_4([[maybe_unused]] Gen& g) {
@@ -97,30 +100,33 @@ rt::Int draw_4([[maybe_unused]] Gen& g) {
       "rt::Int");
 }
 
-hop::model::Player draw_5([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Player>(
+slg_program::hop::model::Player draw_5([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Player>(
       g.rng, nullptr,
-      [&]() -> hop::model::Player {
-        return hop::model::Player{draw_13(g), draw_13(g), draw_12(g), draw_18(g), draw_12(g), draw_19(g), draw_20(g)};
+      [&]() -> slg_program::hop::model::Player {
+        return slg_program::hop::model::Player{draw_13(g), draw_13(g), draw_12(g), draw_18(g),
+                                               draw_12(g), draw_19(g), draw_20(g)};
       },
-      [&](const hop::model::Player& value) { return hop::model::valid_player(value); }, "hop::model::Player");
+      [&](const slg_program::hop::model::Player& value) { return slg_program::hop::model::valid_player(value); },
+      "slg_program::hop::model::Player");
 }
 
 rt::Set<rt::Int> draw_6([[maybe_unused]] Gen& g) {
   return rt::test::draw_set<rt::Int>(g.rng, [&] { return draw_4(g); });
 }
 
-rt::Map<rt::Int, hop::model::Crawler> draw_7([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::Map<rt::Int, hop::model::Crawler>>(
+rt::Map<rt::Int, slg_program::hop::model::Crawler> draw_7([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::Map<rt::Int, slg_program::hop::model::Crawler>>(
       g.rng, nullptr,
-      [&]() -> rt::Map<rt::Int, hop::model::Crawler> {
-        return rt::test::draw_map<rt::Int, hop::model::Crawler>(
+      [&]() -> rt::Map<rt::Int, slg_program::hop::model::Crawler> {
+        return rt::test::draw_map<rt::Int, slg_program::hop::model::Crawler>(
             g.rng, [&] { return draw_4(g); }, [&] { return draw_21(g); });
       },
-      [&](const rt::Map<rt::Int, hop::model::Crawler>& value) {
-        return (std::ranges::all_of(value, [](const auto& entry) { return hop::model::valid_crawler(entry.second); }));
+      [&](const rt::Map<rt::Int, slg_program::hop::model::Crawler>& value) {
+        return (std::ranges::all_of(
+            value, [](const auto& entry) { return slg_program::hop::model::valid_crawler(entry.second); }));
       },
-      "rt::Map<rt::Int, hop::model::Crawler>");
+      "rt::Map<rt::Int, slg_program::hop::model::Crawler>");
 }
 
 rt::Int draw_8([[maybe_unused]] Gen& g) {
@@ -129,14 +135,16 @@ rt::Int draw_8([[maybe_unused]] Gen& g) {
       [&](const rt::Int& value) { return (value >= 0_i && value <= 3_i); }, "rt::Int");
 }
 
-hop::model::Mode draw_9([[maybe_unused]] Gen& g) {
-  return static_cast<hop::model::Mode>(g.rng.below(3));
+slg_program::hop::model::Mode draw_9([[maybe_unused]] Gen& g) {
+  return static_cast<slg_program::hop::model::Mode>(g.rng.below(3));
 }
 
-hop::geom::Box draw_10([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::geom::Box>(
-      g.rng, nullptr, [&]() -> hop::geom::Box { return hop::geom::Box{draw_13(g), draw_13(g)}; },
-      [&](const hop::geom::Box& value) { return hop::geom::valid_box(value); }, "hop::geom::Box");
+slg_program::hop::geom::Box draw_10([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::geom::Box>(
+      g.rng, nullptr,
+      [&]() -> slg_program::hop::geom::Box { return slg_program::hop::geom::Box{draw_13(g), draw_13(g)}; },
+      [&](const slg_program::hop::geom::Box& value) { return slg_program::hop::geom::valid_box(value); },
+      "slg_program::hop::geom::Box");
 }
 
 rt::Int draw_11([[maybe_unused]] Gen& g) {
@@ -149,58 +157,63 @@ bool draw_12([[maybe_unused]] Gen& g) {
   return g.rng.chance(1, 2);
 }
 
-hop::geom::Vec3 draw_13([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::geom::Vec3>(
-      g.rng, nullptr, [&]() -> hop::geom::Vec3 { return hop::geom::Vec3{draw_22(g), draw_22(g), draw_22(g)}; },
-      [&](const hop::geom::Vec3& value) { return hop::geom::valid_vec3(value); }, "hop::geom::Vec3");
+slg_program::hop::geom::Vec3 draw_13([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::geom::Vec3>(
+      g.rng, nullptr,
+      [&]() -> slg_program::hop::geom::Vec3 {
+        return slg_program::hop::geom::Vec3{draw_22(g), draw_22(g), draw_22(g)};
+      },
+      [&](const slg_program::hop::geom::Vec3& value) { return slg_program::hop::geom::valid_vec3(value); },
+      "slg_program::hop::geom::Vec3");
 }
 
-rt::List<hop::model::Solid> draw_14([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::List<hop::model::Solid>>(
+rt::List<slg_program::hop::model::Solid> draw_14([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::List<slg_program::hop::model::Solid>>(
       g.rng, nullptr,
-      [&]() -> rt::List<hop::model::Solid> {
-        return rt::test::draw_list<hop::model::Solid>(g.rng, [&] { return draw_23(g); });
+      [&]() -> rt::List<slg_program::hop::model::Solid> {
+        return rt::test::draw_list<slg_program::hop::model::Solid>(g.rng, [&] { return draw_23(g); });
       },
-      [&](const rt::List<hop::model::Solid>& value) {
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_solid(item); });
+      [&](const rt::List<slg_program::hop::model::Solid>& value) {
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_solid(item); });
       },
-      "rt::List<hop::model::Solid>");
+      "rt::List<slg_program::hop::model::Solid>");
 }
 
-rt::List<hop::model::Mover> draw_15([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::List<hop::model::Mover>>(
+rt::List<slg_program::hop::model::Mover> draw_15([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::List<slg_program::hop::model::Mover>>(
       g.rng, nullptr,
-      [&]() -> rt::List<hop::model::Mover> {
-        return rt::test::draw_list<hop::model::Mover>(g.rng, [&] { return draw_24(g); });
+      [&]() -> rt::List<slg_program::hop::model::Mover> {
+        return rt::test::draw_list<slg_program::hop::model::Mover>(g.rng, [&] { return draw_24(g); });
       },
-      [&](const rt::List<hop::model::Mover>& value) {
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_mover(item); });
+      [&](const rt::List<slg_program::hop::model::Mover>& value) {
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_mover(item); });
       },
-      "rt::List<hop::model::Mover>");
+      "rt::List<slg_program::hop::model::Mover>");
 }
 
-rt::List<hop::model::Gem> draw_16([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::List<hop::model::Gem>>(
+rt::List<slg_program::hop::model::Gem> draw_16([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::List<slg_program::hop::model::Gem>>(
       g.rng, nullptr,
-      [&]() -> rt::List<hop::model::Gem> {
-        return rt::test::draw_list<hop::model::Gem>(g.rng, [&] { return draw_25(g); });
+      [&]() -> rt::List<slg_program::hop::model::Gem> {
+        return rt::test::draw_list<slg_program::hop::model::Gem>(g.rng, [&] { return draw_25(g); });
       },
-      [&](const rt::List<hop::model::Gem>& value) {
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_gem(item); });
+      [&](const rt::List<slg_program::hop::model::Gem>& value) {
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_gem(item); });
       },
-      "rt::List<hop::model::Gem>");
+      "rt::List<slg_program::hop::model::Gem>");
 }
 
-rt::List<hop::model::Crawler> draw_17([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::List<hop::model::Crawler>>(
+rt::List<slg_program::hop::model::Crawler> draw_17([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::List<slg_program::hop::model::Crawler>>(
       g.rng, nullptr,
-      [&]() -> rt::List<hop::model::Crawler> {
-        return rt::test::draw_list<hop::model::Crawler>(g.rng, [&] { return draw_21(g); });
+      [&]() -> rt::List<slg_program::hop::model::Crawler> {
+        return rt::test::draw_list<slg_program::hop::model::Crawler>(g.rng, [&] { return draw_21(g); });
       },
-      [&](const rt::List<hop::model::Crawler>& value) {
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_crawler(item); });
+      [&](const rt::List<slg_program::hop::model::Crawler>& value) {
+        return std::ranges::all_of(value,
+                                   [](const auto& item) { return slg_program::hop::model::valid_crawler(item); });
       },
-      "rt::List<hop::model::Crawler>");
+      "rt::List<slg_program::hop::model::Crawler>");
 }
 
 rt::Int draw_18([[maybe_unused]] Gen& g) {
@@ -222,40 +235,47 @@ rt::Int draw_20([[maybe_unused]] Gen& g) {
       [&](const rt::Int& value) { return (value >= 0_i && value <= 359_i); }, "rt::Int");
 }
 
-hop::model::Crawler draw_21([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Crawler>(
+slg_program::hop::model::Crawler draw_21([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Crawler>(
       g.rng, nullptr,
-      [&]() -> hop::model::Crawler {
-        return hop::model::Crawler{draw_4(g), draw_13(g), draw_4(g), draw_4(g), draw_26(g), draw_27(g)};
+      [&]() -> slg_program::hop::model::Crawler {
+        return slg_program::hop::model::Crawler{draw_4(g), draw_13(g), draw_4(g), draw_4(g), draw_26(g), draw_27(g)};
       },
-      [&](const hop::model::Crawler& value) { return hop::model::valid_crawler(value); }, "hop::model::Crawler");
+      [&](const slg_program::hop::model::Crawler& value) { return slg_program::hop::model::valid_crawler(value); },
+      "slg_program::hop::model::Crawler");
 }
 
-hop::geom::Sub draw_22([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::geom::Sub>(
-      g.rng, nullptr, [&]() -> hop::geom::Sub { return draw_28(g); },
-      [&](const hop::geom::Sub& value) { return hop::geom::valid_sub(value); }, "hop::geom::Sub");
+slg_program::hop::geom::Sub draw_22([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::geom::Sub>(
+      g.rng, nullptr, [&]() -> slg_program::hop::geom::Sub { return draw_28(g); },
+      [&](const slg_program::hop::geom::Sub& value) { return slg_program::hop::geom::valid_sub(value); },
+      "slg_program::hop::geom::Sub");
 }
 
-hop::model::Solid draw_23([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Solid>(
-      g.rng, nullptr, [&]() -> hop::model::Solid { return hop::model::Solid{draw_10(g), draw_29(g)}; },
-      [&](const hop::model::Solid& value) { return hop::model::valid_solid(value); }, "hop::model::Solid");
-}
-
-hop::model::Mover draw_24([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Mover>(
+slg_program::hop::model::Solid draw_23([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Solid>(
       g.rng, nullptr,
-      [&]() -> hop::model::Mover {
-        return hop::model::Mover{draw_4(g), draw_10(g), draw_13(g), draw_30(g), draw_29(g)};
-      },
-      [&](const hop::model::Mover& value) { return hop::model::valid_mover(value); }, "hop::model::Mover");
+      [&]() -> slg_program::hop::model::Solid { return slg_program::hop::model::Solid{draw_10(g), draw_29(g)}; },
+      [&](const slg_program::hop::model::Solid& value) { return slg_program::hop::model::valid_solid(value); },
+      "slg_program::hop::model::Solid");
 }
 
-hop::model::Gem draw_25([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Gem>(
-      g.rng, nullptr, [&]() -> hop::model::Gem { return hop::model::Gem{draw_4(g), draw_13(g)}; },
-      [&](const hop::model::Gem& value) { return hop::model::valid_gem(value); }, "hop::model::Gem");
+slg_program::hop::model::Mover draw_24([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Mover>(
+      g.rng, nullptr,
+      [&]() -> slg_program::hop::model::Mover {
+        return slg_program::hop::model::Mover{draw_4(g), draw_10(g), draw_13(g), draw_30(g), draw_29(g)};
+      },
+      [&](const slg_program::hop::model::Mover& value) { return slg_program::hop::model::valid_mover(value); },
+      "slg_program::hop::model::Mover");
+}
+
+slg_program::hop::model::Gem draw_25([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Gem>(
+      g.rng, nullptr,
+      [&]() -> slg_program::hop::model::Gem { return slg_program::hop::model::Gem{draw_4(g), draw_13(g)}; },
+      [&](const slg_program::hop::model::Gem& value) { return slg_program::hop::model::valid_gem(value); },
+      "slg_program::hop::model::Gem");
 }
 
 rt::Int draw_26([[maybe_unused]] Gen& g) {
@@ -276,10 +296,14 @@ rt::Int draw_28([[maybe_unused]] Gen& g) {
       [&](const rt::Int& value) { return (value >= -1048576_i && value <= 1048576_i); }, "rt::Int");
 }
 
-hop::model::Rgb draw_29([[maybe_unused]] Gen& g) {
-  return rt::test::keep<hop::model::Rgb>(
-      g.rng, nullptr, [&]() -> hop::model::Rgb { return hop::model::Rgb{draw_31(g), draw_31(g), draw_31(g)}; },
-      [&](const hop::model::Rgb& value) { return hop::model::valid_rgb(value); }, "hop::model::Rgb");
+slg_program::hop::model::Rgb draw_29([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::hop::model::Rgb>(
+      g.rng, nullptr,
+      [&]() -> slg_program::hop::model::Rgb {
+        return slg_program::hop::model::Rgb{draw_31(g), draw_31(g), draw_31(g)};
+      },
+      [&](const slg_program::hop::model::Rgb& value) { return slg_program::hop::model::valid_rgb(value); },
+      "slg_program::hop::model::Rgb");
 }
 
 rt::Int draw_30([[maybe_unused]] Gen& g) {
@@ -294,7 +318,8 @@ rt::Int draw_31([[maybe_unused]] Gen& g) {
       [&](const rt::Int& value) { return (value >= 0_i && value <= 255_i); }, "rt::Int");
 }
 
-Run run_hop_tests_edge_touch_matches_raylib(Suite& suite, const hop::geom::Box& a, const hop::geom::Box& b);
+Run run_hop_tests_edge_touch_matches_raylib(Suite& suite, const slg_program::hop::geom::Box& a,
+                                            const slg_program::hop::geom::Box& b);
 Run run_hop_tests_moves_standing_still_stays_put(Suite& suite);
 Run run_hop_tests_moves_running_reaches_full_speed(Suite& suite);
 Run run_hop_tests_moves_a_held_jump_peaks_at_380(Suite& suite);
@@ -338,15 +363,16 @@ Run run_hop_world_falling_fast_onto_the_floor(Suite& suite);
 // the game's touch and raylib's are one test; only a backend linked to raylib can run the right-hand side
 // test hop.tests.edge.touch_matches_raylib (hop/tests/edge.slg:7)
 void given_hop_tests_edge_touch_matches_raylib([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
-void steps_hop_tests_edge_touch_matches_raylib([[maybe_unused]] Machine& ctx, const hop::geom::Box& a,
-                                               const hop::geom::Box& b) {
+void steps_hop_tests_edge_touch_matches_raylib([[maybe_unused]] Machine& ctx, const slg_program::hop::geom::Box& a,
+                                               const slg_program::hop::geom::Box& b) {
   rt::check([&]() -> bool {
-    const auto arg = hop::geom::touches(a, b);
-    const auto arg_2 = hop::screen::check_collision_boxes(a, b);
+    const auto arg = slg_program::hop::geom::touches(a, b);
+    const auto arg_2 = slg_program::hop::screen::check_collision_boxes(a, b);
     return arg == arg_2;
   }());
 }
-Run run_hop_tests_edge_touch_matches_raylib(Suite& suite, const hop::geom::Box& a, const hop::geom::Box& b) {
+Run run_hop_tests_edge_touch_matches_raylib(Suite& suite, const slg_program::hop::geom::Box& a,
+                                            const slg_program::hop::geom::Box& b) {
   return suite.run(given_hop_tests_edge_touch_matches_raylib,
                    [&](Machine& ctx) { steps_hop_tests_edge_touch_matches_raylib(ctx, a, b); });
 }
@@ -354,12 +380,12 @@ Run run_hop_tests_edge_touch_matches_raylib(Suite& suite, const hop::geom::Box& 
 // test hop.tests.moves.standing_still_stays_put (hop/tests/moves.slg:11)
 void given_hop_tests_moves_standing_still_stays_put([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_moves_standing_still_stays_put([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
+  slg_program::hop::world::start(ctx, 1_i);
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 30_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   }
-  rt::check(ctx.world.player.at ==
-            rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"));
+  rt::check(ctx.world.player.at == rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                  slg_program::hop::geom::valid_vec3, "a new Vec3"));
   rt::check(ctx.world.player.grounded);
   rt::check(ctx.world.ticks == 30_i);
 }
@@ -372,9 +398,9 @@ Run run_hop_tests_moves_standing_still_stays_put(Suite& suite) {
 // test hop.tests.moves.running_reaches_full_speed (hop/tests/moves.slg:19)
 void given_hop_tests_moves_running_reaches_full_speed([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_moves_running_reaches_full_speed([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
+  slg_program::hop::world::start(ctx, 1_i);
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 10_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::right);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::right);
   }
   rt::check(ctx.world.player.vel.x == 16_i);
   rt::check(ctx.world.player.at.x == 96_i);
@@ -389,11 +415,11 @@ Run run_hop_tests_moves_running_reaches_full_speed(Suite& suite) {
 // test hop.tests.moves.a_held_jump_peaks_at_380 (hop/tests/moves.slg:28)
 void given_hop_tests_moves_a_held_jump_peaks_at_380([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_moves_a_held_jump_peaks_at_380([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
-  hop::world::step(ctx, hop::tests::moves::rest);
+  slg_program::hop::world::start(ctx, 1_i);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   rt::Int top = 0_i;
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 50_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::jump);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
     top = rt::max(top, ctx.world.player.at.y);
   }
   rt::check(top == 380_i);
@@ -408,12 +434,12 @@ Run run_hop_tests_moves_a_held_jump_peaks_at_380(Suite& suite) {
 // test hop.tests.moves.a_short_hop_peaks_at_94 (hop/tests/moves.slg:41)
 void given_hop_tests_moves_a_short_hop_peaks_at_94([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_moves_a_short_hop_peaks_at_94([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
-  hop::world::step(ctx, hop::tests::moves::rest);
-  hop::world::step(ctx, hop::tests::moves::jump);
+  slg_program::hop::world::start(ctx, 1_i);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
   rt::Int top = 0_i;
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 30_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
     top = rt::max(top, ctx.world.player.at.y);
   }
   rt::check(top == 94_i);
@@ -427,10 +453,10 @@ Run run_hop_tests_moves_a_short_hop_peaks_at_94(Suite& suite) {
 // test hop.tests.moves.a_jump_needs_a_fresh_press (hop/tests/moves.slg:54)
 void given_hop_tests_moves_a_jump_needs_a_fresh_press([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_moves_a_jump_needs_a_fresh_press([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
-  hop::world::step(ctx, hop::tests::moves::rest);
+  slg_program::hop::world::start(ctx, 1_i);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 60_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::jump);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
   }
   rt::check(ctx.world.player.grounded);
   rt::check(ctx.world.player.at.y == 0_i);
@@ -446,9 +472,9 @@ void given_hop_tests_moves_a_jump_just_after_the_edge_still_counts([[maybe_unuse
   ctx.world = suite.end_world(25, "hop.world.past_the_first_ledge", run_hop_world_past_the_first_ledge);
 }
 void steps_hop_tests_moves_a_jump_just_after_the_edge_still_counts([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::moves::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   rt::check(!ctx.world.player.grounded);
-  hop::world::step(ctx, hop::tests::moves::jump);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
   rt::check(ctx.world.player.vel.y == 38_i);
 }
 Run run_hop_tests_moves_a_jump_just_after_the_edge_still_counts(Suite& suite) {
@@ -463,9 +489,9 @@ void given_hop_tests_moves_a_jump_long_after_the_edge_does_not([[maybe_unused]] 
 }
 void steps_hop_tests_moves_a_jump_long_after_the_edge_does_not([[maybe_unused]] Machine& ctx) {
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 7_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   }
-  hop::world::step(ctx, hop::tests::moves::jump);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
   rt::check(ctx.world.player.vel.y < 0_i);
 }
 Run run_hop_tests_moves_a_jump_long_after_the_edge_does_not(Suite& suite) {
@@ -479,7 +505,7 @@ void given_hop_tests_moves_a_wall_stops_the_body_flush([[maybe_unused]] Suite& s
 }
 void steps_hop_tests_moves_a_wall_stops_the_body_flush([[maybe_unused]] Machine& ctx) {
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 10_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::right);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::right);
   }
   rt::check(ctx.world.player.at.x == 2496_i);
   rt::check(ctx.world.player.vel.x == 0_i);
@@ -496,7 +522,7 @@ void given_hop_tests_moves_a_ceiling_stops_a_jump([[maybe_unused]] Suite& suite,
 void steps_hop_tests_moves_a_ceiling_stops_a_jump([[maybe_unused]] Machine& ctx) {
   rt::Int top = 0_i;
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 40_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::jump);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::jump);
     top = rt::max(top, ctx.world.player.at.y);
   }
   rt::check(top == 208_i);
@@ -512,10 +538,10 @@ void given_hop_tests_moves_a_rider_moves_with_the_mover([[maybe_unused]] Suite& 
 }
 void steps_hop_tests_moves_a_rider_moves_with_the_mover([[maybe_unused]] Machine& ctx) {
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 10_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   }
-  rt::check(ctx.world.player.at ==
-            rt::conforming(hop::geom::Vec3{.x = 1680_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"));
+  rt::check(ctx.world.player.at == rt::conforming(slg_program::hop::geom::Vec3{.x = 1680_i, .y = 0_i, .z = 0_i},
+                                                  slg_program::hop::geom::valid_vec3, "a new Vec3"));
   rt::check(ctx.world.player.riding == rt::some(1_i));
 }
 Run run_hop_tests_moves_a_rider_moves_with_the_mover(Suite& suite) {
@@ -530,7 +556,7 @@ void given_hop_tests_moves_a_mover_catches_a_falling_body([[maybe_unused]] Suite
 }
 void steps_hop_tests_moves_a_mover_catches_a_falling_body([[maybe_unused]] Machine& ctx) {
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 40_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   }
   rt::check(ctx.world.player.riding == rt::some(1_i));
   rt::check(ctx.world.player.at.y == 0_i);
@@ -547,7 +573,7 @@ void given_hop_tests_moves_a_mover_never_catches_from_below([[maybe_unused]] Sui
   ctx.world = suite.end_world(38, "hop.world.under_the_mover", run_hop_world_under_the_mover);
 }
 void steps_hop_tests_moves_a_mover_never_catches_from_below([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::moves::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   rt::check(ctx.world.player.at.y < -200_i);
   rt::check(ctx.world.player.riding == rt::Option<rt::Int>{});
 }
@@ -563,7 +589,7 @@ void given_hop_tests_moves_a_fast_fall_lands([[maybe_unused]] Suite& suite, [[ma
 }
 void steps_hop_tests_moves_a_fast_fall_lands([[maybe_unused]] Machine& ctx) {
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 12_i, true})) {
-    hop::world::step(ctx, hop::tests::moves::rest);
+    slg_program::hop::world::step(ctx, slg_program::hop::tests::moves::rest);
   }
   rt::check(ctx.world.player.at.y == 0_i);
   rt::check(ctx.world.player.grounded);
@@ -577,13 +603,13 @@ Run run_hop_tests_moves_a_fast_fall_lands(Suite& suite) {
 // test hop.tests.runs.the_meadow_can_be_won (hop/tests/runs.slg:42)
 void given_hop_tests_runs_the_meadow_can_be_won([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_runs_the_meadow_can_be_won([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
-  for (const auto& h : hop::tests::runs::meadow_win()) {
+  slg_program::hop::world::start(ctx, 1_i);
+  for (const auto& h : slg_program::hop::tests::runs::meadow_win()) {
     for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, h.ticks, true})) {
-      hop::world::step(ctx, hop::tests::runs::pad_of(h.keys));
+      slg_program::hop::world::step(ctx, slg_program::hop::tests::runs::pad_of(h.keys));
     }
   }
-  rt::check(ctx.world.mode == hop::model::Mode::Won);
+  rt::check(ctx.world.mode == slg_program::hop::model::Mode::Won);
   rt::check(ctx.world.ticks == 316_i);
   rt::check(rt::size(ctx.world.taken) == 3_i);
   rt::check(ctx.world.lives == 3_i);
@@ -597,15 +623,15 @@ Run run_hop_tests_runs_the_meadow_can_be_won(Suite& suite) {
 // test hop.tests.runs.the_ridge_can_be_won (hop/tests/runs.slg:54)
 void given_hop_tests_runs_the_ridge_can_be_won([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_runs_the_ridge_can_be_won([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 2_i);
-  for (const auto& h : hop::tests::runs::ridge_win()) {
+  slg_program::hop::world::start(ctx, 2_i);
+  for (const auto& h : slg_program::hop::tests::runs::ridge_win()) {
     for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, h.ticks, true})) {
-      if (ctx.world.mode == hop::model::Mode::Playing) {
-        hop::world::step(ctx, hop::tests::runs::pad_of(h.keys));
+      if (ctx.world.mode == slg_program::hop::model::Mode::Playing) {
+        slg_program::hop::world::step(ctx, slg_program::hop::tests::runs::pad_of(h.keys));
       }
     }
   }
-  rt::check(ctx.world.mode == hop::model::Mode::Won);
+  rt::check(ctx.world.mode == slg_program::hop::model::Mode::Won);
   rt::check(ctx.world.ticks == 549_i);
   rt::check(rt::size(ctx.world.taken) == 3_i);
   rt::check(ctx.world.lives == 3_i);
@@ -620,9 +646,9 @@ void given_hop_tests_touches_a_gem_is_taken_once([[maybe_unused]] Suite& suite, 
   ctx.world = suite.end_world(30, "hop.world.at_the_third_gem", run_hop_world_at_the_third_gem);
 }
 void steps_hop_tests_touches_a_gem_is_taken_once([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.taken == rt::Set<rt::Int>{3_i});
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.taken == rt::Set<rt::Int>{3_i});
   rt::check(ctx.out->text() == "1 gem 3\n"s);
 }
@@ -638,7 +664,7 @@ void given_hop_tests_touches_a_fall_keeps_the_gems([[maybe_unused]] Suite& suite
       suite.end_world(36, "hop.world.about_to_fall_out_holding_a_gem", run_hop_world_about_to_fall_out_holding_a_gem);
 }
 void steps_hop_tests_touches_a_fall_keeps_the_gems([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.lives == 2_i);
   rt::check(ctx.world.taken == rt::Set<rt::Int>{1_i});
 }
@@ -653,7 +679,7 @@ void given_hop_tests_touches_rising_into_a_crawler_hurts([[maybe_unused]] Suite&
   ctx.world = suite.end_world(37, "hop.world.rising_beside_the_crawler", run_hop_world_rising_beside_the_crawler);
 }
 void steps_hop_tests_touches_rising_into_a_crawler_hurts([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.lives == 2_i);
   rt::check(rt::contains(ctx.world.crawlers, 1_i));
 }
@@ -668,7 +694,7 @@ void given_hop_tests_touches_a_stomp_removes_the_crawler([[maybe_unused]] Suite&
   ctx.world = suite.end_world(31, "hop.world.falling_on_the_crawler", run_hop_world_falling_on_the_crawler);
 }
 void steps_hop_tests_touches_a_stomp_removes_the_crawler([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(!rt::contains(ctx.world.crawlers, 1_i));
   rt::check(ctx.world.player.vel.y == 24_i);
   rt::check(ctx.world.lives == 3_i);
@@ -685,9 +711,9 @@ void given_hop_tests_touches_a_crawler_hurts_from_the_side([[maybe_unused]] Suit
   ctx.world = suite.end_world(32, "hop.world.running_at_the_crawler", run_hop_world_running_at_the_crawler);
 }
 void steps_hop_tests_touches_a_crawler_hurts_from_the_side([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::model::Pad{.right = true});
+  slg_program::hop::world::step(ctx, slg_program::hop::model::Pad{.right = true});
   rt::check(ctx.world.lives == 2_i);
-  rt::check(ctx.world.player.at == hop::levels::meadow().start);
+  rt::check(ctx.world.player.at == slg_program::hop::levels::meadow().start);
   rt::check(rt::contains(ctx.world.crawlers, 1_i));
 }
 Run run_hop_tests_touches_a_crawler_hurts_from_the_side(Suite& suite) {
@@ -700,9 +726,9 @@ void given_hop_tests_touches_falling_out_costs_a_life([[maybe_unused]] Suite& su
   ctx.world = suite.end_world(33, "hop.world.about_to_fall_out", run_hop_world_about_to_fall_out);
 }
 void steps_hop_tests_touches_falling_out_costs_a_life([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.lives == 2_i);
-  rt::check(ctx.world.mode == hop::model::Mode::Playing);
+  rt::check(ctx.world.mode == slg_program::hop::model::Mode::Playing);
 }
 Run run_hop_tests_touches_falling_out_costs_a_life(Suite& suite) {
   return suite.run(given_hop_tests_touches_falling_out_costs_a_life,
@@ -715,10 +741,10 @@ void given_hop_tests_touches_the_last_life_ends_the_game([[maybe_unused]] Suite&
                               run_hop_world_about_to_fall_out_for_the_last_time);
 }
 void steps_hop_tests_touches_the_last_life_ends_the_game([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
   rt::check(ctx.world.lives == 0_i);
-  rt::check(ctx.world.mode == hop::model::Mode::Lost);
-  rt::test::expect_fail([&] { hop::world::step(ctx, hop::tests::touches::rest); }, "Over");
+  rt::check(ctx.world.mode == slg_program::hop::model::Mode::Lost);
+  rt::test::expect_fail([&] { slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest); }, "Over");
 }
 Run run_hop_tests_touches_the_last_life_ends_the_game(Suite& suite) {
   return suite.run(given_hop_tests_touches_the_last_life_ends_the_game,
@@ -730,9 +756,9 @@ void given_hop_tests_touches_reaching_the_flag_wins([[maybe_unused]] Suite& suit
   ctx.world = suite.end_world(35, "hop.world.beside_the_flag", run_hop_world_beside_the_flag);
 }
 void steps_hop_tests_touches_reaching_the_flag_wins([[maybe_unused]] Machine& ctx) {
-  hop::world::step(ctx, hop::tests::touches::rest);
-  rt::check(ctx.world.mode == hop::model::Mode::Won);
-  rt::test::expect_fail([&] { hop::world::step(ctx, hop::tests::touches::rest); }, "Over");
+  slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest);
+  rt::check(ctx.world.mode == slg_program::hop::model::Mode::Won);
+  rt::test::expect_fail([&] { slg_program::hop::world::step(ctx, slg_program::hop::tests::touches::rest); }, "Over");
 }
 Run run_hop_tests_touches_reaching_the_flag_wins(Suite& suite) {
   return suite.run(given_hop_tests_touches_reaching_the_flag_wins,
@@ -743,15 +769,15 @@ Run run_hop_tests_touches_reaching_the_flag_wins(Suite& suite) {
 void given_hop_tests_touches_starting_again_resets_everything([[maybe_unused]] Suite& suite,
                                                               [[maybe_unused]] Machine& ctx) {}
 void steps_hop_tests_touches_starting_again_resets_everything([[maybe_unused]] Machine& ctx) {
-  hop::world::start(ctx, 1_i);
+  slg_program::hop::world::start(ctx, 1_i);
   for ([[maybe_unused]] const auto& i : rt::list(rt::Range{1_i, 5_i, true})) {
-    hop::world::step(ctx, hop::model::Pad{.right = true});
+    slg_program::hop::world::step(ctx, slg_program::hop::model::Pad{.right = true});
   }
-  hop::world::start(ctx, 2_i);
+  slg_program::hop::world::start(ctx, 2_i);
   rt::check(ctx.world.taken == rt::Set<rt::Int>{});
   rt::check(ctx.world.ticks == 0_i);
   rt::check(rt::size(ctx.world.crawlers) == 2_i);
-  rt::check(ctx.world.player.at == hop::levels::ridge().start);
+  rt::check(ctx.world.player.at == slg_program::hop::levels::ridge().start);
 }
 Run run_hop_tests_touches_starting_again_resets_everything(Suite& suite) {
   return suite.run(given_hop_tests_touches_starting_again_resets_everything,
@@ -761,16 +787,17 @@ Run run_hop_tests_touches_starting_again_resets_everything(Suite& suite) {
 // a body just past the first ledge of the meadow, still within its coyote ticks
 // test hop.world.past_the_first_ledge (hop/world.slg:152)
 void given_hop_world_past_the_first_ledge([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 1090_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1090_i, .y = 0_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true,
           .coyote = 6_i},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_past_the_first_ledge([[maybe_unused]] Machine& ctx) {}
@@ -782,16 +809,18 @@ Run run_hop_world_past_the_first_ledge(Suite& suite) {
 // running at the stone step of the meadow
 // test hop.world.running_at_the_step (hop/world.slg:156)
 void given_hop_world_running_at_the_step([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 2400_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 2400_i, .y = 0_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_running_at_the_step([[maybe_unused]] Machine& ctx) {}
@@ -803,50 +832,61 @@ Run run_hop_world_running_at_the_step(Suite& suite) {
 // a one-metre room whose ceiling is lower than a jump
 // test hop.world.under_a_low_ceiling (hop/world.slg:160)
 void given_hop_world_under_a_low_ceiling([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value =
+  slg_program::hop::model::Level value =
       rt::conforming(
-          hop::model::Level{
+          slg_program::hop::model::Level{
               .name = "box"s,
-              .start =
-                  rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+              .start = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3"),
               .solids =
-                  rt::List<hop::model::Solid>{
+                  rt::List<slg_program::hop::model::Solid>{
                       rt::conforming(
-                          hop::model::Solid{
+                          slg_program::hop::model::Solid{
                               .box = rt::conforming(
-                                  hop::geom::Box{.lo = rt::conforming(
-                                                     hop::geom::Vec3{.x = -512_i, .y = -256_i, .z = -512_i},
-                                                     hop::geom::valid_vec3, "a new Vec3"),
-                                                 .hi =
-                                                     rt::conforming(hop::geom::Vec3{.x = 512_i, .y = 0_i, .z = 512_i},
-                                                                    hop::geom::valid_vec3, "a new Vec3")},
-                                  hop::geom::valid_box, "a new Box"),
-                              .color = rt::conforming(hop::model::Rgb{.r = 0_i, .g = 0_i, .b = 0_i},
-                                                      hop::model::valid_rgb, "a new Rgb")},
-                          hop::model::valid_solid, "a new Solid"),
-                      rt::conforming(
-                          hop::model::Solid{
-                              .box =
-                                  rt::conforming(
-                                      hop::geom::Box{.lo = rt::conforming(
-                                                         hop::geom::Vec3{.x = -512_i, .y = 400_i, .z = -512_i}, hop::geom::valid_vec3, "a new Vec3"),
-                                                     .hi =
-                                                         rt::conforming(hop::geom::Vec3{.x = 512_i, .y = 600_i, .z = 512_i}, hop::geom::valid_vec3, "a new Vec3")},
-                                      hop::geom::valid_box, "a new Box"),
-                              .color = rt::conforming(
-                                  hop::model::Rgb{.r = 0_i, .g = 0_i, .b = 0_i}, hop::model::valid_rgb, "a new Rgb")},
-                          hop::model::valid_solid, "a new Solid")},
-              .goal = rt::conforming(hop::geom::Vec3{.x = 100000_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3,
-                                     "a new Vec3")},
-          hop::model::valid_level, "a new Level");
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+                                  slg_program::hop::geom::Box{
+                                      .lo = rt::conforming(
+                                          slg_program::hop::geom::Vec3{.x = -512_i, .y = -256_i, .z = -512_i},
+                                          slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                      .hi =
+                                          rt::conforming(slg_program::hop::geom::Vec3{.x = 512_i, .y = 0_i, .z = 512_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+                                  slg_program::hop::geom::valid_box, "a new Box"),
+                              .color = rt::conforming(slg_program::hop::model::Rgb{.r = 0_i, .g = 0_i, .b = 0_i},
+                                                      slg_program::hop::model::valid_rgb, "a new Rgb")},
+                          slg_program::hop::model::valid_solid, "a new Solid"),
+                      rt::conforming(slg_program::
+                                         hop::model::Solid{.box =
+                                                               rt::conforming(slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x =
+                                                                                                                                                                -512_i,
+                                                                                                                                                            .y = 400_i,
+                                                                                                                                                            .z = -512_i},
+                                                                                                                               slg_program::hop::geom::valid_vec3,
+                                                                                                                               "a new Vec3"),
+                                                                                                          .hi = rt::
+                                                                                                              conforming(slg_program::hop::geom::Vec3{.x = 512_i, .y = 600_i, .z = 512_i},
+                                                                                                                         slg_program::hop::geom::valid_vec3,
+                                                                                                                         "a new Vec3")},
+                                                                              slg_program::hop::geom::valid_box,
+                                                                              "a new Box"),
+                                                           .color =
+                                                               rt::conforming(slg_program::hop::model::Rgb{.r = 0_i,
+                                                                                                           .g =
+                                                                                                               0_i,
+                                                                                                           .b = 0_i},
+                                                                              slg_program::hop::model::valid_rgb,
+                                                                              "a new Rgb")},
+                                     slg_program::hop::model::valid_solid, "a new Solid")},
+              .goal = rt::conforming(slg_program::hop::geom::Vec3{.x = 100000_i, .y = 0_i, .z = 0_i},
+                                     slg_program::hop::geom::valid_vec3, "a new Vec3")},
+          slg_program::hop::model::valid_level, "a new Level");
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .grounded = true},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{.at = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                           slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                      .grounded = true},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_under_a_low_ceiling([[maybe_unused]] Machine& ctx) {}
@@ -857,16 +897,17 @@ Run run_hop_world_under_a_low_ceiling(Suite& suite) {
 
 // test hop.world.riding_the_mover (hop/world.slg:173)
 void given_hop_world_riding_the_mover([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::ridge();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::ridge();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 1600_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1600_i, .y = 0_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true,
           .riding = rt::some(1_i)},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_riding_the_mover([[maybe_unused]] Machine& ctx) {}
@@ -876,14 +917,15 @@ Run run_hop_world_riding_the_mover(Suite& suite) {
 
 // test hop.world.above_the_mover (hop/world.slg:176)
 void given_hop_world_above_the_mover([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::ridge();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::ridge();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 =
-      rt::conforming(hop::model::Player{.at = rt::conforming(hop::geom::Vec3{.x = 1600_i, .y = 200_i, .z = 0_i},
-                                                             hop::geom::valid_vec3, "a new Vec3")},
-                     hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1600_i, .y = 200_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_above_the_mover([[maybe_unused]] Machine& ctx) {}
@@ -893,15 +935,16 @@ Run run_hop_world_above_the_mover(Suite& suite) {
 
 // test hop.world.at_the_third_gem (hop/world.slg:179)
 void given_hop_world_at_the_third_gem([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 4608_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 4608_i, .y = 0_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_at_the_third_gem([[maybe_unused]] Machine& ctx) {}
@@ -911,28 +954,32 @@ Run run_hop_world_at_the_third_gem(Suite& suite) {
 
 // test hop.world.falling_on_the_crawler (hop/world.slg:182)
 void given_hop_world_falling_on_the_crawler([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  rt::Map<rt::Int, hop::model::Crawler> value_2 = rt::Map<rt::Int, hop::model::Crawler>{
-      {1_i, rt::conforming(hop::model::Crawler{.no = 1_i,
-                                               .at = rt::conforming(hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
-                                                                    hop::geom::valid_vec3, "a new Vec3"),
-                                               .lo = 2752_i,
-                                               .hi = 3392_i,
-                                               .dir = 1_i,
-                                               .speed = 2_i},
-                           hop::model::valid_crawler, "a new Crawler")}};
-  rt::claim(
-      (std::ranges::all_of(value_2, [](const auto& entry_3) { return hop::model::valid_crawler(entry_3.second); })),
-      "this `@given` value of hop.world.crawlers");
+  rt::Map<rt::Int, slg_program::hop::model::Crawler> value_2 = rt::Map<rt::Int, slg_program::hop::model::Crawler>{
+      {1_i, rt::conforming(
+                slg_program::hop::model::Crawler{
+                    .no = 1_i,
+                    .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
+                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                    .lo = 2752_i,
+                    .hi = 3392_i,
+                    .dir = 1_i,
+                    .speed = 2_i},
+                slg_program::hop::model::valid_crawler, "a new Crawler")}};
+  rt::claim((std::ranges::all_of(
+                value_2, [](const auto& entry_3) { return slg_program::hop::model::valid_crawler(entry_3.second); })),
+            "this `@given` value of hop.world.crawlers");
   ctx.world.crawlers = std::move(value_2);
-  hop::model::Player value_4 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 3072_i, .y = 400_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = -20_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_4 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 3072_i, .y = 400_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = -20_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_4);
 }
 void steps_hop_world_falling_on_the_crawler([[maybe_unused]] Machine& ctx) {}
@@ -943,29 +990,33 @@ Run run_hop_world_falling_on_the_crawler(Suite& suite) {
 
 // test hop.world.running_at_the_crawler (hop/world.slg:189)
 void given_hop_world_running_at_the_crawler([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  rt::Map<rt::Int, hop::model::Crawler> value_2 = rt::Map<rt::Int, hop::model::Crawler>{
-      {1_i, rt::conforming(hop::model::Crawler{.no = 1_i,
-                                               .at = rt::conforming(hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
-                                                                    hop::geom::valid_vec3, "a new Vec3"),
-                                               .lo = 2752_i,
-                                               .hi = 3392_i,
-                                               .dir = 1_i,
-                                               .speed = 2_i},
-                           hop::model::valid_crawler, "a new Crawler")}};
-  rt::claim(
-      (std::ranges::all_of(value_2, [](const auto& entry_3) { return hop::model::valid_crawler(entry_3.second); })),
-      "this `@given` value of hop.world.crawlers");
+  rt::Map<rt::Int, slg_program::hop::model::Crawler> value_2 = rt::Map<rt::Int, slg_program::hop::model::Crawler>{
+      {1_i, rt::conforming(
+                slg_program::hop::model::Crawler{
+                    .no = 1_i,
+                    .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
+                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                    .lo = 2752_i,
+                    .hi = 3392_i,
+                    .dir = 1_i,
+                    .speed = 2_i},
+                slg_program::hop::model::valid_crawler, "a new Crawler")}};
+  rt::claim((std::ranges::all_of(
+                value_2, [](const auto& entry_3) { return slg_program::hop::model::valid_crawler(entry_3.second); })),
+            "this `@given` value of hop.world.crawlers");
   ctx.world.crawlers = std::move(value_2);
-  hop::model::Player value_4 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 2900_i, .y = 256_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_4 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 2900_i, .y = 256_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_4);
 }
 void steps_hop_world_running_at_the_crawler([[maybe_unused]] Machine& ctx) {}
@@ -976,16 +1027,17 @@ Run run_hop_world_running_at_the_crawler(Suite& suite) {
 
 // test hop.world.about_to_fall_out (hop/world.slg:196)
 void given_hop_world_about_to_fall_out([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at =
-              rt::conforming(hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_about_to_fall_out([[maybe_unused]] Machine& ctx) {}
@@ -995,19 +1047,20 @@ Run run_hop_world_about_to_fall_out(Suite& suite) {
 
 // test hop.world.about_to_fall_out_for_the_last_time (hop/world.slg:199)
 void given_hop_world_about_to_fall_out_for_the_last_time([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
   rt::Int value_2 = 1_i;
   rt::claim((value_2 >= 0_i && value_2 <= 3_i), "this `@given` value of hop.world.lives");
   ctx.world.lives = std::move(value_2);
-  hop::model::Player value_3 = rt::conforming(
-      hop::model::Player{
-          .at =
-              rt::conforming(hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_3), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_3 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_3), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_3);
 }
 void steps_hop_world_about_to_fall_out_for_the_last_time([[maybe_unused]] Machine& ctx) {}
@@ -1018,15 +1071,16 @@ Run run_hop_world_about_to_fall_out_for_the_last_time(Suite& suite) {
 
 // test hop.world.beside_the_flag (hop/world.slg:202)
 void given_hop_world_beside_the_flag([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 5000_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 5000_i, .y = 0_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
           .grounded = true},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_beside_the_flag([[maybe_unused]] Machine& ctx) {}
@@ -1037,18 +1091,19 @@ Run run_hop_world_beside_the_flag(Suite& suite) {
 // a gem already taken, then a fall
 // test hop.world.about_to_fall_out_holding_a_gem (hop/world.slg:205)
 void given_hop_world_about_to_fall_out_holding_a_gem([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
   rt::Set<rt::Int> value_2 = rt::Set<rt::Int>{1_i};
   ctx.world.taken = std::move(value_2);
-  hop::model::Player value_3 = rt::conforming(
-      hop::model::Player{
-          .at =
-              rt::conforming(hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_3), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_3 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1280_i, .y = -2040_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_3), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_3);
 }
 void steps_hop_world_about_to_fall_out_holding_a_gem([[maybe_unused]] Machine& ctx) {}
@@ -1060,28 +1115,32 @@ Run run_hop_world_about_to_fall_out_holding_a_gem(Suite& suite) {
 // rising beside a crawler, feet above its middle
 // test hop.world.rising_beside_the_crawler (hop/world.slg:209)
 void given_hop_world_rising_beside_the_crawler([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  rt::Map<rt::Int, hop::model::Crawler> value_2 = rt::Map<rt::Int, hop::model::Crawler>{
-      {1_i, rt::conforming(hop::model::Crawler{.no = 1_i,
-                                               .at = rt::conforming(hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
-                                                                    hop::geom::valid_vec3, "a new Vec3"),
-                                               .lo = 2752_i,
-                                               .hi = 3392_i,
-                                               .dir = 1_i,
-                                               .speed = 2_i},
-                           hop::model::valid_crawler, "a new Crawler")}};
-  rt::claim(
-      (std::ranges::all_of(value_2, [](const auto& entry_3) { return hop::model::valid_crawler(entry_3.second); })),
-      "this `@given` value of hop.world.crawlers");
+  rt::Map<rt::Int, slg_program::hop::model::Crawler> value_2 = rt::Map<rt::Int, slg_program::hop::model::Crawler>{
+      {1_i, rt::conforming(
+                slg_program::hop::model::Crawler{
+                    .no = 1_i,
+                    .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 3072_i, .y = 256_i, .z = 0_i},
+                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                    .lo = 2752_i,
+                    .hi = 3392_i,
+                    .dir = 1_i,
+                    .speed = 2_i},
+                slg_program::hop::model::valid_crawler, "a new Crawler")}};
+  rt::claim((std::ranges::all_of(
+                value_2, [](const auto& entry_3) { return slg_program::hop::model::valid_crawler(entry_3.second); })),
+            "this `@given` value of hop.world.crawlers");
   ctx.world.crawlers = std::move(value_2);
-  hop::model::Player value_4 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 2920_i, .y = 330_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 20_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_4 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 2920_i, .y = 330_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 20_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_4), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_4);
 }
 void steps_hop_world_rising_beside_the_crawler([[maybe_unused]] Machine& ctx) {}
@@ -1093,14 +1152,15 @@ Run run_hop_world_rising_beside_the_crawler(Suite& suite) {
 // under the mover, inside its thickness, falling
 // test hop.world.under_the_mover (hop/world.slg:217)
 void given_hop_world_under_the_mover([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::ridge();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::ridge();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 =
-      rt::conforming(hop::model::Player{.at = rt::conforming(hop::geom::Vec3{.x = 1600_i, .y = -200_i, .z = 0_i},
-                                                             hop::geom::valid_vec3, "a new Vec3")},
-                     hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1600_i, .y = -200_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_under_the_mover([[maybe_unused]] Machine& ctx) {}
@@ -1111,15 +1171,17 @@ Run run_hop_world_under_the_mover(Suite& suite) {
 // falling as fast as anything falls, onto the first floor
 // test hop.world.falling_fast_onto_the_floor (hop/world.slg:221)
 void given_hop_world_falling_fast_onto_the_floor([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  hop::model::Level value = hop::levels::meadow();
-  rt::claim(hop::model::valid_level(value), "this `@given` value of hop.world.stage");
+  slg_program::hop::model::Level value = slg_program::hop::levels::meadow();
+  rt::claim(slg_program::hop::model::valid_level(value), "this `@given` value of hop.world.stage");
   ctx.world.stage = std::move(value);
-  hop::model::Player value_2 = rt::conforming(
-      hop::model::Player{
-          .at = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 400_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-          .vel = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3")},
-      hop::model::valid_player, "a new Player");
-  rt::claim(hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
+  slg_program::hop::model::Player value_2 = rt::conforming(
+      slg_program::hop::model::Player{
+          .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 400_i, .z = 0_i},
+                               slg_program::hop::geom::valid_vec3, "a new Vec3"),
+          .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = -48_i, .z = 0_i},
+                                slg_program::hop::geom::valid_vec3, "a new Vec3")},
+      slg_program::hop::model::valid_player, "a new Player");
+  rt::claim(slg_program::hop::model::valid_player(value_2), "this `@given` value of hop.world.player");
   ctx.world.player = std::move(value_2);
 }
 void steps_hop_world_falling_fast_onto_the_floor([[maybe_unused]] Machine& ctx) {}
@@ -1161,17 +1223,18 @@ int main() {
   suite.rules[program::rule::hop_world_start] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::hop_world_start, {rt::Dyn{draw_0(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { hop::world::start(ctx, e.args.at(0).as<rt::Int>()); });
+        return rt::reply_of([&] { slg_program::hop::world::start(ctx, e.args.at(0).as<rt::Int>()); });
       }};
   suite.rules[program::rule::hop_world_lose] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::hop_world_lose, {rt::Dyn{draw_1(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { hop::world::lose(ctx, e.args.at(0).as<rt::Text>()); });
+        return rt::reply_of([&] { slg_program::hop::world::lose(ctx, e.args.at(0).as<rt::Text>()); });
       }};
   suite.rules[program::rule::hop_world_step] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::hop_world_step, {rt::Dyn{draw_2(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { hop::world::step(ctx, e.args.at(0).as<hop::model::Pad>()); });
+        return rt::reply_of(
+            [&] { slg_program::hop::world::step(ctx, e.args.at(0).as<slg_program::hop::model::Pad>()); });
       }};
   // the hero is never inside a solid
   // law hop.laws.never_inside_a_solid (hop/laws.slg:10)
@@ -1181,8 +1244,8 @@ int main() {
        []([[maybe_unused]] Gen& g) -> Suite::Bound {
          return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
            return rt::all(t.states, [&](const program::World& w) {
-             return rt::all(w.stage.solids, [&](const hop::model::Solid& s) {
-               return !hop::geom::overlaps(hop::physics::body(w.player.at), s.box);
+             return rt::all(w.stage.solids, [&](const slg_program::hop::model::Solid& s) {
+               return !slg_program::hop::geom::overlaps(slg_program::hop::physics::body(w.player.at), s.box);
              });
            });
          };
@@ -1197,12 +1260,12 @@ int main() {
        []([[maybe_unused]] Gen& g) -> Suite::Bound {
          return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
            return rt::all(t.states, [&](const program::World& w) {
-             return rt::abs(w.player.vel.x) <= hop::physics::run_speed &&
-                        rt::abs(w.player.vel.z) <= hop::physics::run_speed && [&]() -> bool {
-               const auto left = 0_i - hop::physics::max_fall;
+             return rt::abs(w.player.vel.x) <= slg_program::hop::physics::run_speed &&
+                        rt::abs(w.player.vel.z) <= slg_program::hop::physics::run_speed && [&]() -> bool {
+               const auto left = 0_i - slg_program::hop::physics::max_fall;
                const auto right_2 = w.player.vel.y;
                if (!(left <= right_2)) return false;
-               const auto right_3 = hop::physics::jump_speed;
+               const auto right_3 = slg_program::hop::physics::jump_speed;
                if (!(right_2 <= right_3)) return false;
                return true;
              }();
@@ -1246,7 +1309,7 @@ int main() {
        []([[maybe_unused]] Gen& g) -> Suite::Bound {
          return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
            return rt::all(t.states, [&](const program::World& w) {
-             return (w.lives == 0_i) == (w.mode == hop::model::Mode::Lost);
+             return (w.lives == 0_i) == (w.mode == slg_program::hop::model::Mode::Lost);
            });
          };
        },
@@ -1260,7 +1323,8 @@ int main() {
        []([[maybe_unused]] Gen& g) -> Suite::Bound {
          return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
            return rt::all(t.steps, [&](const rt::Step<program::World>& s) {
-             return !(s.before.mode != hop::model::Mode::Playing) || (!s.reply.ok() && s.after == s.before);
+             return !(s.before.mode != slg_program::hop::model::Mode::Playing) ||
+                    (!s.reply.ok() && s.after == s.before);
            });
          };
        },
@@ -1289,7 +1353,7 @@ int main() {
          return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
            return rt::all(t.states, [&](const program::World& w) {
              return rt::all(rt::list(w.taken), [&](rt::Int n) {
-               return rt::any(w.stage.gems, [&](const hop::model::Gem& it) { return it.no == n; });
+               return rt::any(w.stage.gems, [&](const slg_program::hop::model::Gem& it) { return it.no == n; });
              });
            });
          };
@@ -1299,157 +1363,167 @@ int main() {
 
   suite.case_fn("hop.geom.plus case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 =
-        rt::conforming(hop::geom::Vec3{.x = 1_i, .y = 2_i, .z = 3_i}, hop::geom::valid_vec3, "a new Vec3");
-    const auto arg_1 =
-        rt::conforming(hop::geom::Vec3{.x = 10_i, .y = 20_i, .z = 30_i}, hop::geom::valid_vec3, "a new Vec3");
-    return rt::test::gives([&] { return hop::geom::plus(arg_0, arg_1); },
+    const auto arg_0 = rt::conforming(slg_program::hop::geom::Vec3{.x = 1_i, .y = 2_i, .z = 3_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3");
+    const auto arg_1 = rt::conforming(slg_program::hop::geom::Vec3{.x = 10_i, .y = 20_i, .z = 30_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3");
+    return rt::test::gives([&] { return slg_program::hop::geom::plus(arg_0, arg_1); },
                            [&] {
-                             return rt::conforming(hop::geom::Vec3{.x = 11_i, .y = 22_i, .z = 33_i},
-                                                   hop::geom::valid_vec3, "a new Vec3");
+                             return rt::conforming(slg_program::hop::geom::Vec3{.x = 11_i, .y = 22_i, .z = 33_i},
+                                                   slg_program::hop::geom::valid_vec3, "a new Vec3");
                            });
   });
   suite.case_fn("hop.geom.around_feet case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 =
-        rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3");
-    const auto arg_1 =
-        rt::conforming(hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i}, hop::geom::valid_vec3, "a new Vec3");
-    return rt::test::gives([&] { return hop::geom::around_feet(arg_0, arg_1); },
-                           [&] {
-                             return rt::conforming(
-                                 hop::geom::Box{.lo = rt::conforming(hop::geom::Vec3{.x = -64_i, .y = 0_i, .z = -64_i},
-                                                                     hop::geom::valid_vec3, "a new Vec3"),
-                                                .hi = rt::conforming(hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i},
-                                                                     hop::geom::valid_vec3, "a new Vec3")},
-                                 hop::geom::valid_box, "a new Box");
-                           });
+    const auto arg_0 = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3");
+    const auto arg_1 = rt::conforming(slg_program::hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3");
+    return rt::test::gives(
+        [&] { return slg_program::hop::geom::around_feet(arg_0, arg_1); },
+        [&] {
+          return rt::conforming(
+              slg_program::hop::geom::Box{
+                  .lo = rt::conforming(slg_program::hop::geom::Vec3{.x = -64_i, .y = 0_i, .z = -64_i},
+                                       slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                  .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i},
+                                       slg_program::hop::geom::valid_vec3, "a new Vec3")},
+              slg_program::hop::geom::valid_box, "a new Box");
+        });
   });
   suite.case_fn("hop.geom.overlaps case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
     const auto arg_1 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 1_i, .y = 1_i, .z = 1_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 3_i, .y = 3_i, .z = 3_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
-    return rt::test::gives([&] { return hop::geom::overlaps(arg_0, arg_1); }, [&] { return true; });
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 1_i, .y = 1_i, .z = 1_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 3_i, .y = 3_i, .z = 3_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
+    return rt::test::gives([&] { return slg_program::hop::geom::overlaps(arg_0, arg_1); }, [&] { return true; });
   });
   suite.case_fn("hop.geom.overlaps case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
     const auto arg_1 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
-    return rt::test::gives([&] { return hop::geom::overlaps(arg_0, arg_1); }, [&] { return false; });
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
+    return rt::test::gives([&] { return slg_program::hop::geom::overlaps(arg_0, arg_1); }, [&] { return false; });
   });
   suite.case_fn("hop.geom.touches case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
     const auto arg_1 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
-    return rt::test::gives([&] { return hop::geom::touches(arg_0, arg_1); }, [&] { return true; });
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
+    return rt::test::gives([&] { return slg_program::hop::geom::touches(arg_0, arg_1); }, [&] { return true; });
   });
   suite.case_fn("hop.geom.touches case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 2_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
     const auto arg_1 = rt::conforming(
-        hop::geom::Box{
-            .lo = rt::conforming(hop::geom::Vec3{.x = 3_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .hi = rt::conforming(hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i}, hop::geom::valid_vec3, "a new Vec3")},
-        hop::geom::valid_box, "a new Box");
-    return rt::test::gives([&] { return hop::geom::touches(arg_0, arg_1); }, [&] { return false; });
+        slg_program::hop::geom::Box{.lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 3_i, .y = 0_i, .z = 0_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                    .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 4_i, .y = 2_i, .z = 2_i},
+                                                         slg_program::hop::geom::valid_vec3, "a new Vec3")},
+        slg_program::hop::geom::valid_box, "a new Box");
+    return rt::test::gives([&] { return slg_program::hop::geom::touches(arg_0, arg_1); }, [&] { return false; });
   });
   suite.case_fn("hop.geom.triangle case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 0_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 0_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 0_i; });
   });
   suite.case_fn("hop.geom.triangle case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 3_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 3_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 3_i; });
   });
   suite.case_fn("hop.geom.triangle case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 4_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 4_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 4_i; });
   });
   suite.case_fn("hop.geom.triangle case[3]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 5_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 3_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 3_i; });
   });
   suite.case_fn("hop.geom.triangle case[4]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 8_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 0_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 0_i; });
   });
   suite.case_fn("hop.geom.triangle case[5]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 9_i;
     const auto arg_1 = 4_i;
-    return rt::test::gives([&] { return hop::geom::triangle(arg_0, arg_1); }, [&] { return 1_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::triangle(arg_0, arg_1); }, [&] { return 1_i; });
   });
   suite.case_fn("hop.geom.approach case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 0_i;
     const auto arg_1 = 3_i;
     const auto arg_2 = 2_i;
-    return rt::test::gives([&] { return hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 2_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 2_i; });
   });
   suite.case_fn("hop.geom.approach case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 5_i;
     const auto arg_1 = 3_i;
     const auto arg_2 = 2_i;
-    return rt::test::gives([&] { return hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 3_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 3_i; });
   });
   suite.case_fn("hop.geom.approach case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 5_i;
     const auto arg_1 = 0_i;
     const auto arg_2 = 2_i;
-    return rt::test::gives([&] { return hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 3_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return 3_i; });
   });
   suite.case_fn("hop.geom.approach case[3]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = -5_i;
     const auto arg_1 = 0_i;
     const auto arg_2 = 1_i;
-    return rt::test::gives([&] { return hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return -4_i; });
+    return rt::test::gives([&] { return slg_program::hop::geom::approach(arg_0, arg_1, arg_2); }, [&] { return -4_i; });
   });
   suite.case_fn("hop.geom.vec_text case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 =
-        rt::conforming(hop::geom::Vec3{.x = 1_i, .y = -2_i, .z = 3_i}, hop::geom::valid_vec3, "a new Vec3");
-    return rt::test::gives([&] { return hop::geom::vec_text(arg_0); }, [&] { return "1,-2,3"s; });
+    const auto arg_0 = rt::conforming(slg_program::hop::geom::Vec3{.x = 1_i, .y = -2_i, .z = 3_i},
+                                      slg_program::hop::geom::valid_vec3, "a new Vec3");
+    return rt::test::gives([&] { return slg_program::hop::geom::vec_text(arg_0); }, [&] { return "1,-2,3"s; });
   });
   suite.law(0);
   suite.law(1);
@@ -1462,184 +1536,193 @@ int main() {
   suite.case_fn("hop.levels.q case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 4_i;
-    return rt::test::gives([&] { return hop::levels::q(arg_0); }, [&] { return 256_i; });
+    return rt::test::gives([&] { return slg_program::hop::levels::q(arg_0); }, [&] { return 256_i; });
   });
   suite.case_fn("hop.levels.q case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = -2_i;
-    return rt::test::gives([&] { return hop::levels::q(arg_0); }, [&] { return -128_i; });
+    return rt::test::gives([&] { return slg_program::hop::levels::q(arg_0); }, [&] { return -128_i; });
   });
   suite.case_fn("hop.physics.walk_target case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{};
-    return rt::test::gives([&] { return hop::physics::walk_target(arg_0); },
+    const auto arg_0 = slg_program::hop::model::Pad{};
+    return rt::test::gives([&] { return slg_program::hop::physics::walk_target(arg_0); },
                            [&] {
-                             return rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3,
-                                                   "a new Vec3");
+                             return rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                   slg_program::hop::geom::valid_vec3, "a new Vec3");
                            });
   });
   suite.case_fn("hop.physics.walk_target case[1]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.right = true};
-    return rt::test::gives([&] { return hop::physics::walk_target(arg_0); },
+    const auto arg_0 = slg_program::hop::model::Pad{.right = true};
+    return rt::test::gives([&] { return slg_program::hop::physics::walk_target(arg_0); },
                            [&] {
-                             return rt::conforming(hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i},
-                                                   hop::geom::valid_vec3, "a new Vec3");
+                             return rt::conforming(slg_program::hop::geom::Vec3{.x = 16_i, .y = 0_i, .z = 0_i},
+                                                   slg_program::hop::geom::valid_vec3, "a new Vec3");
                            });
   });
   suite.case_fn("hop.physics.walk_target case[2]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.left = true, .forward = true};
-    return rt::test::gives([&] { return hop::physics::walk_target(arg_0); },
+    const auto arg_0 = slg_program::hop::model::Pad{.left = true, .forward = true};
+    return rt::test::gives([&] { return slg_program::hop::physics::walk_target(arg_0); },
                            [&] {
-                             return rt::conforming(hop::geom::Vec3{.x = -11_i, .y = 0_i, .z = -11_i},
-                                                   hop::geom::valid_vec3, "a new Vec3");
+                             return rt::conforming(slg_program::hop::geom::Vec3{.x = -11_i, .y = 0_i, .z = -11_i},
+                                                   slg_program::hop::geom::valid_vec3, "a new Vec3");
                            });
   });
   suite.case_fn("hop.physics.walk_target case[3]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.left = true, .right = true};
-    return rt::test::gives([&] { return hop::physics::walk_target(arg_0); },
+    const auto arg_0 = slg_program::hop::model::Pad{.left = true, .right = true};
+    return rt::test::gives([&] { return slg_program::hop::physics::walk_target(arg_0); },
                            [&] {
-                             return rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3,
-                                                   "a new Vec3");
+                             return rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                   slg_program::hop::geom::valid_vec3, "a new Vec3");
                            });
   });
   suite.case_fn("hop.physics.facing case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{};
+    const auto arg_0 = slg_program::hop::model::Pad{};
     const auto arg_1 = 90_i;
-    return rt::test::gives([&] { return hop::physics::facing(arg_0, arg_1); }, [&] { return 90_i; });
+    return rt::test::gives([&] { return slg_program::hop::physics::facing(arg_0, arg_1); }, [&] { return 90_i; });
   });
   suite.case_fn("hop.physics.facing case[1]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.right = true};
+    const auto arg_0 = slg_program::hop::model::Pad{.right = true};
     const auto arg_1 = 90_i;
-    return rt::test::gives([&] { return hop::physics::facing(arg_0, arg_1); }, [&] { return 0_i; });
+    return rt::test::gives([&] { return slg_program::hop::physics::facing(arg_0, arg_1); }, [&] { return 0_i; });
   });
   suite.case_fn("hop.physics.facing case[2]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.forward = true};
+    const auto arg_0 = slg_program::hop::model::Pad{.forward = true};
     const auto arg_1 = 0_i;
-    return rt::test::gives([&] { return hop::physics::facing(arg_0, arg_1); }, [&] { return 90_i; });
+    return rt::test::gives([&] { return slg_program::hop::physics::facing(arg_0, arg_1); }, [&] { return 90_i; });
   });
   suite.case_fn("hop.physics.facing case[3]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::model::Pad{.left = true, .back = true};
+    const auto arg_0 = slg_program::hop::model::Pad{.left = true, .back = true};
     const auto arg_1 = 0_i;
-    return rt::test::gives([&] { return hop::physics::facing(arg_0, arg_1); }, [&] { return 225_i; });
+    return rt::test::gives([&] { return slg_program::hop::physics::facing(arg_0, arg_1); }, [&] { return 225_i; });
   });
   suite.case_fn("hop.physics.patrol case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::model::Crawler{
+        slg_program::hop::model::Crawler{
             .no = 1_i,
-            .at = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+            .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                 slg_program::hop::geom::valid_vec3, "a new Vec3"),
             .lo = -10_i,
             .hi = 10_i,
             .dir = 1_i,
             .speed = 4_i},
-        hop::model::valid_crawler, "a new Crawler");
-    return rt::test::gives([&] { return hop::physics::patrol(arg_0); },
+        slg_program::hop::model::valid_crawler, "a new Crawler");
+    return rt::test::gives([&] { return slg_program::hop::physics::patrol(arg_0); },
                            [&] {
                              return rt::conforming(
-                                 hop::model::Crawler{.no = 1_i,
-                                                     .at = rt::conforming(hop::geom::Vec3{.x = 4_i, .y = 0_i, .z = 0_i},
-                                                                          hop::geom::valid_vec3, "a new Vec3"),
-                                                     .lo = -10_i,
-                                                     .hi = 10_i,
-                                                     .dir = 1_i,
-                                                     .speed = 4_i},
-                                 hop::model::valid_crawler, "a new Crawler");
+                                 slg_program::hop::model::Crawler{
+                                     .no = 1_i,
+                                     .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 4_i, .y = 0_i, .z = 0_i},
+                                                          slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                     .lo = -10_i,
+                                     .hi = 10_i,
+                                     .dir = 1_i,
+                                     .speed = 4_i},
+                                 slg_program::hop::model::valid_crawler, "a new Crawler");
                            });
   });
   suite.case_fn("hop.physics.patrol case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::conforming(
-        hop::model::Crawler{
+        slg_program::hop::model::Crawler{
             .no = 1_i,
-            .at = rt::conforming(hop::geom::Vec3{.x = 8_i, .y = 0_i, .z = 0_i}, hop::geom::valid_vec3, "a new Vec3"),
+            .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 8_i, .y = 0_i, .z = 0_i},
+                                 slg_program::hop::geom::valid_vec3, "a new Vec3"),
             .lo = -10_i,
             .hi = 10_i,
             .dir = 1_i,
             .speed = 4_i},
-        hop::model::valid_crawler, "a new Crawler");
-    return rt::test::gives(
-        [&] { return hop::physics::patrol(arg_0); },
-        [&] {
-          return rt::conforming(hop::model::Crawler{.no = 1_i,
-                                                    .at = rt::conforming(hop::geom::Vec3{.x = 10_i, .y = 0_i, .z = 0_i},
-                                                                         hop::geom::valid_vec3, "a new Vec3"),
-                                                    .lo = -10_i,
-                                                    .hi = 10_i,
-                                                    .dir = -1_i,
-                                                    .speed = 4_i},
-                                hop::model::valid_crawler, "a new Crawler");
-        });
+        slg_program::hop::model::valid_crawler, "a new Crawler");
+    return rt::test::gives([&] { return slg_program::hop::physics::patrol(arg_0); },
+                           [&] {
+                             return rt::conforming(
+                                 slg_program::hop::model::Crawler{
+                                     .no = 1_i,
+                                     .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 10_i, .y = 0_i, .z = 0_i},
+                                                          slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                     .lo = -10_i,
+                                     .hi = 10_i,
+                                     .dir = -1_i,
+                                     .speed = 4_i},
+                                 slg_program::hop::model::valid_crawler, "a new Crawler");
+                           });
   });
   suite.case_fn("hop.render.asset_name case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::render::Asset::PipMesh;
-    return rt::test::gives([&] { return hop::render::asset_name(arg_0); }, [&] { return "pip"s; });
+    const auto arg_0 = slg_program::hop::render::Asset::PipMesh;
+    return rt::test::gives([&] { return slg_program::hop::render::asset_name(arg_0); }, [&] { return "pip"s; });
   });
   suite.case_fn("hop.render.asset_name case[1]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::render::Asset::CrawlerMesh;
-    return rt::test::gives([&] { return hop::render::asset_name(arg_0); }, [&] { return "crawler"s; });
+    const auto arg_0 = slg_program::hop::render::Asset::CrawlerMesh;
+    return rt::test::gives([&] { return slg_program::hop::render::asset_name(arg_0); }, [&] { return "crawler"s; });
   });
   suite.case_fn("hop.render.asset_name case[2]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::render::Asset::GemMesh;
-    return rt::test::gives([&] { return hop::render::asset_name(arg_0); }, [&] { return "gem"s; });
+    const auto arg_0 = slg_program::hop::render::Asset::GemMesh;
+    return rt::test::gives([&] { return slg_program::hop::render::asset_name(arg_0); }, [&] { return "gem"s; });
   });
   suite.case_fn("hop.render.asset_name case[3]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = hop::render::Asset::FlagMesh;
-    return rt::test::gives([&] { return hop::render::asset_name(arg_0); }, [&] { return "flag"s; });
+    const auto arg_0 = slg_program::hop::render::Asset::FlagMesh;
+    return rt::test::gives([&] { return slg_program::hop::render::asset_name(arg_0); }, [&] { return "flag"s; });
   });
   suite.case_fn("hop.render.bob case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 0_i;
-    return rt::test::gives([&] { return hop::render::bob(arg_0); }, [&] { return -32_i; });
+    return rt::test::gives([&] { return slg_program::hop::render::bob(arg_0); }, [&] { return -32_i; });
   });
   suite.case_fn("hop.render.bob case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 16_i;
-    return rt::test::gives([&] { return hop::render::bob(arg_0); }, [&] { return 0_i; });
+    return rt::test::gives([&] { return slg_program::hop::render::bob(arg_0); }, [&] { return 0_i; });
   });
   suite.case_fn("hop.render.bob case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 32_i;
-    return rt::test::gives([&] { return hop::render::bob(arg_0); }, [&] { return 32_i; });
+    return rt::test::gives([&] { return slg_program::hop::render::bob(arg_0); }, [&] { return 32_i; });
   });
   suite.case_fn("hop.render.bob case[3]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = 48_i;
-    return rt::test::gives([&] { return hop::render::bob(arg_0); }, [&] { return 0_i; });
+    return rt::test::gives([&] { return slg_program::hop::render::bob(arg_0); }, [&] { return 0_i; });
   });
   suite.case_fn("hop.render.draw_text case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = rt::conforming(
-        hop::render::Draw{hop::render::Draw::Cube{
-            .box = rt::conforming(hop::geom::Box{.lo = rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
-                                                                      hop::geom::valid_vec3, "a new Vec3"),
-                                                 .hi = rt::conforming(hop::geom::Vec3{.x = 64_i, .y = 64_i, .z = 64_i},
-                                                                      hop::geom::valid_vec3, "a new Vec3")},
-                                  hop::geom::valid_box, "a new Box"),
-            .color =
-                rt::conforming(hop::model::Rgb{.r = 1_i, .g = 2_i, .b = 3_i}, hop::model::valid_rgb, "a new Rgb")}},
-        hop::render::valid_draw, "a new Draw");
-    return rt::test::gives([&] { return hop::render::draw_text(arg_0); }, [&] { return "cube 0,0,0 64,64,64 1,2,3"s; });
+    const auto arg_0 =
+        rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Cube{
+                           .box = rt::conforming(
+                               slg_program::hop::geom::Box{
+                                   .lo = rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 0_i, .z = 0_i},
+                                                        slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                                   .hi = rt::conforming(slg_program::hop::geom::Vec3{.x = 64_i, .y = 64_i, .z = 64_i},
+                                                        slg_program::hop::geom::valid_vec3, "a new Vec3")},
+                               slg_program::hop::geom::valid_box, "a new Box"),
+                           .color = rt::conforming(slg_program::hop::model::Rgb{.r = 1_i, .g = 2_i, .b = 3_i},
+                                                   slg_program::hop::model::valid_rgb, "a new Rgb")}},
+                       slg_program::hop::render::valid_draw, "a new Draw");
+    return rt::test::gives([&] { return slg_program::hop::render::draw_text(arg_0); },
+                           [&] { return "cube 0,0,0 64,64,64 1,2,3"s; });
   });
   suite.case_fn("hop.render.draw_text case[1]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = rt::conforming(
-        hop::render::Draw{hop::render::Draw::Mesh{
-            .asset = hop::render::Asset::PipMesh,
-            .at = rt::conforming(hop::geom::Vec3{.x = 1_i, .y = 2_i, .z = 3_i}, hop::geom::valid_vec3, "a new Vec3"),
-            .yaw = 90_i}},
-        hop::render::valid_draw, "a new Draw");
-    return rt::test::gives([&] { return hop::render::draw_text(arg_0); }, [&] { return "mesh pip 1,2,3 90"s; });
+    const auto arg_0 =
+        rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Mesh{
+                           .asset = slg_program::hop::render::Asset::PipMesh,
+                           .at = rt::conforming(slg_program::hop::geom::Vec3{.x = 1_i, .y = 2_i, .z = 3_i},
+                                                slg_program::hop::geom::valid_vec3, "a new Vec3"),
+                           .yaw = 90_i}},
+                       slg_program::hop::render::valid_draw, "a new Draw");
+    return rt::test::gives([&] { return slg_program::hop::render::draw_text(arg_0); },
+                           [&] { return "mesh pip 1,2,3 90"s; });
   });
   suite.property("hop.tests.edge.touch_matches_raylib", "hop.tests.edge.touch_matches_raylib",
                  [](Suite& suite, [[maybe_unused]] Gen& g) {
@@ -1666,19 +1749,20 @@ int main() {
   suite.case_fn("hop.tests.runs.pad_of case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "-"s;
-    return rt::test::gives([&] { return hop::tests::runs::pad_of(arg_0); }, [&] { return hop::model::Pad{}; });
+    return rt::test::gives([&] { return slg_program::hop::tests::runs::pad_of(arg_0); },
+                           [&] { return slg_program::hop::model::Pad{}; });
   });
   suite.case_fn("hop.tests.runs.pad_of case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "RJ"s;
-    return rt::test::gives([&] { return hop::tests::runs::pad_of(arg_0); },
-                           [&] { return hop::model::Pad{.right = true, .jump = true}; });
+    return rt::test::gives([&] { return slg_program::hop::tests::runs::pad_of(arg_0); },
+                           [&] { return slg_program::hop::model::Pad{.right = true, .jump = true}; });
   });
   suite.case_fn("hop.tests.runs.pad_of case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "LFB"s;
-    return rt::test::gives([&] { return hop::tests::runs::pad_of(arg_0); },
-                           [&] { return hop::model::Pad{.left = true, .forward = true, .back = true}; });
+    return rt::test::gives([&] { return slg_program::hop::tests::runs::pad_of(arg_0); },
+                           [&] { return slg_program::hop::model::Pad{.left = true, .forward = true, .back = true}; });
   });
   suite.test("hop.tests.runs.the_meadow_can_be_won", 14, run_hop_tests_runs_the_meadow_can_be_won);
   suite.test("hop.tests.runs.the_ridge_can_be_won", 15, run_hop_tests_runs_the_ridge_can_be_won);

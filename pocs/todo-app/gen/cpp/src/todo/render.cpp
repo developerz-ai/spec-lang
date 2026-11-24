@@ -3,15 +3,15 @@
 
 #include "program/machine.hpp"
 
-namespace todo::render {
+namespace slg_program::todo::render {
 
 // fn todo.render.mark (todo/render.slg:8)
-rt::Text mark(todo::model::Status s) {
+rt::Text mark(slg_program::todo::model::Status s) {
   switch (s) {
-    case todo::model::Status::Open: {
+    case slg_program::todo::model::Status::Open: {
       return " "s;
     }
-    case todo::model::Status::Done: {
+    case slg_program::todo::model::Status::Done: {
       return "x"s;
     }
   }
@@ -19,15 +19,15 @@ rt::Text mark(todo::model::Status s) {
 }
 
 // fn todo.render.badge (todo/render.slg:13)
-rt::Text badge(todo::model::Priority p) {
+rt::Text badge(slg_program::todo::model::Priority p) {
   switch (p) {
-    case todo::model::Priority::Low: {
+    case slg_program::todo::model::Priority::Low: {
       return " !low"s;
     }
-    case todo::model::Priority::Normal: {
+    case slg_program::todo::model::Priority::Normal: {
       return ""s;
     }
-    case todo::model::Priority::High: {
+    case slg_program::todo::model::Priority::High: {
       return " !high"s;
     }
   }
@@ -35,22 +35,22 @@ rt::Text badge(todo::model::Priority p) {
 }
 
 // fn todo.render.tag_text (todo/render.slg:19)
-rt::Text tag_text(const rt::Set<todo::model::Tag>& tags) {
-  rt::claim(std::ranges::all_of(tags, [](const auto& item) { return todo::model::valid_tag(item); }),
+rt::Text tag_text(const rt::Set<slg_program::todo::model::Tag>& tags) {
+  rt::claim(std::ranges::all_of(tags, [](const auto& item) { return slg_program::todo::model::valid_tag(item); }),
             "argument `tags`");
   return rt::join(rt::map(rt::list(tags), [&](const rt::Text& t) { return rt::concat({" #", t}); }), ""s);
 }
 
 // fn todo.render.urgency (todo/render.slg:22)
-rt::Int urgency(todo::model::Priority p) {
+rt::Int urgency(slg_program::todo::model::Priority p) {
   switch (p) {
-    case todo::model::Priority::High: {
+    case slg_program::todo::model::Priority::High: {
       return 0_i;
     }
-    case todo::model::Priority::Normal: {
+    case slg_program::todo::model::Priority::Normal: {
       return 1_i;
     }
-    case todo::model::Priority::Low: {
+    case slg_program::todo::model::Priority::Low: {
       return 2_i;
     }
   }
@@ -59,16 +59,16 @@ rt::Int urgency(todo::model::Priority p) {
 
 // most urgent first, then oldest first
 // fn todo.render.rank (todo/render.slg:28)
-std::tuple<rt::Int, rt::Int> rank(const todo::model::Task& t) {
-  rt::claim(todo::model::valid_task(t), "argument `t`");
-  return std::tuple<rt::Int, rt::Int>{todo::render::urgency(t.priority), t.no};
+std::tuple<rt::Int, rt::Int> rank(const slg_program::todo::model::Task& t) {
+  rt::claim(slg_program::todo::model::valid_task(t), "argument `t`");
+  return std::tuple<rt::Int, rt::Int>{slg_program::todo::render::urgency(t.priority), t.no};
 }
 
 // fn todo.render.line (todo/render.slg:31)
-rt::Text line(const todo::model::Task& t) {
-  rt::claim(todo::model::valid_task(t), "argument `t`");
-  return rt::concat({rt::str(t.no), " [", todo::render::mark(t.status), "] ", t.title, todo::render::badge(t.priority),
-                     todo::render::tag_text(t.tags)});
+rt::Text line(const slg_program::todo::model::Task& t) {
+  rt::claim(slg_program::todo::model::valid_task(t), "argument `t`");
+  return rt::concat({rt::str(t.no), " [", slg_program::todo::render::mark(t.status), "] ", t.title,
+                     slg_program::todo::render::badge(t.priority), slg_program::todo::render::tag_text(t.tags)});
 }
 
-}  // namespace todo::render
+}  // namespace slg_program::todo::render

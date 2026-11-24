@@ -8,13 +8,13 @@ namespace foreign::raylib {
 bool IsKeyDown(rt::Int key) {
   return lib::raylib::IsKeyDown(key);
 }
-bool CheckCollisionBoxes(const hop::geom::Box& a, const hop::geom::Box& b) {
+bool CheckCollisionBoxes(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b) {
   return lib::raylib::CheckCollisionBoxes(a, b);
 }
-void ClearBackground(const hop::model::Rgb& color) {
+void ClearBackground(const slg_program::hop::model::Rgb& color) {
   lib::raylib::ClearBackground(color);
 }
-void BeginMode3D(const hop::geom::Vec3& eye, const hop::geom::Vec3& target) {
+void BeginMode3D(const slg_program::hop::geom::Vec3& eye, const slg_program::hop::geom::Vec3& target) {
   lib::raylib::BeginMode3D(eye, target);
 }
 void EndMode3D() {
@@ -26,16 +26,16 @@ void BeginShaderMode(rt::Int time) {
 void EndShaderMode() {
   lib::raylib::EndShaderMode();
 }
-void DrawCube(const hop::geom::Box& box, const hop::model::Rgb& color) {
+void DrawCube(const slg_program::hop::geom::Box& box, const slg_program::hop::model::Rgb& color) {
   lib::raylib::DrawCube(box, color);
 }
-void DrawCubeWires(const hop::geom::Box& box, const hop::model::Rgb& color) {
+void DrawCubeWires(const slg_program::hop::geom::Box& box, const slg_program::hop::model::Rgb& color) {
   lib::raylib::DrawCubeWires(box, color);
 }
-void DrawModelEx(hop::render::Asset asset, const hop::geom::Vec3& at, rt::Int yaw) {
+void DrawModelEx(slg_program::hop::render::Asset asset, const slg_program::hop::geom::Vec3& at, rt::Int yaw) {
   lib::raylib::DrawModelEx(asset, at, yaw);
 }
-void DrawText(const rt::Text& text, rt::Int x, rt::Int y, rt::Int size, const hop::model::Rgb& color) {
+void DrawText(const rt::Text& text, rt::Int x, rt::Int y, rt::Int size, const slg_program::hop::model::Rgb& color) {
   lib::raylib::DrawText(text, x, y, size, color);
 }
 }  // namespace foreign::raylib

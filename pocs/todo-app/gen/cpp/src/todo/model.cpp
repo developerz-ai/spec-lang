@@ -3,14 +3,14 @@
 
 #include "program/machine.hpp"
 
-namespace todo::model {
+namespace slg_program::todo::model {
 
 bool valid_title(const Title& value) {
-  return todo::model::is_title(value);
+  return slg_program::todo::model::is_title(value);
 }
 
 bool valid_tag(const Tag& value) {
-  return todo::model::is_tag(value);
+  return slg_program::todo::model::is_tag(value);
 }
 
 bool valid_task_no(const TaskNo& value) {
@@ -50,8 +50,8 @@ rt::Text show(const Task& value) {
 }
 
 bool valid_task(const Task& value) {
-  return todo::model::valid_task_no(value.no) && todo::model::valid_title(value.title) &&
-         std::ranges::all_of(value.tags, [](const auto& item) { return todo::model::valid_tag(item); });
+  return slg_program::todo::model::valid_task_no(value.no) && slg_program::todo::model::valid_title(value.title) &&
+         std::ranges::all_of(value.tags, [](const auto& item) { return slg_program::todo::model::valid_tag(item); });
 }
 
 // a title fits on one line of a terminal list
@@ -79,4 +79,4 @@ bool is_tag(const rt::Text& t) {
                       !rt::starts_with(t, "-"s);
 }
 
-}  // namespace todo::model
+}  // namespace slg_program::todo::model

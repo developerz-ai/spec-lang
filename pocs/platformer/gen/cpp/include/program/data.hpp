@@ -6,15 +6,15 @@
 #include "rt/data.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::geom {
+namespace slg_program::hop::geom {
 rt::Data to_data(const Vec3& value);
 void from_data(const rt::Data& data, Vec3& value);
 rt::Data to_data(const Box& value);
 void from_data(const rt::Data& data, Box& value);
-}  // namespace hop::geom
+}  // namespace slg_program::hop::geom
 #include "hop/model.hpp"
 
-namespace hop::model {
+namespace slg_program::hop::model {
 rt::Data to_data(const Pad& value);
 void from_data(const rt::Data& data, Pad& value);
 rt::Data to_data(const Rgb& value);
@@ -33,20 +33,20 @@ rt::Data to_data(Mode value);
 void from_data(const rt::Data& data, Mode& value);
 rt::Data to_data(const Player& value);
 void from_data(const rt::Data& data, Player& value);
-}  // namespace hop::model
+}  // namespace slg_program::hop::model
 #include "hop/physics.hpp"
 
-namespace hop::physics {
+namespace slg_program::hop::physics {
 rt::Data to_data(const Axis& value);
 void from_data(const rt::Data& data, Axis& value);
 rt::Data to_data(const Fall& value);
 void from_data(const rt::Data& data, Fall& value);
 rt::Data to_data(const Placed& value);
 void from_data(const rt::Data& data, Placed& value);
-}  // namespace hop::physics
+}  // namespace slg_program::hop::physics
 #include "hop/render.hpp"
 
-namespace hop::render {
+namespace slg_program::hop::render {
 rt::Data to_data(Asset value);
 void from_data(const rt::Data& data, Asset& value);
 rt::Data to_data(const Draw& value);
@@ -55,16 +55,16 @@ rt::Data to_data(const Label& value);
 void from_data(const rt::Data& data, Label& value);
 rt::Data to_data(const Frame& value);
 void from_data(const rt::Data& data, Frame& value);
-}  // namespace hop::render
+}  // namespace slg_program::hop::render
 #include "hop/tests/runs.hpp"
 
-namespace hop::tests::runs {
+namespace slg_program::hop::tests::runs {
 rt::Data to_data(const Hold& value);
 void from_data(const rt::Data& data, Hold& value);
-}  // namespace hop::tests::runs
+}  // namespace slg_program::hop::tests::runs
 #include "hop/world.hpp"
 
-namespace hop::world {
+namespace slg_program::hop::world {
 rt::Data to_data(const View& value);
 void from_data(const rt::Data& data, View& value);
-}  // namespace hop::world
+}  // namespace slg_program::hop::world

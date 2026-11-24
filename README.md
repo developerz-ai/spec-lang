@@ -65,7 +65,7 @@ end
 
 The left side is all anyone writes. `spec-lang test` checks it in memory, with no database, disk or network. The same source also builds to Rust, TypeScript and C++, and the command line, the JSON store, file locking and the tests around this rule are derived, not written. The Ruby is one method of its module, de-indented ([full file](pocs/todo-app/gen/ruby/lib/todo/board.rb)); the test is abridged from [scenarios.slg](pocs/todo-app/src/todo/tests/scenarios.slg).
 
-> **Status: early, `As of 2026-11-24`.** The present tense below describes the design. What runs: a first engine in [`src/`](src/README.md) parses every spec-lang block in these docs, and checks, lints and tests programs, and compiles them to Rust, TypeScript, Ruby and C++, judged on 40 programs including the [todo POC](pocs/todo-app/README.md) and the [platformer](pocs/platformer/README.md). The output is correct there and not optimised. Forms the engine does not run are refused. Everything else is design.
+> **Status: early, `As of 2026-11-24`.** The present tense below describes the design. What runs: a first engine in [`src/`](src/README.md) parses every spec-lang block in these docs, and checks, lints and tests programs, and compiles them to Rust, TypeScript, Ruby and C++, judged on 41 programs including the [todo POC](pocs/todo-app/README.md) and the [platformer](pocs/platformer/README.md). The output is correct there and not optimised. Forms the engine does not run are refused. Everything else is design.
 
 > **If you are a coding agent**, read the [language card](docs/idea/01-language-card.md) first: the whole language on one page.
 

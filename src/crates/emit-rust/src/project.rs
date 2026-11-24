@@ -329,7 +329,7 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
             if rel == "runtime.conf" || rel == "README.md" {
                 continue;
             }
-            let path = if link == Some(&rel) { format!("build/{dir}.rs") } else { format!("src/libs/{dir}/{rel}") };
+            let path = if link == Some(&rel) { format!("link/{dir}.rs") } else { format!("src/libs/{dir}/{rel}") };
             files.push(OutFile { path, bytes, executable: false });
         }
         if link.is_some() {
@@ -351,7 +351,7 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     let mut toml = cargo_toml(&exe, &[(&exe, "src/main.rs"), ("checks", "src/bin/checks.rs")]);
     if !links.is_empty() {
         toml = toml.replace("publish = false\n", "publish = false\nbuild = \"build.rs\"\n");
-        let mods: Vec<String> = links.iter().map(|l| format!("#[path = \"build/{l}.rs\"]\nmod {l};\n")).collect();
+        let mods: Vec<String> = links.iter().map(|l| format!("#[path = \"link/{l}.rs\"]\nmod {l};\n")).collect();
         let calls: Vec<String> = links.iter().map(|l| format!("    {l}::link();\n")).collect();
         files.push(plain(
             "build.rs",

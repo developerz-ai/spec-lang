@@ -5,7 +5,7 @@
 #include "hop/physics.hpp"
 #include "program/machine.hpp"
 
-namespace hop::world {
+namespace slg_program::hop::world {
 
 rt::Text show(const View& value) {
   return rt::Shown("View")
@@ -20,20 +20,21 @@ rt::Text show(const View& value) {
 }
 
 bool valid_view(const View& value) {
-  return hop::model::valid_level(value.stage) && hop::model::valid_player(value.player) &&
-         std::ranges::all_of(value.crawlers, [](const auto& item) { return hop::model::valid_crawler(item); });
+  return slg_program::hop::model::valid_level(value.stage) && slg_program::hop::model::valid_player(value.player) &&
+         std::ranges::all_of(value.crawlers,
+                             [](const auto& item) { return slg_program::hop::model::valid_crawler(item); });
 }
 
 // fn hop.world.mode_text (hop/world.slg:135)
-rt::Text mode_text(hop::model::Mode m) {
+rt::Text mode_text(slg_program::hop::model::Mode m) {
   switch (m) {
-    case hop::model::Mode::Playing: {
+    case slg_program::hop::model::Mode::Playing: {
       return "playing"s;
     }
-    case hop::model::Mode::Won: {
+    case slg_program::hop::model::Mode::Won: {
       return "won"s;
     }
-    case hop::model::Mode::Lost: {
+    case slg_program::hop::model::Mode::Lost: {
       return "lost"s;
     }
   }
@@ -43,57 +44,58 @@ rt::Text mode_text(hop::model::Mode m) {
 // one line that sums up a run, printed after the last tick
 // fn hop.world.summary (hop/world.slg:141)
 rt::Text summary(program::Machine& ctx) {
-  return rt::concat({"end ", rt::str(ctx.world.ticks), " ", hop::world::mode_text(ctx.world.mode), " gems ",
-                     rt::str(rt::size(ctx.world.taken)), "/", rt::str(rt::size(ctx.world.stage.gems)), " lives ",
-                     rt::str(ctx.world.lives), " at ", hop::geom::vec_text(ctx.world.player.at)});
+  return rt::concat({"end ", rt::str(ctx.world.ticks), " ", slg_program::hop::world::mode_text(ctx.world.mode),
+                     " gems ", rt::str(rt::size(ctx.world.taken)), "/", rt::str(rt::size(ctx.world.stage.gems)),
+                     " lives ", rt::str(ctx.world.lives), " at ",
+                     slg_program::hop::geom::vec_text(ctx.world.player.at)});
 }
 
 // fn hop.world.view (hop/world.slg:148)
-hop::world::View view(program::Machine& ctx) {
-  const auto result = [&]() -> hop::world::View {
-    return rt::conforming(hop::world::View{.stage = ctx.world.stage,
-                                           .ticks = ctx.world.ticks,
-                                           .player = ctx.world.player,
-                                           .taken = ctx.world.taken,
-                                           .crawlers = rt::values(ctx.world.crawlers),
-                                           .lives = ctx.world.lives,
-                                           .mode = ctx.world.mode},
-                          hop::world::valid_view, "a new View");
+slg_program::hop::world::View view(program::Machine& ctx) {
+  const auto result = [&]() -> slg_program::hop::world::View {
+    return rt::conforming(slg_program::hop::world::View{.stage = ctx.world.stage,
+                                                        .ticks = ctx.world.ticks,
+                                                        .player = ctx.world.player,
+                                                        .taken = ctx.world.taken,
+                                                        .crawlers = rt::values(ctx.world.crawlers),
+                                                        .lives = ctx.world.lives,
+                                                        .mode = ctx.world.mode},
+                          slg_program::hop::world::valid_view, "a new View");
   }();
-  rt::claim(hop::world::valid_view(result), "the result");
+  rt::claim(slg_program::hop::world::valid_view(result), "the result");
   return result;
 }
 
 // every level starts the same way: three lives, nothing taken, every crawler home
 // rule hop.world.start (hop/world.slg:26)
-void start(program::Machine& ctx, hop::levels::LevelNo level_2) {
+void start(program::Machine& ctx, slg_program::hop::levels::LevelNo level_2) {
   ctx.atomic([&] {
-    rt::claim(hop::levels::valid_level_no(level_2), "argument `level`");
-    const auto l = hop::levels::level(level_2);
-    hop::model::Level value = l;
-    rt::claim(hop::model::valid_level(value), "a write to hop.world.stage");
+    rt::claim(slg_program::hop::levels::valid_level_no(level_2), "argument `level`");
+    const auto l = slg_program::hop::levels::level(level_2);
+    slg_program::hop::model::Level value = l;
+    rt::claim(slg_program::hop::model::valid_level(value), "a write to hop.world.stage");
     ctx.world.stage = std::move(value);
     ctx.world.ticks = 0_i;
-    hop::model::Player value_2 =
-        rt::conforming(hop::model::Player{.at = l.start}, hop::model::valid_player, "a new Player");
-    rt::claim(hop::model::valid_player(value_2), "a write to hop.world.player");
+    slg_program::hop::model::Player value_2 = rt::conforming(slg_program::hop::model::Player{.at = l.start},
+                                                             slg_program::hop::model::valid_player, "a new Player");
+    rt::claim(slg_program::hop::model::valid_player(value_2), "a write to hop.world.player");
     ctx.world.player = std::move(value_2);
     ctx.world.taken = {};
-    rt::Map<rt::Int, hop::model::Crawler> value_3 = {};
-    rt::claim(
-        (std::ranges::all_of(value_3, [](const auto& entry_4) { return hop::model::valid_crawler(entry_4.second); })),
-        "a write to hop.world.crawlers");
+    rt::Map<rt::Int, slg_program::hop::model::Crawler> value_3 = {};
+    rt::claim((std::ranges::all_of(
+                  value_3, [](const auto& entry_4) { return slg_program::hop::model::valid_crawler(entry_4.second); })),
+              "a write to hop.world.crawlers");
     ctx.world.crawlers = std::move(value_3);
     const auto items_5 = l.crawlers;
     for (const auto& c : items_5) {
-      hop::model::Crawler value_6 = c;
-      rt::claim(hop::model::valid_crawler(value_6), "a write to hop.world.crawlers");
+      slg_program::hop::model::Crawler value_6 = c;
+      rt::claim(slg_program::hop::model::valid_crawler(value_6), "a write to hop.world.crawlers");
       ctx.world.crawlers.insert_or_assign(c.no, std::move(value_6));
     }
     rt::Int value_7 = 3_i;
     rt::claim((value_7 >= 0_i && value_7 <= 3_i), "a write to hop.world.lives");
     ctx.world.lives = std::move(value_7);
-    ctx.world.mode = hop::model::Mode::Playing;
+    ctx.world.mode = slg_program::hop::model::Mode::Playing;
     ctx.out->line(rt::concat({"0 level ", l.name}));
   });
 }
@@ -102,17 +104,18 @@ void start(program::Machine& ctx, hop::levels::LevelNo level_2) {
 // rule hop.world.lose (hop/world.slg:41)
 void lose(program::Machine& ctx, const rt::Text& why) {
   ctx.atomic([&] {
-    rt::guard(ctx.world.mode == hop::model::Mode::Playing, "Over");
+    rt::guard(ctx.world.mode == slg_program::hop::model::Mode::Playing, "Over");
     ctx.out->line(rt::concat({rt::str(ctx.world.ticks), " ", why}));
     rt::Int value = ctx.world.lives - 1_i;
     rt::claim((value >= 0_i && value <= 3_i), "a write to hop.world.lives");
     ctx.world.lives = std::move(value);
-    hop::model::Player value_2 =
-        rt::conforming(hop::model::Player{.at = ctx.world.stage.start}, hop::model::valid_player, "a new Player");
-    rt::claim(hop::model::valid_player(value_2), "a write to hop.world.player");
+    slg_program::hop::model::Player value_2 =
+        rt::conforming(slg_program::hop::model::Player{.at = ctx.world.stage.start},
+                       slg_program::hop::model::valid_player, "a new Player");
+    rt::claim(slg_program::hop::model::valid_player(value_2), "a write to hop.world.player");
     ctx.world.player = std::move(value_2);
     if (ctx.world.lives == 0_i) {
-      ctx.world.mode = hop::model::Mode::Lost;
+      ctx.world.mode = slg_program::hop::model::Mode::Lost;
       ctx.out->line(rt::concat({rt::str(ctx.world.ticks), " lost"}));
     }
   });
@@ -121,129 +124,135 @@ void lose(program::Machine& ctx, const rt::Text& why) {
 // one tick of play: carry, steer, jump, fall, then everything the hero touches
 // rule hop.world.step (hop/world.slg:53)
 // @on(tick(60Hz))
-void step(program::Machine& ctx, const hop::model::Pad& pad) {
+void step(program::Machine& ctx, const slg_program::hop::model::Pad& pad) {
   ctx.atomic([&] {
-    rt::guard(ctx.world.mode == hop::model::Mode::Playing, "Over");
+    rt::guard(ctx.world.mode == slg_program::hop::model::Mode::Playing, "Over");
     const auto t = ctx.world.ticks + 1_i;
     ctx.world.ticks = t;
     const auto was = ctx.world.player;
-    const auto tops = rt::map(ctx.world.stage.movers, [&](const hop::model::Mover& m) {
-      return rt::conforming(hop::physics::Placed{.no = m.no, .box = hop::physics::mover_box(m, t)},
-                            hop::physics::valid_placed, "a new Placed");
+    const auto tops = rt::map(ctx.world.stage.movers, [&](const slg_program::hop::model::Mover& m) {
+      return rt::conforming(
+          slg_program::hop::physics::Placed{.no = m.no, .box = slg_program::hop::physics::mover_box(m, t)},
+          slg_program::hop::physics::valid_placed, "a new Placed");
     });
-    hop::geom::Vec3 at_2 = was.at;
+    slg_program::hop::geom::Vec3 at_2 = was.at;
     if (was.riding.has_value()) {
-      const auto ridden = rt::filter(ctx.world.stage.movers,
-                                     [&](const hop::model::Mover& m_2) { return was.riding == rt::some(m_2.no); });
+      const auto ridden = rt::filter(ctx.world.stage.movers, [&](const slg_program::hop::model::Mover& m_2) {
+        return was.riding == rt::some(m_2.no);
+      });
       const auto items = ridden;
       for (const auto& m_3 : items) {
-        at_2 = hop::geom::plus(at_2, hop::physics::mover_shift(m_3, t));
+        at_2 = slg_program::hop::geom::plus(at_2, slg_program::hop::physics::mover_shift(m_3, t));
       }
     }
-    const auto target = hop::physics::walk_target(pad);
-    const auto accel = was.grounded ? hop::physics::ground_accel : hop::physics::air_accel;
+    const auto target = slg_program::hop::physics::walk_target(pad);
+    const auto accel = was.grounded ? slg_program::hop::physics::ground_accel : slg_program::hop::physics::air_accel;
     rt::Int vy = was.vel.y;
     rt::Int coyote = was.coyote;
     if (pad.jump && !was.jump_held && (was.grounded || was.coyote > 0_i)) {
-      vy = hop::physics::jump_speed;
+      vy = slg_program::hop::physics::jump_speed;
       coyote = 0_i;
       ctx.out->line(rt::concat({rt::str(t), " jump"}));
-    } else if (!pad.jump && vy > hop::physics::hop_cut) {
-      vy = hop::physics::hop_cut;
+    } else if (!pad.jump && vy > slg_program::hop::physics::hop_cut) {
+      vy = slg_program::hop::physics::hop_cut;
     }
-    vy = rt::max(vy - hop::physics::gravity, 0_i - hop::physics::max_fall);
-    const auto sx =
-        hop::physics::slide_x(at_2, hop::geom::approach(was.vel.x, target.x, accel), ctx.world.stage.solids);
+    vy = rt::max(vy - slg_program::hop::physics::gravity, 0_i - slg_program::hop::physics::max_fall);
+    const auto sx = slg_program::hop::physics::slide_x(
+        at_2, slg_program::hop::geom::approach(was.vel.x, target.x, accel), ctx.world.stage.solids);
     at_2 = [&] {
       auto changed_3 = at_2;
       changed_3.x = sx.pos;
-      rt::claim(hop::geom::valid_sub(changed_3.x), "field `x`");
+      rt::claim(slg_program::hop::geom::valid_sub(changed_3.x), "field `x`");
       return changed_3;
     }();
-    const auto sz =
-        hop::physics::slide_z(at_2, hop::geom::approach(was.vel.z, target.z, accel), ctx.world.stage.solids);
+    const auto sz = slg_program::hop::physics::slide_z(
+        at_2, slg_program::hop::geom::approach(was.vel.z, target.z, accel), ctx.world.stage.solids);
     at_2 = [&] {
       auto changed_5 = at_2;
       changed_5.z = sz.pos;
-      rt::claim(hop::geom::valid_sub(changed_5.z), "field `z`");
+      rt::claim(slg_program::hop::geom::valid_sub(changed_5.z), "field `z`");
       return changed_5;
     }();
-    const auto f = hop::physics::fall(at_2, vy, ctx.world.stage.solids, tops);
+    const auto f = slg_program::hop::physics::fall(at_2, vy, ctx.world.stage.solids, tops);
     at_2 = [&] {
       auto changed_7 = at_2;
       changed_7.y = f.y;
-      rt::claim(hop::geom::valid_sub(changed_7.y), "field `y`");
+      rt::claim(slg_program::hop::geom::valid_sub(changed_7.y), "field `y`");
       return changed_7;
     }();
     if (f.grounded && !was.grounded) {
       ctx.out->line(rt::concat({rt::str(t), " land"}));
     }
-    hop::model::Player value_8 = rt::conforming(
-        hop::model::Player{.at = at_2,
-                           .vel = rt::conforming(hop::geom::Vec3{.x = sx.vel, .y = f.vel, .z = sz.vel},
-                                                 hop::geom::valid_vec3, "a new Vec3"),
-                           .grounded = f.grounded,
-                           .coyote = f.grounded ? hop::physics::coyote_ticks : rt::max(coyote - 1_i, 0_i),
-                           .jump_held = pad.jump,
-                           .riding = f.riding,
-                           .yaw = hop::physics::facing(pad, was.yaw)},
-        hop::model::valid_player, "a new Player");
-    rt::claim(hop::model::valid_player(value_8), "a write to hop.world.player");
+    slg_program::hop::model::Player value_8 = rt::conforming(
+        slg_program::hop::model::Player{
+            .at = at_2,
+            .vel = rt::conforming(slg_program::hop::geom::Vec3{.x = sx.vel, .y = f.vel, .z = sz.vel},
+                                  slg_program::hop::geom::valid_vec3, "a new Vec3"),
+            .grounded = f.grounded,
+            .coyote = f.grounded ? slg_program::hop::physics::coyote_ticks : rt::max(coyote - 1_i, 0_i),
+            .jump_held = pad.jump,
+            .riding = f.riding,
+            .yaw = slg_program::hop::physics::facing(pad, was.yaw)},
+        slg_program::hop::model::valid_player, "a new Player");
+    rt::claim(slg_program::hop::model::valid_player(value_8), "a write to hop.world.player");
     ctx.world.player = std::move(value_8);
     for (const auto& c : rt::values(ctx.world.crawlers)) {
-      hop::model::Crawler value_9 = hop::physics::patrol(c);
-      rt::claim(hop::model::valid_crawler(value_9), "a write to hop.world.crawlers");
+      slg_program::hop::model::Crawler value_9 = slg_program::hop::physics::patrol(c);
+      rt::claim(slg_program::hop::model::valid_crawler(value_9), "a write to hop.world.crawlers");
       ctx.world.crawlers.insert_or_assign(c.no, std::move(value_9));
     }
     const auto items_10 = ctx.world.stage.gems;
     for (const auto& g : items_10) {
       if (!rt::contains(ctx.world.taken, g.no) &&
-          hop::geom::touches(hop::physics::body(at_2), hop::geom::around_centre(g.at, hop::physics::gem_half))) {
+          slg_program::hop::geom::touches(
+              slg_program::hop::physics::body(at_2),
+              slg_program::hop::geom::around_centre(g.at, slg_program::hop::physics::gem_half))) {
         ctx.world.taken.insert(g.no);
         ctx.out->line(rt::concat({rt::str(t), " gem ", rt::str(g.no)}));
       }
     }
     bool alive = true;
     for (const auto& c_2 : rt::values(ctx.world.crawlers)) {
-      if (alive && hop::geom::touches(hop::physics::body(at_2), hop::physics::crawler_box(c_2))) {
-        if (hop::physics::stomps(at_2.y, vy, c_2)) {
+      if (alive && slg_program::hop::geom::touches(slg_program::hop::physics::body(at_2),
+                                                   slg_program::hop::physics::crawler_box(c_2))) {
+        if (slg_program::hop::physics::stomps(at_2.y, vy, c_2)) {
           ctx.world.crawlers.erase(c_2.no);
-          rt::claim(
-              (std::ranges::all_of(ctx.world.crawlers,
-                                   [](const auto& entry_11) { return hop::model::valid_crawler(entry_11.second); })),
-              "a write to hop.world.crawlers");
-          hop::model::Player value_16 = [&] {
+          rt::claim((std::ranges::all_of(
+                        ctx.world.crawlers,
+                        [](const auto& entry_11) { return slg_program::hop::model::valid_crawler(entry_11.second); })),
+                    "a write to hop.world.crawlers");
+          slg_program::hop::model::Player value_16 = [&] {
             auto changed_14 = ctx.world.player;
             changed_14.vel = [&] {
               auto changed_15 = ctx.world.player.vel;
-              changed_15.y = hop::physics::stomp_bounce;
-              rt::claim(hop::geom::valid_sub(changed_15.y), "field `y`");
+              changed_15.y = slg_program::hop::physics::stomp_bounce;
+              rt::claim(slg_program::hop::geom::valid_sub(changed_15.y), "field `y`");
               return changed_15;
             }();
             changed_14.grounded = false;
             changed_14.riding = {};
-            rt::claim(hop::geom::valid_vec3(changed_14.vel), "field `vel`");
+            rt::claim(slg_program::hop::geom::valid_vec3(changed_14.vel), "field `vel`");
             return changed_14;
           }();
-          rt::claim(hop::model::valid_player(value_16), "a write to hop.world.player");
+          rt::claim(slg_program::hop::model::valid_player(value_16), "a write to hop.world.player");
           ctx.world.player = std::move(value_16);
           ctx.out->line(rt::concat({rt::str(t), " stomp ", rt::str(c_2.no)}));
         } else {
-          hop::world::lose(ctx, "hit"s);
+          slg_program::hop::world::lose(ctx, "hit"s);
           alive = false;
         }
       }
     }
-    if (alive && at_2.y < hop::physics::kill_y) {
-      hop::world::lose(ctx, "fall"s);
+    if (alive && at_2.y < slg_program::hop::physics::kill_y) {
+      slg_program::hop::world::lose(ctx, "fall"s);
       alive = false;
     }
-    const auto goal = hop::geom::around_feet(ctx.world.stage.goal, hop::physics::goal_half());
-    if (alive && hop::geom::touches(hop::physics::body(at_2), goal)) {
-      ctx.world.mode = hop::model::Mode::Won;
+    const auto goal = slg_program::hop::geom::around_feet(ctx.world.stage.goal, slg_program::hop::physics::goal_half());
+    if (alive && slg_program::hop::geom::touches(slg_program::hop::physics::body(at_2), goal)) {
+      ctx.world.mode = slg_program::hop::model::Mode::Won;
       ctx.out->line(rt::concat({rt::str(t), " won"}));
     }
   });
 }
 
-}  // namespace hop::world
+}  // namespace slg_program::hop::world

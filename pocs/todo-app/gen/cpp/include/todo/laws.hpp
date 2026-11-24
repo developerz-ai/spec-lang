@@ -3,9 +3,9 @@
 
 #include "rt/prelude.hpp"
 
-namespace todo::laws {
+namespace slg_program::todo::laws {
 
 // type todo.laws.Change (todo/laws.slg:7)
 using Change = rt::Event;
 
-}  // namespace todo::laws
+}  // namespace slg_program::todo::laws

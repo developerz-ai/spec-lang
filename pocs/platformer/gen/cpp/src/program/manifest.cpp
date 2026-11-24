@@ -23,57 +23,57 @@ using rt::from_data;
 using rt::to_data;
 
 // The declared types the app's rules and states name.
-const rt::meta::Type& type_0();   // hop::model::Rgb
+const rt::meta::Type& type_0();   // slg_program::hop::model::Rgb
 const rt::meta::Type& type_1();   // rt::Unit
-const rt::meta::Type& type_2();   // hop::geom::Vec3
+const rt::meta::Type& type_2();   // slg_program::hop::geom::Vec3
 const rt::meta::Type& type_3();   // rt::Int
-const rt::meta::Type& type_4();   // hop::geom::Box
-const rt::meta::Type& type_5();   // hop::render::Asset
+const rt::meta::Type& type_4();   // slg_program::hop::geom::Box
+const rt::meta::Type& type_5();   // slg_program::hop::render::Asset
 const rt::meta::Type& type_6();   // rt::Int
 const rt::meta::Type& type_7();   // rt::Text
-const rt::meta::Type& type_8();   // hop::levels::LevelNo
-const rt::meta::Type& type_9();   // hop::model::Pad
+const rt::meta::Type& type_8();   // slg_program::hop::levels::LevelNo
+const rt::meta::Type& type_9();   // slg_program::hop::model::Pad
 const rt::meta::Type& type_10();  // bool
-const rt::meta::Type& type_11();  // hop::model::Level
-const rt::meta::Type& type_12();  // hop::model::Crawler
-const rt::meta::Type& type_13();  // hop::model::Mover
-const rt::meta::Type& type_14();  // rt::List<hop::model::Solid>
-const rt::meta::Type& type_15();  // hop::physics::Axis
-const rt::meta::Type& type_16();  // rt::List<hop::physics::Placed>
-const rt::meta::Type& type_17();  // hop::physics::Fall
-const rt::meta::Type& type_18();  // hop::world::View
-const rt::meta::Type& type_19();  // hop::render::Frame
-const rt::meta::Type& type_20();  // hop::render::Draw
+const rt::meta::Type& type_11();  // slg_program::hop::model::Level
+const rt::meta::Type& type_12();  // slg_program::hop::model::Crawler
+const rt::meta::Type& type_13();  // slg_program::hop::model::Mover
+const rt::meta::Type& type_14();  // rt::List<slg_program::hop::model::Solid>
+const rt::meta::Type& type_15();  // slg_program::hop::physics::Axis
+const rt::meta::Type& type_16();  // rt::List<slg_program::hop::physics::Placed>
+const rt::meta::Type& type_17();  // slg_program::hop::physics::Fall
+const rt::meta::Type& type_18();  // slg_program::hop::world::View
+const rt::meta::Type& type_19();  // slg_program::hop::render::Frame
+const rt::meta::Type& type_20();  // slg_program::hop::render::Draw
 const rt::meta::Type& type_21();  // rt::List<rt::Text>
-const rt::meta::Type& type_22();  // hop::model::Player
+const rt::meta::Type& type_22();  // slg_program::hop::model::Player
 const rt::meta::Type& type_23();  // rt::Set<rt::Int>
-const rt::meta::Type& type_24();  // rt::Map<rt::Int, hop::model::Crawler>
+const rt::meta::Type& type_24();  // rt::Map<rt::Int, slg_program::hop::model::Crawler>
 const rt::meta::Type& type_25();  // rt::Int
-const rt::meta::Type& type_26();  // hop::model::Mode
+const rt::meta::Type& type_26();  // slg_program::hop::model::Mode
 const rt::meta::Type& type_27();  // rt::Int
-const rt::meta::Type& type_28();  // hop::geom::Sub
-const rt::meta::Type& type_29();  // rt::List<hop::model::Mover>
-const rt::meta::Type& type_30();  // rt::List<hop::model::Gem>
-const rt::meta::Type& type_31();  // rt::List<hop::model::Crawler>
+const rt::meta::Type& type_28();  // slg_program::hop::geom::Sub
+const rt::meta::Type& type_29();  // rt::List<slg_program::hop::model::Mover>
+const rt::meta::Type& type_30();  // rt::List<slg_program::hop::model::Gem>
+const rt::meta::Type& type_31();  // rt::List<slg_program::hop::model::Crawler>
 const rt::meta::Type& type_32();  // rt::Int
 const rt::meta::Type& type_33();  // rt::Int
 const rt::meta::Type& type_34();  // rt::Int
-const rt::meta::Type& type_35();  // hop::model::Solid
-const rt::meta::Type& type_36();  // hop::physics::Placed
+const rt::meta::Type& type_35();  // slg_program::hop::model::Solid
+const rt::meta::Type& type_36();  // slg_program::hop::physics::Placed
 const rt::meta::Type& type_37();  // rt::Option<rt::Int>
-const rt::meta::Type& type_38();  // rt::List<hop::render::Draw>
-const rt::meta::Type& type_39();  // rt::List<hop::render::Label>
+const rt::meta::Type& type_38();  // rt::List<slg_program::hop::render::Draw>
+const rt::meta::Type& type_39();  // rt::List<slg_program::hop::render::Label>
 const rt::meta::Type& type_40();  // rt::Int
-const rt::meta::Type& type_41();  // hop::model::Gem
-const rt::meta::Type& type_42();  // hop::render::Label
+const rt::meta::Type& type_41();  // slg_program::hop::model::Gem
+const rt::meta::Type& type_42();  // slg_program::hop::render::Label
 
 const rt::meta::Type& type_0() {
   static const rt::meta::Type type{.kind = rt::meta::Kind::Record,
                                    .name = "Rgb",
                                    .fields = {{"r", &type_27}, {"g", &type_27}, {"b", &type_27}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::model::Rgb>(data);
-                                     return hop::model::valid_rgb(value);
+                                     const auto value = rt::from<slg_program::hop::model::Rgb>(data);
+                                     return slg_program::hop::model::valid_rgb(value);
                                    }};
   return type;
 }
@@ -88,8 +88,8 @@ const rt::meta::Type& type_2() {
                                    .name = "Vec3",
                                    .fields = {{"x", &type_28}, {"y", &type_28}, {"z", &type_28}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::geom::Vec3>(data);
-                                     return hop::geom::valid_vec3(value);
+                                     const auto value = rt::from<slg_program::hop::geom::Vec3>(data);
+                                     return slg_program::hop::geom::valid_vec3(value);
                                    }};
   return type;
 }
@@ -104,8 +104,8 @@ const rt::meta::Type& type_4() {
                                    .name = "Box",
                                    .fields = {{"lo", &type_2}, {"hi", &type_2}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::geom::Box>(data);
-                                     return hop::geom::valid_box(value);
+                                     const auto value = rt::from<slg_program::hop::geom::Box>(data);
+                                     return slg_program::hop::geom::valid_box(value);
                                    }};
   return type;
 }
@@ -134,8 +134,8 @@ const rt::meta::Type& type_7() {
 const rt::meta::Type& type_8() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::Int, .name = "LevelNo", .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<hop::levels::LevelNo>(data);
-        return hop::levels::valid_level_no(value);
+        const auto value = rt::from<slg_program::hop::levels::LevelNo>(data);
+        return slg_program::hop::levels::valid_level_no(value);
       }};
   return type;
 }
@@ -165,8 +165,8 @@ const rt::meta::Type& type_11() {
                                               {"crawlers", &type_31},
                                               {"goal", &type_2}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::model::Level>(data);
-                                     return hop::model::valid_level(value);
+                                     const auto value = rt::from<slg_program::hop::model::Level>(data);
+                                     return slg_program::hop::model::valid_level(value);
                                    }};
   return type;
 }
@@ -178,8 +178,8 @@ const rt::meta::Type& type_12() {
       .fields =
           {{"no", &type_3}, {"at", &type_2}, {"lo", &type_3}, {"hi", &type_3}, {"dir", &type_32}, {"speed", &type_33}},
       .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<hop::model::Crawler>(data);
-        return hop::model::valid_crawler(value);
+        const auto value = rt::from<slg_program::hop::model::Crawler>(data);
+        return slg_program::hop::model::valid_crawler(value);
       }};
   return type;
 }
@@ -190,8 +190,8 @@ const rt::meta::Type& type_13() {
       .name = "Mover",
       .fields = {{"no", &type_3}, {"home", &type_4}, {"step", &type_2}, {"span", &type_34}, {"color", &type_0}},
       .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<hop::model::Mover>(data);
-        return hop::model::valid_mover(value);
+        const auto value = rt::from<slg_program::hop::model::Mover>(data);
+        return slg_program::hop::model::valid_mover(value);
       }};
   return type;
 }
@@ -199,8 +199,8 @@ const rt::meta::Type& type_13() {
 const rt::meta::Type& type_14() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_35}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::model::Solid>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_solid(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::model::Solid>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_solid(item); });
       }};
   return type;
 }
@@ -214,8 +214,9 @@ const rt::meta::Type& type_15() {
 const rt::meta::Type& type_16() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_36}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::physics::Placed>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::physics::valid_placed(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::physics::Placed>>(data);
+        return std::ranges::all_of(value,
+                                   [](const auto& item) { return slg_program::hop::physics::valid_placed(item); });
       }};
   return type;
 }
@@ -239,8 +240,8 @@ const rt::meta::Type& type_18() {
                                               {"lives", &type_3},
                                               {"mode", &type_26}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::world::View>(data);
-                                     return hop::world::valid_view(value);
+                                     const auto value = rt::from<slg_program::hop::world::View>(data);
+                                     return slg_program::hop::world::valid_view(value);
                                    }};
   return type;
 }
@@ -255,8 +256,8 @@ const rt::meta::Type& type_19() {
                                               {"world", &type_38},
                                               {"labels", &type_39}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::render::Frame>(data);
-                                     return hop::render::valid_frame(value);
+                                     const auto value = rt::from<slg_program::hop::render::Frame>(data);
+                                     return slg_program::hop::render::valid_frame(value);
                                    }};
   return type;
 }
@@ -268,8 +269,8 @@ const rt::meta::Type& type_20() {
                                                 {"Wires", {{"box", &type_4}, {"color", &type_0}}},
                                                 {"Mesh", {{"asset", &type_5}, {"at", &type_2}, {"yaw", &type_6}}}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::render::Draw>(data);
-                                     return hop::render::valid_draw(value);
+                                     const auto value = rt::from<slg_program::hop::render::Draw>(data);
+                                     return slg_program::hop::render::valid_draw(value);
                                    }};
   return type;
 }
@@ -290,8 +291,8 @@ const rt::meta::Type& type_22() {
                                               {"riding", &type_37},
                                               {"yaw", &type_6}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::model::Player>(data);
-                                     return hop::model::valid_player(value);
+                                     const auto value = rt::from<slg_program::hop::model::Player>(data);
+                                     return slg_program::hop::model::valid_player(value);
                                    }};
   return type;
 }
@@ -304,8 +305,9 @@ const rt::meta::Type& type_23() {
 const rt::meta::Type& type_24() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::Map, .args = {&type_3, &type_12}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::Map<rt::Int, hop::model::Crawler>>(data);
-        return (std::ranges::all_of(value, [](const auto& entry) { return hop::model::valid_crawler(entry.second); }));
+        const auto value = rt::from<rt::Map<rt::Int, slg_program::hop::model::Crawler>>(data);
+        return (std::ranges::all_of(
+            value, [](const auto& entry) { return slg_program::hop::model::valid_crawler(entry.second); }));
       }};
   return type;
 }
@@ -334,8 +336,8 @@ const rt::meta::Type& type_27() {
 
 const rt::meta::Type& type_28() {
   static const rt::meta::Type type{.kind = rt::meta::Kind::Int, .name = "Sub", .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::geom::Sub>(data);
-                                     return hop::geom::valid_sub(value);
+                                     const auto value = rt::from<slg_program::hop::geom::Sub>(data);
+                                     return slg_program::hop::geom::valid_sub(value);
                                    }};
   return type;
 }
@@ -343,8 +345,8 @@ const rt::meta::Type& type_28() {
 const rt::meta::Type& type_29() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_13}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::model::Mover>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_mover(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::model::Mover>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_mover(item); });
       }};
   return type;
 }
@@ -352,8 +354,8 @@ const rt::meta::Type& type_29() {
 const rt::meta::Type& type_30() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_41}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::model::Gem>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_gem(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::model::Gem>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::model::valid_gem(item); });
       }};
   return type;
 }
@@ -361,8 +363,9 @@ const rt::meta::Type& type_30() {
 const rt::meta::Type& type_31() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_12}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::model::Crawler>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::model::valid_crawler(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::model::Crawler>>(data);
+        return std::ranges::all_of(value,
+                                   [](const auto& item) { return slg_program::hop::model::valid_crawler(item); });
       }};
   return type;
 }
@@ -396,8 +399,8 @@ const rt::meta::Type& type_35() {
                                    .name = "Solid",
                                    .fields = {{"box", &type_4}, {"color", &type_0}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::model::Solid>(data);
-                                     return hop::model::valid_solid(value);
+                                     const auto value = rt::from<slg_program::hop::model::Solid>(data);
+                                     return slg_program::hop::model::valid_solid(value);
                                    }};
   return type;
 }
@@ -407,8 +410,8 @@ const rt::meta::Type& type_36() {
                                    .name = "Placed",
                                    .fields = {{"no", &type_3}, {"box", &type_4}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::physics::Placed>(data);
-                                     return hop::physics::valid_placed(value);
+                                     const auto value = rt::from<slg_program::hop::physics::Placed>(data);
+                                     return slg_program::hop::physics::valid_placed(value);
                                    }};
   return type;
 }
@@ -421,8 +424,8 @@ const rt::meta::Type& type_37() {
 const rt::meta::Type& type_38() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_20}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::render::Draw>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::render::valid_draw(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::render::Draw>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::render::valid_draw(item); });
       }};
   return type;
 }
@@ -430,8 +433,8 @@ const rt::meta::Type& type_38() {
 const rt::meta::Type& type_39() {
   static const rt::meta::Type type{
       .kind = rt::meta::Kind::List, .args = {&type_42}, .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<rt::List<hop::render::Label>>(data);
-        return std::ranges::all_of(value, [](const auto& item) { return hop::render::valid_label(item); });
+        const auto value = rt::from<rt::List<slg_program::hop::render::Label>>(data);
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::hop::render::valid_label(item); });
       }};
   return type;
 }
@@ -449,8 +452,8 @@ const rt::meta::Type& type_41() {
                                    .name = "Gem",
                                    .fields = {{"no", &type_3}, {"at", &type_2}},
                                    .conforms = [](const rt::Data& data) {
-                                     const auto value = rt::from<hop::model::Gem>(data);
-                                     return hop::model::valid_gem(value);
+                                     const auto value = rt::from<slg_program::hop::model::Gem>(data);
+                                     return slg_program::hop::model::valid_gem(value);
                                    }};
   return type;
 }
@@ -461,8 +464,8 @@ const rt::meta::Type& type_42() {
       .name = "Label",
       .fields = {{"x", &type_3}, {"y", &type_3}, {"size", &type_3}, {"text", &type_7}, {"color", &type_0}},
       .conforms = [](const rt::Data& data) {
-        const auto value = rt::from<hop::render::Label>(data);
-        return hop::render::valid_label(value);
+        const auto value = rt::from<slg_program::hop::render::Label>(data);
+        return slg_program::hop::render::valid_label(value);
       }};
   return type;
 }
@@ -472,20 +475,20 @@ const std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {
     // law hop.laws.never_inside_a_solid (hop/laws.slg:10)
     []([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
       return rt::all(t.states, [&](const program::World& w) {
-        return rt::all(w.stage.solids, [&](const hop::model::Solid& s) {
-          return !hop::geom::overlaps(hop::physics::body(w.player.at), s.box);
+        return rt::all(w.stage.solids, [&](const slg_program::hop::model::Solid& s) {
+          return !slg_program::hop::geom::overlaps(slg_program::hop::physics::body(w.player.at), s.box);
         });
       });
     },
     // law hop.laws.speed_is_bounded (hop/laws.slg:14)
     []([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
       return rt::all(t.states, [&](const program::World& w) {
-        return rt::abs(w.player.vel.x) <= hop::physics::run_speed &&
-                   rt::abs(w.player.vel.z) <= hop::physics::run_speed && [&]() -> bool {
-          const auto left = 0_i - hop::physics::max_fall;
+        return rt::abs(w.player.vel.x) <= slg_program::hop::physics::run_speed &&
+                   rt::abs(w.player.vel.z) <= slg_program::hop::physics::run_speed && [&]() -> bool {
+          const auto left = 0_i - slg_program::hop::physics::max_fall;
           const auto right_2 = w.player.vel.y;
           if (!(left <= right_2)) return false;
-          const auto right_3 = hop::physics::jump_speed;
+          const auto right_3 = slg_program::hop::physics::jump_speed;
           if (!(right_2 <= right_3)) return false;
           return true;
         }();
@@ -503,13 +506,14 @@ const std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {
     },
     // law hop.laws.lost_means_no_lives (hop/laws.slg:27)
     []([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
-      return rt::all(t.states,
-                     [&](const program::World& w) { return (w.lives == 0_i) == (w.mode == hop::model::Mode::Lost); });
+      return rt::all(t.states, [&](const program::World& w) {
+        return (w.lives == 0_i) == (w.mode == slg_program::hop::model::Mode::Lost);
+      });
     },
     // law hop.laws.over_is_final (hop/laws.slg:31)
     []([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
       return rt::all(t.steps, [&](const rt::Step<program::World>& s) {
-        return !(s.before.mode != hop::model::Mode::Playing) || (!s.reply.ok() && s.after == s.before);
+        return !(s.before.mode != slg_program::hop::model::Mode::Playing) || (!s.reply.ok() && s.after == s.before);
       });
     },
     // law hop.laws.one_tick_per_step (hop/laws.slg:35)
@@ -522,7 +526,7 @@ const std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {
     []([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& t) -> bool {
       return rt::all(t.states, [&](const program::World& w) {
         return rt::all(rt::list(w.taken), [&](rt::Int n) {
-          return rt::any(w.stage.gems, [&](const hop::model::Gem& it) { return it.no == n; });
+          return rt::any(w.stage.gems, [&](const slg_program::hop::model::Gem& it) { return it.no == n; });
         });
       });
     },
@@ -565,7 +569,7 @@ const rt::meta::App& app() {
                .params = {{"color", &type_0, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::clear_background(ctx, rt::from<hop::model::Rgb>(args.at(0)));
+                 slg_program::hop::screen::clear_background(ctx, rt::from<slg_program::hop::model::Rgb>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.begin_mode_3d (hop/screen.slg:16)
@@ -580,8 +584,8 @@ const rt::meta::App& app() {
                .params = {{"eye", &type_2, false}, {"target", &type_2, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::begin_mode_3d(ctx, rt::from<hop::geom::Vec3>(args.at(0)),
-                                            rt::from<hop::geom::Vec3>(args.at(1)));
+                 slg_program::hop::screen::begin_mode_3d(ctx, rt::from<slg_program::hop::geom::Vec3>(args.at(0)),
+                                                         rt::from<slg_program::hop::geom::Vec3>(args.at(1)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.end_mode_3d (hop/screen.slg:20)
@@ -596,7 +600,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_1,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::end_mode_3d(ctx);
+                 slg_program::hop::screen::end_mode_3d(ctx);
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.begin_lit (hop/screen.slg:23)
@@ -611,7 +615,7 @@ const rt::meta::App& app() {
                .params = {{"time", &type_3, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::begin_lit(ctx, rt::from<rt::Int>(args.at(0)));
+                 slg_program::hop::screen::begin_lit(ctx, rt::from<rt::Int>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.end_lit (hop/screen.slg:27)
@@ -626,7 +630,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_1,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::end_lit(ctx);
+                 slg_program::hop::screen::end_lit(ctx);
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.draw_cube (hop/screen.slg:30)
@@ -641,8 +645,8 @@ const rt::meta::App& app() {
                .params = {{"box", &type_4, false}, {"color", &type_0, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::draw_cube(ctx, rt::from<hop::geom::Box>(args.at(0)),
-                                        rt::from<hop::model::Rgb>(args.at(1)));
+                 slg_program::hop::screen::draw_cube(ctx, rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                     rt::from<slg_program::hop::model::Rgb>(args.at(1)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.draw_cube_wires (hop/screen.slg:33)
@@ -657,8 +661,8 @@ const rt::meta::App& app() {
                .params = {{"box", &type_4, false}, {"color", &type_0, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::draw_cube_wires(ctx, rt::from<hop::geom::Box>(args.at(0)),
-                                              rt::from<hop::model::Rgb>(args.at(1)));
+                 slg_program::hop::screen::draw_cube_wires(ctx, rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                           rt::from<slg_program::hop::model::Rgb>(args.at(1)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.draw_model (hop/screen.slg:36)
@@ -673,8 +677,9 @@ const rt::meta::App& app() {
                .params = {{"asset", &type_5, false}, {"at", &type_2, false}, {"yaw", &type_6, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::draw_model(ctx, rt::from<hop::render::Asset>(args.at(0)),
-                                         rt::from<hop::geom::Vec3>(args.at(1)), rt::from<rt::Int>(args.at(2)));
+                 slg_program::hop::screen::draw_model(ctx, rt::from<slg_program::hop::render::Asset>(args.at(0)),
+                                                      rt::from<slg_program::hop::geom::Vec3>(args.at(1)),
+                                                      rt::from<rt::Int>(args.at(2)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.draw_text (hop/screen.slg:39)
@@ -693,9 +698,9 @@ const rt::meta::App& app() {
                           {"color", &type_0, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::draw_text(ctx, rt::from<rt::Text>(args.at(0)), rt::from<rt::Int>(args.at(1)),
-                                        rt::from<rt::Int>(args.at(2)), rt::from<rt::Int>(args.at(3)),
-                                        rt::from<hop::model::Rgb>(args.at(4)));
+                 slg_program::hop::screen::draw_text(ctx, rt::from<rt::Text>(args.at(0)), rt::from<rt::Int>(args.at(1)),
+                                                     rt::from<rt::Int>(args.at(2)), rt::from<rt::Int>(args.at(3)),
+                                                     rt::from<slg_program::hop::model::Rgb>(args.at(4)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.screen.present (hop/screen.slg:68)
@@ -711,7 +716,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_1,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::screen::present(ctx);
+                 slg_program::hop::screen::present(ctx);
                  return rt::Data{rt::unit};
                }},
               // rule hop.world.start (hop/world.slg:26)
@@ -726,7 +731,7 @@ const rt::meta::App& app() {
                .params = {{"level", &type_8, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::world::start(ctx, rt::from<rt::Int>(args.at(0)));
+                 slg_program::hop::world::start(ctx, rt::from<rt::Int>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.world.lose (hop/world.slg:41)
@@ -741,7 +746,7 @@ const rt::meta::App& app() {
                .params = {{"why", &type_7, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::world::lose(ctx, rt::from<rt::Text>(args.at(0)));
+                 slg_program::hop::world::lose(ctx, rt::from<rt::Text>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
               // rule hop.world.step (hop/world.slg:53)
@@ -758,7 +763,7 @@ const rt::meta::App& app() {
                .params = {{"pad", &type_9, false}},
                .result = &type_1,
                .call = [](program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 hop::world::step(ctx, rt::from<hop::model::Pad>(args.at(0)));
+                 slg_program::hop::world::step(ctx, rt::from<slg_program::hop::model::Pad>(args.at(0)));
                  return rt::Data{rt::unit};
                }},
           },
@@ -776,8 +781,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_2, false}, {"b", &type_2, false}},
                .result = &type_2,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::plus(rt::from<hop::geom::Vec3>(args.at(0)), rt::from<hop::geom::Vec3>(args.at(1))));
+                 return to_data(slg_program::hop::geom::plus(rt::from<slg_program::hop::geom::Vec3>(args.at(0)),
+                                                             rt::from<slg_program::hop::geom::Vec3>(args.at(1))));
                }},
               // fn hop.geom.minus (hop/geom.slg:17)
               {.qualified = "hop.geom.minus",
@@ -791,8 +796,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_2, false}, {"b", &type_2, false}},
                .result = &type_2,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::minus(rt::from<hop::geom::Vec3>(args.at(0)), rt::from<hop::geom::Vec3>(args.at(1))));
+                 return to_data(slg_program::hop::geom::minus(rt::from<slg_program::hop::geom::Vec3>(args.at(0)),
+                                                              rt::from<slg_program::hop::geom::Vec3>(args.at(1))));
                }},
               // fn hop.geom.scaled (hop/geom.slg:19)
               {.qualified = "hop.geom.scaled",
@@ -806,8 +811,8 @@ const rt::meta::App& app() {
                .params = {{"v", &type_2, false}, {"k", &type_3, false}},
                .result = &type_2,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::scaled(rt::from<hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(slg_program::hop::geom::scaled(rt::from<slg_program::hop::geom::Vec3>(args.at(0)),
+                                                               rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.geom.shifted (hop/geom.slg:21)
               {.qualified = "hop.geom.shifted",
@@ -821,8 +826,8 @@ const rt::meta::App& app() {
                .params = {{"b", &type_4, false}, {"by", &type_2, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::shifted(rt::from<hop::geom::Box>(args.at(0)), rt::from<hop::geom::Vec3>(args.at(1))));
+                 return to_data(slg_program::hop::geom::shifted(rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                                rt::from<slg_program::hop::geom::Vec3>(args.at(1))));
                }},
               // fn hop.geom.around_feet (hop/geom.slg:23)
               {.qualified = "hop.geom.around_feet",
@@ -836,8 +841,9 @@ const rt::meta::App& app() {
                .params = {{"feet", &type_2, false}, {"half", &type_2, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::geom::around_feet(rt::from<hop::geom::Vec3>(args.at(0)),
-                                                       rt::from<hop::geom::Vec3>(args.at(1))));
+                 return to_data(
+                     slg_program::hop::geom::around_feet(rt::from<slg_program::hop::geom::Vec3>(args.at(0)),
+                                                         rt::from<slg_program::hop::geom::Vec3>(args.at(1))));
                }},
               // fn hop.geom.around_centre (hop/geom.slg:28)
               {.qualified = "hop.geom.around_centre",
@@ -851,8 +857,8 @@ const rt::meta::App& app() {
                .params = {{"c", &type_2, false}, {"half", &type_3, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::around_centre(rt::from<hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(slg_program::hop::geom::around_centre(
+                     rt::from<slg_program::hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.geom.overlaps (hop/geom.slg:32)
               {.qualified = "hop.geom.overlaps",
@@ -867,8 +873,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_4, false}, {"b", &type_4, false}},
                .result = &type_10,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::overlaps(rt::from<hop::geom::Box>(args.at(0)), rt::from<hop::geom::Box>(args.at(1))));
+                 return to_data(slg_program::hop::geom::overlaps(rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                                 rt::from<slg_program::hop::geom::Box>(args.at(1))));
                }},
               // fn hop.geom.touches (hop/geom.slg:40)
               {.qualified = "hop.geom.touches",
@@ -883,8 +889,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_4, false}, {"b", &type_4, false}},
                .result = &type_10,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::touches(rt::from<hop::geom::Box>(args.at(0)), rt::from<hop::geom::Box>(args.at(1))));
+                 return to_data(slg_program::hop::geom::touches(rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                                rt::from<slg_program::hop::geom::Box>(args.at(1))));
                }},
               // fn hop.geom.over (hop/geom.slg:48)
               {.qualified = "hop.geom.over",
@@ -898,8 +904,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_4, false}, {"b", &type_4, false}},
                .result = &type_10,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::geom::over(rt::from<hop::geom::Box>(args.at(0)), rt::from<hop::geom::Box>(args.at(1))));
+                 return to_data(slg_program::hop::geom::over(rt::from<slg_program::hop::geom::Box>(args.at(0)),
+                                                             rt::from<slg_program::hop::geom::Box>(args.at(1))));
                }},
               // fn hop.geom.triangle (hop/geom.slg:51)
               {.qualified = "hop.geom.triangle",
@@ -913,7 +919,8 @@ const rt::meta::App& app() {
                .params = {{"t", &type_3, false}, {"n", &type_3, false}},
                .result = &type_3,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::geom::triangle(rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(
+                     slg_program::hop::geom::triangle(rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.geom.approach (hop/geom.slg:58)
               {.qualified = "hop.geom.approach",
@@ -927,8 +934,8 @@ const rt::meta::App& app() {
                .params = {{"v", &type_3, false}, {"target", &type_3, false}, {"step", &type_3, false}},
                .result = &type_3,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::geom::approach(rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1)),
-                                                    rt::from<rt::Int>(args.at(2))));
+                 return to_data(slg_program::hop::geom::approach(
+                     rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1)), rt::from<rt::Int>(args.at(2))));
                }},
               // fn hop.geom.vec_text (hop/geom.slg:62)
               {.qualified = "hop.geom.vec_text",
@@ -942,7 +949,7 @@ const rt::meta::App& app() {
                .params = {{"v", &type_2, false}},
                .result = &type_7,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::geom::vec_text(rt::from<hop::geom::Vec3>(args.at(0))));
+                 return to_data(slg_program::hop::geom::vec_text(rt::from<slg_program::hop::geom::Vec3>(args.at(0))));
                }},
               // fn hop.levels.level (hop/levels.slg:60)
               {.qualified = "hop.levels.level",
@@ -956,7 +963,7 @@ const rt::meta::App& app() {
                .params = {{"n", &type_8, false}},
                .result = &type_11,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::levels::level(rt::from<rt::Int>(args.at(0))));
+                 return to_data(slg_program::hop::levels::level(rt::from<rt::Int>(args.at(0))));
                }},
               // fn hop.physics.body (hop/physics.slg:39)
               {.qualified = "hop.physics.body",
@@ -970,7 +977,7 @@ const rt::meta::App& app() {
                .params = {{"at", &type_2, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::body(rt::from<hop::geom::Vec3>(args.at(0))));
+                 return to_data(slg_program::hop::physics::body(rt::from<slg_program::hop::geom::Vec3>(args.at(0))));
                }},
               // fn hop.physics.crawler_box (hop/physics.slg:41)
               {.qualified = "hop.physics.crawler_box",
@@ -984,7 +991,8 @@ const rt::meta::App& app() {
                .params = {{"c", &type_12, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::crawler_box(rt::from<hop::model::Crawler>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::physics::crawler_box(rt::from<slg_program::hop::model::Crawler>(args.at(0))));
                }},
               // fn hop.physics.mover_box (hop/physics.slg:43)
               {.qualified = "hop.physics.mover_box",
@@ -998,8 +1006,8 @@ const rt::meta::App& app() {
                .params = {{"m", &type_13, false}, {"t", &type_3, false}},
                .result = &type_4,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::physics::mover_box(rt::from<hop::model::Mover>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(slg_program::hop::physics::mover_box(
+                     rt::from<slg_program::hop::model::Mover>(args.at(0)), rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.physics.mover_shift (hop/physics.slg:45)
               {.qualified = "hop.physics.mover_shift",
@@ -1013,8 +1021,8 @@ const rt::meta::App& app() {
                .params = {{"m", &type_13, false}, {"t", &type_3, false}},
                .result = &type_2,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::physics::mover_shift(rt::from<hop::model::Mover>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(slg_program::hop::physics::mover_shift(
+                     rt::from<slg_program::hop::model::Mover>(args.at(0)), rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.physics.walk_target (hop/physics.slg:50)
               {.qualified = "hop.physics.walk_target",
@@ -1028,7 +1036,8 @@ const rt::meta::App& app() {
                .params = {{"pad", &type_9, false}},
                .result = &type_2,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::walk_target(rt::from<hop::model::Pad>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::physics::walk_target(rt::from<slg_program::hop::model::Pad>(args.at(0))));
                }},
               // fn hop.physics.facing (hop/physics.slg:59)
               {.qualified = "hop.physics.facing",
@@ -1042,8 +1051,8 @@ const rt::meta::App& app() {
                .params = {{"pad", &type_9, false}, {"was", &type_3, false}},
                .result = &type_3,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(
-                     hop::physics::facing(rt::from<hop::model::Pad>(args.at(0)), rt::from<rt::Int>(args.at(1))));
+                 return to_data(slg_program::hop::physics::facing(rt::from<slg_program::hop::model::Pad>(args.at(0)),
+                                                                  rt::from<rt::Int>(args.at(1))));
                }},
               // fn hop.physics.slide_x (hop/physics.slg:69)
               {.qualified = "hop.physics.slide_x",
@@ -1057,9 +1066,9 @@ const rt::meta::App& app() {
                .params = {{"at", &type_2, false}, {"v", &type_3, false}, {"solids", &type_14, false}},
                .result = &type_15,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::slide_x(rt::from<hop::geom::Vec3>(args.at(0)),
-                                                      rt::from<rt::Int>(args.at(1)),
-                                                      rt::from<rt::List<hop::model::Solid>>(args.at(2))));
+                 return to_data(slg_program::hop::physics::slide_x(
+                     rt::from<slg_program::hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1)),
+                     rt::from<rt::List<slg_program::hop::model::Solid>>(args.at(2))));
                }},
               // fn hop.physics.slide_z (hop/physics.slg:78)
               {.qualified = "hop.physics.slide_z",
@@ -1073,9 +1082,9 @@ const rt::meta::App& app() {
                .params = {{"at", &type_2, false}, {"v", &type_3, false}, {"solids", &type_14, false}},
                .result = &type_15,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::slide_z(rt::from<hop::geom::Vec3>(args.at(0)),
-                                                      rt::from<rt::Int>(args.at(1)),
-                                                      rt::from<rt::List<hop::model::Solid>>(args.at(2))));
+                 return to_data(slg_program::hop::physics::slide_z(
+                     rt::from<slg_program::hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1)),
+                     rt::from<rt::List<slg_program::hop::model::Solid>>(args.at(2))));
                }},
               // fn hop.physics.fall (hop/physics.slg:86)
               {.qualified = "hop.physics.fall",
@@ -1092,9 +1101,10 @@ const rt::meta::App& app() {
                           {"tops", &type_16, false}},
                .result = &type_17,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::fall(rt::from<hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1)),
-                                                   rt::from<rt::List<hop::model::Solid>>(args.at(2)),
-                                                   rt::from<rt::List<hop::physics::Placed>>(args.at(3))));
+                 return to_data(slg_program::hop::physics::fall(
+                     rt::from<slg_program::hop::geom::Vec3>(args.at(0)), rt::from<rt::Int>(args.at(1)),
+                     rt::from<rt::List<slg_program::hop::model::Solid>>(args.at(2)),
+                     rt::from<rt::List<slg_program::hop::physics::Placed>>(args.at(3))));
                }},
               // fn hop.physics.patrol (hop/physics.slg:97)
               {.qualified = "hop.physics.patrol",
@@ -1108,7 +1118,8 @@ const rt::meta::App& app() {
                .params = {{"c", &type_12, false}},
                .result = &type_12,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::patrol(rt::from<hop::model::Crawler>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::physics::patrol(rt::from<slg_program::hop::model::Crawler>(args.at(0))));
                }},
               // fn hop.physics.stomps (hop/physics.slg:109)
               {.qualified = "hop.physics.stomps",
@@ -1122,8 +1133,9 @@ const rt::meta::App& app() {
                .params = {{"feet", &type_3, false}, {"vy", &type_3, false}, {"c", &type_12, false}},
                .result = &type_10,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::physics::stomps(rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1)),
-                                                     rt::from<hop::model::Crawler>(args.at(2))));
+                 return to_data(
+                     slg_program::hop::physics::stomps(rt::from<rt::Int>(args.at(0)), rt::from<rt::Int>(args.at(1)),
+                                                       rt::from<slg_program::hop::model::Crawler>(args.at(2))));
                }},
               // fn hop.render.asset_name (hop/render.slg:30)
               {.qualified = "hop.render.asset_name",
@@ -1137,7 +1149,8 @@ const rt::meta::App& app() {
                .params = {{"a", &type_5, false}},
                .result = &type_7,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::asset_name(rt::from<hop::render::Asset>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::render::asset_name(rt::from<slg_program::hop::render::Asset>(args.at(0))));
                }},
               // fn hop.render.bob (hop/render.slg:38)
               {.qualified = "hop.render.bob",
@@ -1151,7 +1164,7 @@ const rt::meta::App& app() {
                .params = {{"t", &type_3, false}},
                .result = &type_3,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::bob(rt::from<rt::Int>(args.at(0))));
+                 return to_data(slg_program::hop::render::bob(rt::from<rt::Int>(args.at(0))));
                }},
               // fn hop.render.scene (hop/render.slg:50)
               {.qualified = "hop.render.scene",
@@ -1166,7 +1179,7 @@ const rt::meta::App& app() {
                .params = {{"v", &type_18, false}},
                .result = &type_19,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::scene(rt::from<hop::world::View>(args.at(0))));
+                 return to_data(slg_program::hop::render::scene(rt::from<slg_program::hop::world::View>(args.at(0))));
                }},
               // fn hop.render.draw_text (hop/render.slg:71)
               {.qualified = "hop.render.draw_text",
@@ -1180,7 +1193,8 @@ const rt::meta::App& app() {
                .params = {{"d", &type_20, false}},
                .result = &type_7,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::draw_text(rt::from<hop::render::Draw>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::render::draw_text(rt::from<slg_program::hop::render::Draw>(args.at(0))));
                }},
               // fn hop.render.frame_lines (hop/render.slg:81)
               {.qualified = "hop.render.frame_lines",
@@ -1195,7 +1209,8 @@ const rt::meta::App& app() {
                .params = {{"f", &type_19, false}},
                .result = &type_21,
                .call = []([[maybe_unused]] program::Machine& ctx, const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::frame_lines(rt::from<hop::render::Frame>(args.at(0))));
+                 return to_data(
+                     slg_program::hop::render::frame_lines(rt::from<slg_program::hop::render::Frame>(args.at(0))));
                }},
               // fn hop.render.dump (hop/render.slg:87)
               {.qualified = "hop.render.dump",
@@ -1209,7 +1224,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_21,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::render::dump(ctx));
+                 return to_data(slg_program::hop::render::dump(ctx));
                }},
               // fn hop.screen.read_pad (hop/screen.slg:58)
               {.qualified = "hop.screen.read_pad",
@@ -1223,7 +1238,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_9,
                .call = []([[maybe_unused]] program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args)
-                   -> rt::Data { return to_data(hop::screen::read_pad()); }},
+                   -> rt::Data { return to_data(slg_program::hop::screen::read_pad()); }},
               // fn hop.world.summary (hop/world.slg:141)
               {.qualified = "hop.world.summary",
                .name = "summary",
@@ -1236,7 +1251,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_7,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::world::summary(ctx));
+                 return to_data(slg_program::hop::world::summary(ctx));
                }},
               // fn hop.world.view (hop/world.slg:148)
               {.qualified = "hop.world.view",
@@ -1250,7 +1265,7 @@ const rt::meta::App& app() {
                .params = {},
                .result = &type_18,
                .call = [](program::Machine& ctx, [[maybe_unused]] const std::vector<rt::Data>& args) -> rt::Data {
-                 return to_data(hop::world::view(ctx));
+                 return to_data(slg_program::hop::world::view(ctx));
                }},
           },
       .states = {{"hop.world.stage", "stage", &type_11},

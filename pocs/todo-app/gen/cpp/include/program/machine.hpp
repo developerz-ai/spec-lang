@@ -21,9 +21,9 @@ inline constexpr int todo_board_stats = 7;
 // Every state of the program at one moment.
 struct World {
   // state todo.board.tasks (todo/board.slg:13)
-  rt::Map<todo::model::TaskNo, todo::model::Task> tasks;
+  rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task> tasks;
   // state todo.board.next_no (todo/board.slg:14)
-  todo::model::TaskNo next_no;
+  slg_program::todo::model::TaskNo next_no;
   friend std::strong_ordering operator<=>(const World&, const World&) = default;
   friend bool operator==(const World&, const World&) = default;
   friend rt::Text show(const World& value);

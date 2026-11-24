@@ -5,7 +5,7 @@
 #include "hop/model.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::physics {
+namespace slg_program::hop::physics {
 
 // type hop.physics.Axis (hop/physics.slg:35)
 struct Axis {
@@ -30,7 +30,7 @@ struct Fall {
 // type hop.physics.Placed (hop/physics.slg:37)
 struct Placed {
   rt::Int no;
-  hop::geom::Box box;
+  slg_program::hop::geom::Box box;
   friend std::strong_ordering operator<=>(const Placed&, const Placed&) = default;
   friend bool operator==(const Placed&, const Placed&) = default;
   friend rt::Text show(const Placed& value);
@@ -40,16 +40,16 @@ bool valid_placed(const Placed& value);
 
 // half the width, the full height and half the depth of the hero: 0.5 m by 0.75 m by 0.5 m
 // const hop.physics.body_half (hop/physics.slg:11)
-const hop::geom::Vec3& body_half();
+const slg_program::hop::geom::Vec3& body_half();
 
 // const hop.physics.crawler_half (hop/physics.slg:13)
-const hop::geom::Vec3& crawler_half();
+const slg_program::hop::geom::Vec3& crawler_half();
 
 // const hop.physics.gem_half (hop/physics.slg:14)
 inline const rt::Int gem_half = 64_i;
 
 // const hop.physics.goal_half (hop/physics.slg:15)
-const hop::geom::Vec3& goal_half();
+const slg_program::hop::geom::Vec3& goal_half();
 
 // 3.75 m/s flat out; about the same speed on a diagonal, so a diagonal is not a shortcut
 // const hop.physics.run_speed (hop/physics.slg:17)
@@ -93,47 +93,50 @@ inline const rt::Int stomp_line = 64_i;
 inline const rt::Int kill_y = -2048_i;
 
 // fn hop.physics.body (hop/physics.slg:39)
-hop::geom::Box body(const hop::geom::Vec3& at_2);
+slg_program::hop::geom::Box body(const slg_program::hop::geom::Vec3& at_2);
 
 // fn hop.physics.crawler_box (hop/physics.slg:41)
-hop::geom::Box crawler_box(const hop::model::Crawler& c);
+slg_program::hop::geom::Box crawler_box(const slg_program::hop::model::Crawler& c);
 
 // fn hop.physics.mover_box (hop/physics.slg:43)
-hop::geom::Box mover_box(const hop::model::Mover& m, rt::Int t);
+slg_program::hop::geom::Box mover_box(const slg_program::hop::model::Mover& m, rt::Int t);
 
 // a rider moves exactly as far as its mover did this tick
 // fn hop.physics.mover_shift (hop/physics.slg:45)
-hop::geom::Vec3 mover_shift(const hop::model::Mover& m, rt::Int t);
+slg_program::hop::geom::Vec3 mover_shift(const slg_program::hop::model::Mover& m, rt::Int t);
 
 // fn hop.physics.axis (hop/physics.slg:48)
 rt::Int axis(bool neg, bool pos);
 
 // x runs right, z runs toward the camera, so forward is minus z
 // fn hop.physics.walk_target (hop/physics.slg:50)
-hop::geom::Vec3 walk_target(const hop::model::Pad& pad);
+slg_program::hop::geom::Vec3 walk_target(const slg_program::hop::model::Pad& pad);
 
 // the hero faces where the pad points, and keeps facing there when it lets go
 // fn hop.physics.facing (hop/physics.slg:59)
-rt::Int facing(const hop::model::Pad& pad, rt::Int was);
+rt::Int facing(const slg_program::hop::model::Pad& pad, rt::Int was);
 
 // move on one axis, then stop flush against the first solid in the way
 // fn hop.physics.slide_x (hop/physics.slg:69)
-hop::physics::Axis slide_x(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids);
+slg_program::hop::physics::Axis slide_x(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                        const rt::List<slg_program::hop::model::Solid>& solids);
 
 // fn hop.physics.slide_z (hop/physics.slg:78)
-hop::physics::Axis slide_z(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids);
+slg_program::hop::physics::Axis slide_z(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                        const rt::List<slg_program::hop::model::Solid>& solids);
 
 // solids stop the body both ways; a mover's top only catches feet that were above it
 // fn hop.physics.fall (hop/physics.slg:86)
-hop::physics::Fall fall(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids,
-                        const rt::List<hop::physics::Placed>& tops);
+slg_program::hop::physics::Fall fall(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                     const rt::List<slg_program::hop::model::Solid>& solids,
+                                     const rt::List<slg_program::hop::physics::Placed>& tops);
 
 // a crawler walks to the end of its beat and turns
 // fn hop.physics.patrol (hop/physics.slg:97)
-hop::model::Crawler patrol(const hop::model::Crawler& c);
+slg_program::hop::model::Crawler patrol(const slg_program::hop::model::Crawler& c);
 
 // from above and falling, on the upper half: a stomp; any other touch hurts
 // fn hop.physics.stomps (hop/physics.slg:109)
-bool stomps(rt::Int feet, rt::Int vy, const hop::model::Crawler& c);
+bool stomps(rt::Int feet, rt::Int vy, const slg_program::hop::model::Crawler& c);
 
-}  // namespace hop::physics
+}  // namespace slg_program::hop::physics

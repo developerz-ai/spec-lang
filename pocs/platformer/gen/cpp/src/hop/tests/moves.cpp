@@ -3,4 +3,4 @@
 
 #include "program/machine.hpp"
 
-namespace hop::tests::moves {}  // namespace hop::tests::moves
+namespace slg_program::hop::tests::moves {}  // namespace slg_program::hop::tests::moves

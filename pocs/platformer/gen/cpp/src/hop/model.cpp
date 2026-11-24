@@ -3,7 +3,7 @@
 
 #include "program/machine.hpp"
 
-namespace hop::model {
+namespace slg_program::hop::model {
 
 rt::Text show(const Pad& value) {
   return rt::Shown("Pad")
@@ -29,7 +29,7 @@ rt::Text show(const Solid& value) {
 }
 
 bool valid_solid(const Solid& value) {
-  return hop::geom::valid_box(value.box) && hop::model::valid_rgb(value.color);
+  return slg_program::hop::geom::valid_box(value.box) && slg_program::hop::model::valid_rgb(value.color);
 }
 
 rt::Text show(const Mover& value) {
@@ -43,8 +43,8 @@ rt::Text show(const Mover& value) {
 }
 
 bool valid_mover(const Mover& value) {
-  return hop::geom::valid_box(value.home) && hop::geom::valid_vec3(value.step) &&
-         (value.span >= 1_i && value.span <= 1024_i) && hop::model::valid_rgb(value.color);
+  return slg_program::hop::geom::valid_box(value.home) && slg_program::hop::geom::valid_vec3(value.step) &&
+         (value.span >= 1_i && value.span <= 1024_i) && slg_program::hop::model::valid_rgb(value.color);
 }
 
 rt::Text show(const Gem& value) {
@@ -52,7 +52,7 @@ rt::Text show(const Gem& value) {
 }
 
 bool valid_gem(const Gem& value) {
-  return hop::geom::valid_vec3(value.at);
+  return slg_program::hop::geom::valid_vec3(value.at);
 }
 
 rt::Text show(const Crawler& value) {
@@ -67,7 +67,7 @@ rt::Text show(const Crawler& value) {
 }
 
 bool valid_crawler(const Crawler& value) {
-  return hop::geom::valid_vec3(value.at) && (value.dir >= -1_i && value.dir <= 1_i) &&
+  return slg_program::hop::geom::valid_vec3(value.at) && (value.dir >= -1_i && value.dir <= 1_i) &&
          (value.speed >= 1_i && value.speed <= 8_i);
 }
 
@@ -84,12 +84,16 @@ rt::Text show(const Level& value) {
 }
 
 bool valid_level(const Level& value) {
-  return hop::geom::valid_vec3(value.start) &&
-         std::ranges::all_of(value.solids, [](const auto& item) { return hop::model::valid_solid(item); }) &&
-         std::ranges::all_of(value.movers, [](const auto& item_2) { return hop::model::valid_mover(item_2); }) &&
-         std::ranges::all_of(value.gems, [](const auto& item_3) { return hop::model::valid_gem(item_3); }) &&
-         std::ranges::all_of(value.crawlers, [](const auto& item_4) { return hop::model::valid_crawler(item_4); }) &&
-         hop::geom::valid_vec3(value.goal);
+  return slg_program::hop::geom::valid_vec3(value.start) &&
+         std::ranges::all_of(value.solids,
+                             [](const auto& item) { return slg_program::hop::model::valid_solid(item); }) &&
+         std::ranges::all_of(value.movers,
+                             [](const auto& item_2) { return slg_program::hop::model::valid_mover(item_2); }) &&
+         std::ranges::all_of(value.gems,
+                             [](const auto& item_3) { return slg_program::hop::model::valid_gem(item_3); }) &&
+         std::ranges::all_of(value.crawlers,
+                             [](const auto& item_4) { return slg_program::hop::model::valid_crawler(item_4); }) &&
+         slg_program::hop::geom::valid_vec3(value.goal);
 }
 
 rt::Text show(Mode value) {
@@ -117,8 +121,8 @@ rt::Text show(const Player& value) {
 }
 
 bool valid_player(const Player& value) {
-  return hop::geom::valid_vec3(value.at) && hop::geom::valid_vec3(value.vel) &&
+  return slg_program::hop::geom::valid_vec3(value.at) && slg_program::hop::geom::valid_vec3(value.vel) &&
          (value.coyote >= 0_i && value.coyote <= 6_i) && (value.yaw >= 0_i && value.yaw <= 359_i);
 }
 
-}  // namespace hop::model
+}  // namespace slg_program::hop::model

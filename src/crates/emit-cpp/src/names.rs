@@ -54,6 +54,7 @@ const RESERVED: &[&str] = &[
     "long",
     "mutable",
     "namespace",
+    "slg_program",
     "new",
     "noexcept",
     "not",
@@ -140,9 +141,13 @@ pub fn snake(name: &str) -> String {
     out
 }
 
-/// `todo.board` as `todo::board`.
+/// Every module's namespace sits inside this one: a module may be called
+/// `access` or `time`, and the C library declares those at global scope.
+const ROOT: &str = "slg_program";
+
+/// `todo.board` as `slg_program::todo::board`.
 pub fn namespace(module: &str) -> String {
-    module.split('.').map(ident).collect::<Vec<_>>().join("::")
+    std::iter::once(ROOT.to_string()).chain(module.split('.').map(ident)).collect::<Vec<_>>().join("::")
 }
 
 /// `todo.board` as `todo/board`.

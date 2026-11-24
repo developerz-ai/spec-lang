@@ -9,42 +9,43 @@ struct Machine;
 struct World;
 }  // namespace program
 
-namespace todo::board {
+namespace slg_program::todo::board {
 
 // fn todo.board.has_tag (todo/board.slg:16)
-bool has_tag(const todo::model::Task& t, const rt::Option<todo::model::Tag>& tag);
+bool has_tag(const slg_program::todo::model::Task& t, const rt::Option<slg_program::todo::model::Tag>& tag);
 
 // a number is never reused, so an old note that says 'task 3' never names a new task
 // rule todo.board.add (todo/board.slg:21)
 // @on(cli("add"))
-todo::model::TaskNo add(program::Machine& ctx, const todo::model::Title& title,
-                        todo::model::Priority priority = todo::model::Priority::Normal,
-                        const rt::Set<todo::model::Tag>& tags = {});
+slg_program::todo::model::TaskNo add(
+    program::Machine& ctx, const slg_program::todo::model::Title& title,
+    slg_program::todo::model::Priority priority = slg_program::todo::model::Priority::Normal,
+    const rt::Set<slg_program::todo::model::Tag>& tags = {});
 
 // open work first; finished work only when asked for
 // rule todo.board.list (todo/board.slg:32)
 // @on(cli("list"))
-void list(program::Machine& ctx, bool all = false, const rt::Option<todo::model::Tag>& tag = {});
+void list(program::Machine& ctx, bool all = false, const rt::Option<slg_program::todo::model::Tag>& tag = {});
 
 // finishing is one step, and only open work can finish
 // rule todo.board.done (todo/board.slg:44)
 // @on(cli("done"))
-void done(program::Machine& ctx, todo::model::TaskNo no);
+void done(program::Machine& ctx, slg_program::todo::model::TaskNo no);
 
 // a mistaken done is undone, not re-added under a new number
 // rule todo.board.reopen (todo/board.slg:53)
 // @on(cli("reopen"))
-void reopen(program::Machine& ctx, todo::model::TaskNo no);
+void reopen(program::Machine& ctx, slg_program::todo::model::TaskNo no);
 
 // a title changes without losing its number, status or tags
 // rule todo.board.rename (todo/board.slg:62)
 // @on(cli("rename"))
-void rename(program::Machine& ctx, todo::model::TaskNo no, const todo::model::Title& title);
+void rename(program::Machine& ctx, slg_program::todo::model::TaskNo no, const slg_program::todo::model::Title& title);
 
 // removing frees nothing: the number stays used
 // rule todo.board.remove (todo/board.slg:71)
 // @on(cli("remove"))
-void remove(program::Machine& ctx, todo::model::TaskNo no);
+void remove(program::Machine& ctx, slg_program::todo::model::TaskNo no);
 
 // finished work leaves the list in one step
 // rule todo.board.clear (todo/board.slg:80)
@@ -56,4 +57,4 @@ rt::Int clear(program::Machine& ctx);
 // @on(cli("stats"))
 void stats(program::Machine& ctx);
 
-}  // namespace todo::board
+}  // namespace slg_program::todo::board

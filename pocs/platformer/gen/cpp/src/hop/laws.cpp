@@ -3,4 +3,4 @@
 
 #include "program/machine.hpp"
 
-namespace hop::laws {}  // namespace hop::laws
+namespace slg_program::hop::laws {}  // namespace slg_program::hop::laws

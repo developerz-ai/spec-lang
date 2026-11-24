@@ -4,7 +4,7 @@
 #include "hop/physics.hpp"
 #include "program/machine.hpp"
 
-namespace hop::render {
+namespace slg_program::hop::render {
 
 rt::Text show(Asset value) {
   switch (value) {
@@ -35,13 +35,13 @@ rt::Text show(const Draw& value) {
 
 bool valid_draw(const Draw& value) {
   if (const auto* v = std::get_if<Draw::Cube>(&value.alt)) {
-    return hop::geom::valid_box((*v).box) && hop::model::valid_rgb((*v).color);
+    return slg_program::hop::geom::valid_box((*v).box) && slg_program::hop::model::valid_rgb((*v).color);
   }
   if (const auto* v = std::get_if<Draw::Wires>(&value.alt)) {
-    return hop::geom::valid_box((*v).box) && hop::model::valid_rgb((*v).color);
+    return slg_program::hop::geom::valid_box((*v).box) && slg_program::hop::model::valid_rgb((*v).color);
   }
   if (const auto* v = std::get_if<Draw::Mesh>(&value.alt)) {
-    return hop::geom::valid_vec3((*v).at) && ((*v).yaw >= 0_i && (*v).yaw <= 359_i);
+    return slg_program::hop::geom::valid_vec3((*v).at) && ((*v).yaw >= 0_i && (*v).yaw <= 359_i);
   }
   return true;
 }
@@ -57,7 +57,7 @@ rt::Text show(const Label& value) {
 }
 
 bool valid_label(const Label& value) {
-  return hop::model::valid_rgb(value.color);
+  return slg_program::hop::model::valid_rgb(value.color);
 }
 
 rt::Text show(const Frame& value) {
@@ -72,48 +72,54 @@ rt::Text show(const Frame& value) {
 }
 
 bool valid_frame(const Frame& value) {
-  return hop::model::valid_rgb(value.sky) && hop::geom::valid_vec3(value.eye) && hop::geom::valid_vec3(value.target) &&
-         std::ranges::all_of(value.world, [](const auto& item) { return hop::render::valid_draw(item); }) &&
-         std::ranges::all_of(value.labels, [](const auto& item_2) { return hop::render::valid_label(item_2); });
+  return slg_program::hop::model::valid_rgb(value.sky) && slg_program::hop::geom::valid_vec3(value.eye) &&
+         slg_program::hop::geom::valid_vec3(value.target) &&
+         std::ranges::all_of(value.world,
+                             [](const auto& item) { return slg_program::hop::render::valid_draw(item); }) &&
+         std::ranges::all_of(value.labels,
+                             [](const auto& item_2) { return slg_program::hop::render::valid_label(item_2); });
 }
 
-const hop::model::Rgb& sky() {
-  static const hop::model::Rgb value =
-      rt::conforming(hop::model::Rgb{.r = 135_i, .g = 206_i, .b = 235_i}, hop::model::valid_rgb, "a new Rgb");
+const slg_program::hop::model::Rgb& sky() {
+  static const slg_program::hop::model::Rgb value =
+      rt::conforming(slg_program::hop::model::Rgb{.r = 135_i, .g = 206_i, .b = 235_i},
+                     slg_program::hop::model::valid_rgb, "a new Rgb");
   return value;
 }
 
-const hop::model::Rgb& edge() {
-  static const hop::model::Rgb value =
-      rt::conforming(hop::model::Rgb{.r = 30_i, .g = 40_i, .b = 30_i}, hop::model::valid_rgb, "a new Rgb");
+const slg_program::hop::model::Rgb& edge() {
+  static const slg_program::hop::model::Rgb value = rt::conforming(
+      slg_program::hop::model::Rgb{.r = 30_i, .g = 40_i, .b = 30_i}, slg_program::hop::model::valid_rgb, "a new Rgb");
   return value;
 }
 
-const hop::model::Rgb& ink() {
-  static const hop::model::Rgb value =
-      rt::conforming(hop::model::Rgb{.r = 255_i, .g = 255_i, .b = 255_i}, hop::model::valid_rgb, "a new Rgb");
+const slg_program::hop::model::Rgb& ink() {
+  static const slg_program::hop::model::Rgb value =
+      rt::conforming(slg_program::hop::model::Rgb{.r = 255_i, .g = 255_i, .b = 255_i},
+                     slg_program::hop::model::valid_rgb, "a new Rgb");
   return value;
 }
 
-const hop::geom::Vec3& eye_offset() {
-  static const hop::geom::Vec3 value =
-      rt::conforming(hop::geom::Vec3{.x = 0_i, .y = 512_i, .z = 2048_i}, hop::geom::valid_vec3, "a new Vec3");
+const slg_program::hop::geom::Vec3& eye_offset() {
+  static const slg_program::hop::geom::Vec3 value =
+      rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = 512_i, .z = 2048_i},
+                     slg_program::hop::geom::valid_vec3, "a new Vec3");
   return value;
 }
 
 // fn hop.render.asset_name (hop/render.slg:30)
-rt::Text asset_name(hop::render::Asset a) {
+rt::Text asset_name(slg_program::hop::render::Asset a) {
   switch (a) {
-    case hop::render::Asset::PipMesh: {
+    case slg_program::hop::render::Asset::PipMesh: {
       return "pip"s;
     }
-    case hop::render::Asset::CrawlerMesh: {
+    case slg_program::hop::render::Asset::CrawlerMesh: {
       return "crawler"s;
     }
-    case hop::render::Asset::GemMesh: {
+    case slg_program::hop::render::Asset::GemMesh: {
       return "gem"s;
     }
-    case hop::render::Asset::FlagMesh: {
+    case slg_program::hop::render::Asset::FlagMesh: {
       return "flag"s;
     }
   }
@@ -123,171 +129,188 @@ rt::Text asset_name(hop::render::Asset a) {
 // a gem bobs a quarter of a metre and turns three degrees a tick
 // fn hop.render.bob (hop/render.slg:38)
 rt::Int bob(rt::Int t) {
-  return hop::geom::triangle(t, 32_i) * 2_i - 32_i;
+  return slg_program::hop::geom::triangle(t, 32_i) * 2_i - 32_i;
 }
 
 // fn hop.render.block (hop/render.slg:42)
-rt::List<hop::render::Draw> block(const hop::geom::Box& box, const hop::model::Rgb& color) {
-  rt::claim(hop::geom::valid_box(box), "argument `box`");
-  rt::claim(hop::model::valid_rgb(color), "argument `color`");
-  const auto result = [&]() -> rt::List<hop::render::Draw> {
-    return rt::List<hop::render::Draw>{
-        rt::conforming(hop::render::Draw{hop::render::Draw::Cube{.box = box, .color = color}}, hop::render::valid_draw,
-                       "a new Draw"),
-        rt::conforming(hop::render::Draw{hop::render::Draw::Wires{.box = box, .color = hop::render::edge()}},
-                       hop::render::valid_draw, "a new Draw")};
+rt::List<slg_program::hop::render::Draw> block(const slg_program::hop::geom::Box& box,
+                                               const slg_program::hop::model::Rgb& color) {
+  rt::claim(slg_program::hop::geom::valid_box(box), "argument `box`");
+  rt::claim(slg_program::hop::model::valid_rgb(color), "argument `color`");
+  const auto result = [&]() -> rt::List<slg_program::hop::render::Draw> {
+    return rt::List<slg_program::hop::render::Draw>{
+        rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Cube{.box = box, .color = color}},
+                       slg_program::hop::render::valid_draw, "a new Draw"),
+        rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Wires{
+                           .box = box, .color = slg_program::hop::render::edge()}},
+                       slg_program::hop::render::valid_draw, "a new Draw")};
   }();
-  rt::claim(std::ranges::all_of(result, [](const auto& item_2) { return hop::render::valid_draw(item_2); }),
-            "the result");
+  rt::claim(
+      std::ranges::all_of(result, [](const auto& item_2) { return slg_program::hop::render::valid_draw(item_2); }),
+      "the result");
   return result;
 }
 
 // fn hop.render.banner (hop/render.slg:44)
-rt::List<hop::render::Label> banner(hop::model::Mode m) {
-  const auto result = [&]() -> rt::List<hop::render::Label> {
+rt::List<slg_program::hop::render::Label> banner(slg_program::hop::model::Mode m) {
+  const auto result = [&]() -> rt::List<slg_program::hop::render::Label> {
     switch (m) {
-      case hop::model::Mode::Playing: {
-        return rt::List<hop::render::Label>{};
+      case slg_program::hop::model::Mode::Playing: {
+        return rt::List<slg_program::hop::render::Label>{};
       }
-      case hop::model::Mode::Won: {
-        return rt::List<hop::render::Label>{rt::conforming(
-            hop::render::Label{
-                .x = 380_i, .y = 250_i, .size = 40_i, .text = "level clear"s, .color = hop::render::ink()},
-            hop::render::valid_label, "a new Label")};
+      case slg_program::hop::model::Mode::Won: {
+        return rt::List<slg_program::hop::render::Label>{rt::conforming(
+            slg_program::hop::render::Label{
+                .x = 380_i, .y = 250_i, .size = 40_i, .text = "level clear"s, .color = slg_program::hop::render::ink()},
+            slg_program::hop::render::valid_label, "a new Label")};
       }
-      case hop::model::Mode::Lost: {
-        return rt::List<hop::render::Label>{rt::conforming(
-            hop::render::Label{.x = 400_i, .y = 250_i, .size = 40_i, .text = "game over"s, .color = hop::render::ink()},
-            hop::render::valid_label, "a new Label")};
+      case slg_program::hop::model::Mode::Lost: {
+        return rt::List<slg_program::hop::render::Label>{rt::conforming(
+            slg_program::hop::render::Label{
+                .x = 400_i, .y = 250_i, .size = 40_i, .text = "game over"s, .color = slg_program::hop::render::ink()},
+            slg_program::hop::render::valid_label, "a new Label")};
       }
     }
     rt::no_arm(rt::str(m));
   }();
-  rt::claim(std::ranges::all_of(result, [](const auto& item_2) { return hop::render::valid_label(item_2); }),
-            "the result");
+  rt::claim(
+      std::ranges::all_of(result, [](const auto& item_2) { return slg_program::hop::render::valid_label(item_2); }),
+      "the result");
   return result;
 }
 
 // solids, then movers, gems, crawlers, the flag and last the hero, so the order of the frame is fixed
 // fn hop.render.scene (hop/render.slg:50)
-hop::render::Frame scene(const hop::world::View& v) {
-  rt::claim(hop::world::valid_view(v), "argument `v`");
-  const auto result_6 = [&]() -> hop::render::Frame {
-    const auto target =
-        hop::geom::plus(v.player.at, rt::conforming(hop::geom::Vec3{.x = 0_i, .y = hop::render::look_height, .z = 0_i},
-                                                    hop::geom::valid_vec3, "a new Vec3"));
-    rt::List<hop::render::Draw> draws = rt::List<hop::render::Draw>{};
-    rt::claim(std::ranges::all_of(draws, [](const auto& item) { return hop::render::valid_draw(item); }), "`draws`");
+slg_program::hop::render::Frame scene(const slg_program::hop::world::View& v) {
+  rt::claim(slg_program::hop::world::valid_view(v), "argument `v`");
+  const auto result_6 = [&]() -> slg_program::hop::render::Frame {
+    const auto target = slg_program::hop::geom::plus(
+        v.player.at,
+        rt::conforming(slg_program::hop::geom::Vec3{.x = 0_i, .y = slg_program::hop::render::look_height, .z = 0_i},
+                       slg_program::hop::geom::valid_vec3, "a new Vec3"));
+    rt::List<slg_program::hop::render::Draw> draws = rt::List<slg_program::hop::render::Draw>{};
+    rt::claim(std::ranges::all_of(draws, [](const auto& item) { return slg_program::hop::render::valid_draw(item); }),
+              "`draws`");
     const auto items_2 = v.stage.solids;
     for (const auto& s : items_2) {
-      draws = rt::concat(draws, hop::render::block(s.box, s.color));
+      draws = rt::concat(draws, slg_program::hop::render::block(s.box, s.color));
     }
     const auto items_3 = v.stage.movers;
     for (const auto& m : items_3) {
-      draws = rt::concat(draws, hop::render::block(hop::physics::mover_box(m, v.ticks), m.color));
+      draws =
+          rt::concat(draws, slg_program::hop::render::block(slg_program::hop::physics::mover_box(m, v.ticks), m.color));
     }
-    for (const auto& g_2 :
-         rt::filter(v.stage.gems, [&](const hop::model::Gem& g) { return !rt::contains(v.taken, g.no); })) {
-      rt::push(draws, rt::conforming(hop::render::Draw{hop::render::Draw::Mesh{
-                                         .asset = hop::render::Asset::GemMesh,
+    for (const auto& g_2 : rt::filter(
+             v.stage.gems, [&](const slg_program::hop::model::Gem& g) { return !rt::contains(v.taken, g.no); })) {
+      rt::push(draws, rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Mesh{
+                                         .asset = slg_program::hop::render::Asset::GemMesh,
                                          .at =
                                              [&] {
                                                auto changed_4 = g_2.at;
-                                               changed_4.y = g_2.at.y + hop::render::bob(v.ticks);
-                                               rt::claim(hop::geom::valid_sub(changed_4.y), "field `y`");
+                                               changed_4.y = g_2.at.y + slg_program::hop::render::bob(v.ticks);
+                                               rt::claim(slg_program::hop::geom::valid_sub(changed_4.y), "field `y`");
                                                return changed_4;
                                              }(),
                                          .yaw = rt::mod(v.ticks * 3_i, 360_i)}},
-                                     hop::render::valid_draw, "a new Draw"));
+                                     slg_program::hop::render::valid_draw, "a new Draw"));
     }
     const auto items_5 = v.crawlers;
     for (const auto& c : items_5) {
-      rt::push(draws, rt::conforming(
-                          hop::render::Draw{hop::render::Draw::Mesh{
-                              .asset = hop::render::Asset::CrawlerMesh, .at = c.at, .yaw = c.dir < 0_i ? 180_i : 0_i}},
-                          hop::render::valid_draw, "a new Draw"));
+      rt::push(
+          draws,
+          rt::conforming(
+              slg_program::hop::render::Draw{slg_program::hop::render::Draw::Mesh{
+                  .asset = slg_program::hop::render::Asset::CrawlerMesh, .at = c.at, .yaw = c.dir < 0_i ? 180_i : 0_i}},
+              slg_program::hop::render::valid_draw, "a new Draw"));
     }
-    rt::push(draws, rt::conforming(hop::render::Draw{hop::render::Draw::Mesh{
-                                       .asset = hop::render::Asset::FlagMesh, .at = v.stage.goal, .yaw = 0_i}},
-                                   hop::render::valid_draw, "a new Draw"));
-    rt::push(draws, rt::conforming(hop::render::Draw{hop::render::Draw::Mesh{
-                                       .asset = hop::render::Asset::PipMesh, .at = v.player.at, .yaw = v.player.yaw}},
-                                   hop::render::valid_draw, "a new Draw"));
-    const auto hud = rt::List<hop::render::Label>{
-        rt::conforming(hop::render::Label{.x = 16_i,
-                                          .y = 12_i,
-                                          .size = 20_i,
-                                          .text = rt::concat({"gems ", rt::str(rt::size(v.taken)), "/",
-                                                              rt::str(rt::size(v.stage.gems))}),
-                                          .color = hop::render::ink()},
-                       hop::render::valid_label, "a new Label"),
-        rt::conforming(hop::render::Label{.x = 16_i,
-                                          .y = 38_i,
-                                          .size = 20_i,
-                                          .text = rt::concat({"lives ", rt::str(v.lives)}),
-                                          .color = hop::render::ink()},
-                       hop::render::valid_label, "a new Label")};
-    return rt::conforming(hop::render::Frame{.sky = hop::render::sky(),
-                                             .eye = hop::geom::plus(target, hop::render::eye_offset()),
-                                             .target = target,
-                                             .time = v.ticks,
-                                             .world = draws,
-                                             .labels = rt::concat(hud, hop::render::banner(v.mode))},
-                          hop::render::valid_frame, "a new Frame");
+    rt::push(draws,
+             rt::conforming(slg_program::hop::render::Draw{slg_program::hop::render::Draw::Mesh{
+                                .asset = slg_program::hop::render::Asset::FlagMesh, .at = v.stage.goal, .yaw = 0_i}},
+                            slg_program::hop::render::valid_draw, "a new Draw"));
+    rt::push(draws, rt::conforming(
+                        slg_program::hop::render::Draw{slg_program::hop::render::Draw::Mesh{
+                            .asset = slg_program::hop::render::Asset::PipMesh, .at = v.player.at, .yaw = v.player.yaw}},
+                        slg_program::hop::render::valid_draw, "a new Draw"));
+    const auto hud = rt::List<slg_program::hop::render::Label>{
+        rt::conforming(slg_program::hop::render::Label{.x = 16_i,
+                                                       .y = 12_i,
+                                                       .size = 20_i,
+                                                       .text = rt::concat({"gems ", rt::str(rt::size(v.taken)), "/",
+                                                                           rt::str(rt::size(v.stage.gems))}),
+                                                       .color = slg_program::hop::render::ink()},
+                       slg_program::hop::render::valid_label, "a new Label"),
+        rt::conforming(slg_program::hop::render::Label{.x = 16_i,
+                                                       .y = 38_i,
+                                                       .size = 20_i,
+                                                       .text = rt::concat({"lives ", rt::str(v.lives)}),
+                                                       .color = slg_program::hop::render::ink()},
+                       slg_program::hop::render::valid_label, "a new Label")};
+    return rt::conforming(
+        slg_program::hop::render::Frame{
+            .sky = slg_program::hop::render::sky(),
+            .eye = slg_program::hop::geom::plus(target, slg_program::hop::render::eye_offset()),
+            .target = target,
+            .time = v.ticks,
+            .world = draws,
+            .labels = rt::concat(hud, slg_program::hop::render::banner(v.mode))},
+        slg_program::hop::render::valid_frame, "a new Frame");
   }();
-  rt::claim(hop::render::valid_frame(result_6), "the result");
+  rt::claim(slg_program::hop::render::valid_frame(result_6), "the result");
   return result_6;
 }
 
 // fn hop.render.rgb_text (hop/render.slg:69)
-rt::Text rgb_text(const hop::model::Rgb& c) {
-  rt::claim(hop::model::valid_rgb(c), "argument `c`");
+rt::Text rgb_text(const slg_program::hop::model::Rgb& c) {
+  rt::claim(slg_program::hop::model::valid_rgb(c), "argument `c`");
   return rt::concat({rt::str(c.r), ",", rt::str(c.g), ",", rt::str(c.b)});
 }
 
 // fn hop.render.draw_text (hop/render.slg:71)
-rt::Text draw_text(const hop::render::Draw& d) {
-  rt::claim(hop::render::valid_draw(d), "argument `d`");
-  if (std::holds_alternative<hop::render::Draw::Cube>(d.alt)) {
-    const auto b = std::get<hop::render::Draw::Cube>(d.alt).box;
-    const auto color = std::get<hop::render::Draw::Cube>(d.alt).color;
-    return rt::concat(
-        {"cube ", hop::geom::vec_text(b.lo), " ", hop::geom::vec_text(b.hi), " ", hop::render::rgb_text(color)});
+rt::Text draw_text(const slg_program::hop::render::Draw& d) {
+  rt::claim(slg_program::hop::render::valid_draw(d), "argument `d`");
+  if (std::holds_alternative<slg_program::hop::render::Draw::Cube>(d.alt)) {
+    const auto b = std::get<slg_program::hop::render::Draw::Cube>(d.alt).box;
+    const auto color = std::get<slg_program::hop::render::Draw::Cube>(d.alt).color;
+    return rt::concat({"cube ", slg_program::hop::geom::vec_text(b.lo), " ", slg_program::hop::geom::vec_text(b.hi),
+                       " ", slg_program::hop::render::rgb_text(color)});
   }
-  if (std::holds_alternative<hop::render::Draw::Wires>(d.alt)) {
-    const auto b_2 = std::get<hop::render::Draw::Wires>(d.alt).box;
-    const auto color_2 = std::get<hop::render::Draw::Wires>(d.alt).color;
-    return rt::concat(
-        {"wires ", hop::geom::vec_text(b_2.lo), " ", hop::geom::vec_text(b_2.hi), " ", hop::render::rgb_text(color_2)});
+  if (std::holds_alternative<slg_program::hop::render::Draw::Wires>(d.alt)) {
+    const auto b_2 = std::get<slg_program::hop::render::Draw::Wires>(d.alt).box;
+    const auto color_2 = std::get<slg_program::hop::render::Draw::Wires>(d.alt).color;
+    return rt::concat({"wires ", slg_program::hop::geom::vec_text(b_2.lo), " ",
+                       slg_program::hop::geom::vec_text(b_2.hi), " ", slg_program::hop::render::rgb_text(color_2)});
   }
-  if (std::holds_alternative<hop::render::Draw::Mesh>(d.alt)) {
-    const auto asset = std::get<hop::render::Draw::Mesh>(d.alt).asset;
-    const auto at_2 = std::get<hop::render::Draw::Mesh>(d.alt).at;
-    const auto yaw = std::get<hop::render::Draw::Mesh>(d.alt).yaw;
-    return rt::concat({"mesh ", hop::render::asset_name(asset), " ", hop::geom::vec_text(at_2), " ", rt::str(yaw)});
+  if (std::holds_alternative<slg_program::hop::render::Draw::Mesh>(d.alt)) {
+    const auto asset = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).asset;
+    const auto at_2 = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).at;
+    const auto yaw = std::get<slg_program::hop::render::Draw::Mesh>(d.alt).yaw;
+    return rt::concat({"mesh ", slg_program::hop::render::asset_name(asset), " ",
+                       slg_program::hop::geom::vec_text(at_2), " ", rt::str(yaw)});
   }
   rt::no_arm(rt::str(d));
 }
 
 // a frame as text, one line per call the screen will make, so four backends can be compared without a GPU
 // fn hop.render.frame_lines (hop/render.slg:81)
-rt::List<rt::Text> frame_lines(const hop::render::Frame& f) {
-  rt::claim(hop::render::valid_frame(f), "argument `f`");
-  return rt::concat(
-      rt::concat(
-          rt::List<rt::Text>{rt::concat({"sky ", hop::render::rgb_text(f.sky)}),
-                             rt::concat({"camera ", hop::geom::vec_text(f.eye), " ", hop::geom::vec_text(f.target)}),
-                             rt::concat({"time ", rt::str(f.time)})},
-          rt::map(f.world, [&](const hop::render::Draw& d) { return hop::render::draw_text(d); })),
-      rt::map(f.labels, [&](const hop::render::Label& l) {
-        return rt::concat({"label ", rt::str(l.x), " ", rt::str(l.y), " ", rt::str(l.size), " ",
-                           hop::render::rgb_text(l.color), " ", l.text});
-      }));
+rt::List<rt::Text> frame_lines(const slg_program::hop::render::Frame& f) {
+  rt::claim(slg_program::hop::render::valid_frame(f), "argument `f`");
+  return rt::concat(rt::concat(rt::List<rt::Text>{rt::concat({"sky ", slg_program::hop::render::rgb_text(f.sky)}),
+                                                  rt::concat({"camera ", slg_program::hop::geom::vec_text(f.eye), " ",
+                                                              slg_program::hop::geom::vec_text(f.target)}),
+                                                  rt::concat({"time ", rt::str(f.time)})},
+                               rt::map(f.world,
+                                       [&](const slg_program::hop::render::Draw& d) {
+                                         return slg_program::hop::render::draw_text(d);
+                                       })),
+                    rt::map(f.labels, [&](const slg_program::hop::render::Label& l) {
+                      return rt::concat({"label ", rt::str(l.x), " ", rt::str(l.y), " ", rt::str(l.size), " ",
+                                         slg_program::hop::render::rgb_text(l.color), " ", l.text});
+                    }));
 }
 
 // fn hop.render.dump (hop/render.slg:87)
 rt::List<rt::Text> dump(program::Machine& ctx) {
-  return hop::render::frame_lines(hop::render::scene(hop::world::view(ctx)));
+  return slg_program::hop::render::frame_lines(slg_program::hop::render::scene(slg_program::hop::world::view(ctx)));
 }
 
-}  // namespace hop::render
+}  // namespace slg_program::hop::render

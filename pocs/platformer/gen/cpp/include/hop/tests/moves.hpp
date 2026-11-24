@@ -4,15 +4,15 @@
 #include "hop/model.hpp"
 #include "rt/prelude.hpp"
 
-namespace hop::tests::moves {
+namespace slg_program::hop::tests::moves {
 
 // const hop.tests.moves.right (hop/tests/moves.slg:7)
-inline const hop::model::Pad right = hop::model::Pad{.right = true};
+inline const slg_program::hop::model::Pad right = slg_program::hop::model::Pad{.right = true};
 
 // const hop.tests.moves.jump (hop/tests/moves.slg:8)
-inline const hop::model::Pad jump = hop::model::Pad{.jump = true};
+inline const slg_program::hop::model::Pad jump = slg_program::hop::model::Pad{.jump = true};
 
 // const hop.tests.moves.rest (hop/tests/moves.slg:9)
-inline const hop::model::Pad rest = hop::model::Pad{};
+inline const slg_program::hop::model::Pad rest = slg_program::hop::model::Pad{};
 
-}  // namespace hop::tests::moves
+}  // namespace slg_program::hop::tests::moves

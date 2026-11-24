@@ -14,7 +14,7 @@ using program::World;
 
 // Values already in a world, by declared type: the keys of each `Map` state and the elements of each `Set` state.
 struct Pools {
-  rt::Set<todo::model::TaskNo> pool_0;
+  rt::Set<slg_program::todo::model::TaskNo> pool_0;
   void add([[maybe_unused]] const World& world) {
     for (const auto& entry : world.tasks) {
       pool_0.insert(entry.first);
@@ -27,81 +27,85 @@ using Gen = rt::test::Gen<Machine, Pools>;
 using Run = rt::test::Run<World>;
 
 // One generator per declared type a property or a law draws: the engine's algorithm, step for step.
-todo::model::TaskNo draw_0(Gen& g);
-todo::model::Title draw_1(Gen& g);
-todo::model::Priority draw_2(Gen& g);
-rt::Set<todo::model::Tag> draw_3(Gen& g);
+slg_program::todo::model::TaskNo draw_0(Gen& g);
+slg_program::todo::model::Title draw_1(Gen& g);
+slg_program::todo::model::Priority draw_2(Gen& g);
+rt::Set<slg_program::todo::model::Tag> draw_3(Gen& g);
 bool draw_4(Gen& g);
-rt::Option<todo::model::Tag> draw_5(Gen& g);
-rt::Map<todo::model::TaskNo, todo::model::Task> draw_6(Gen& g);
+rt::Option<slg_program::todo::model::Tag> draw_5(Gen& g);
+rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task> draw_6(Gen& g);
 rt::Int draw_7(Gen& g);
 rt::Text draw_8(Gen& g);
-todo::model::Tag draw_9(Gen& g);
-todo::model::Task draw_10(Gen& g);
+slg_program::todo::model::Tag draw_9(Gen& g);
+slg_program::todo::model::Task draw_10(Gen& g);
 rt::Int draw_11(Gen& g);
 rt::Text draw_12(Gen& g);
 rt::Text draw_13(Gen& g);
-todo::model::Status draw_14(Gen& g);
+slg_program::todo::model::Status draw_14(Gen& g);
 
-todo::model::TaskNo draw_0([[maybe_unused]] Gen& g) {
-  return rt::test::keep<todo::model::TaskNo>(
-      g.rng, &g.pools.pool_0, [&]() -> todo::model::TaskNo { return draw_7(g); },
-      [&](const todo::model::TaskNo& value) { return todo::model::valid_task_no(value); }, "todo::model::TaskNo");
+slg_program::todo::model::TaskNo draw_0([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::todo::model::TaskNo>(
+      g.rng, &g.pools.pool_0, [&]() -> slg_program::todo::model::TaskNo { return draw_7(g); },
+      [&](const slg_program::todo::model::TaskNo& value) { return slg_program::todo::model::valid_task_no(value); },
+      "slg_program::todo::model::TaskNo");
 }
 
-todo::model::Title draw_1([[maybe_unused]] Gen& g) {
-  return rt::test::keep<todo::model::Title>(
-      g.rng, nullptr, [&]() -> todo::model::Title { return draw_8(g); },
-      [&](const todo::model::Title& value) { return todo::model::valid_title(value); }, "todo::model::Title");
+slg_program::todo::model::Title draw_1([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::todo::model::Title>(
+      g.rng, nullptr, [&]() -> slg_program::todo::model::Title { return draw_8(g); },
+      [&](const slg_program::todo::model::Title& value) { return slg_program::todo::model::valid_title(value); },
+      "slg_program::todo::model::Title");
 }
 
-todo::model::Priority draw_2([[maybe_unused]] Gen& g) {
-  return static_cast<todo::model::Priority>(g.rng.below(3));
+slg_program::todo::model::Priority draw_2([[maybe_unused]] Gen& g) {
+  return static_cast<slg_program::todo::model::Priority>(g.rng.below(3));
 }
 
-rt::Set<todo::model::Tag> draw_3([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::Set<todo::model::Tag>>(
+rt::Set<slg_program::todo::model::Tag> draw_3([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::Set<slg_program::todo::model::Tag>>(
       g.rng, nullptr,
-      [&]() -> rt::Set<todo::model::Tag> {
-        return rt::test::draw_set<todo::model::Tag>(g.rng, [&] { return draw_9(g); });
+      [&]() -> rt::Set<slg_program::todo::model::Tag> {
+        return rt::test::draw_set<slg_program::todo::model::Tag>(g.rng, [&] { return draw_9(g); });
       },
-      [&](const rt::Set<todo::model::Tag>& value) {
-        return std::ranges::all_of(value, [](const auto& item) { return todo::model::valid_tag(item); });
+      [&](const rt::Set<slg_program::todo::model::Tag>& value) {
+        return std::ranges::all_of(value, [](const auto& item) { return slg_program::todo::model::valid_tag(item); });
       },
-      "rt::Set<todo::model::Tag>");
+      "rt::Set<slg_program::todo::model::Tag>");
 }
 
 bool draw_4([[maybe_unused]] Gen& g) {
   return g.rng.chance(1, 2);
 }
 
-rt::Option<todo::model::Tag> draw_5([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::Option<todo::model::Tag>>(
+rt::Option<slg_program::todo::model::Tag> draw_5([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::Option<slg_program::todo::model::Tag>>(
       g.rng, nullptr,
-      [&]() -> rt::Option<todo::model::Tag> {
+      [&]() -> rt::Option<slg_program::todo::model::Tag> {
         if (g.rng.chance(1, 3)) {
           return {};
         }
-        return rt::Option<todo::model::Tag>{draw_9(g)};
+        return rt::Option<slg_program::todo::model::Tag>{draw_9(g)};
       },
-      [&](const rt::Option<todo::model::Tag>& value) {
-        return (!value.has_value() || todo::model::valid_tag((*value)));
+      [&](const rt::Option<slg_program::todo::model::Tag>& value) {
+        return (!value.has_value() || slg_program::todo::model::valid_tag((*value)));
       },
-      "rt::Option<todo::model::Tag>");
+      "rt::Option<slg_program::todo::model::Tag>");
 }
 
-rt::Map<todo::model::TaskNo, todo::model::Task> draw_6([[maybe_unused]] Gen& g) {
-  return rt::test::keep<rt::Map<todo::model::TaskNo, todo::model::Task>>(
+rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task> draw_6([[maybe_unused]] Gen& g) {
+  return rt::test::keep<rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>>(
       g.rng, nullptr,
-      [&]() -> rt::Map<todo::model::TaskNo, todo::model::Task> {
-        return rt::test::draw_map<todo::model::TaskNo, todo::model::Task>(
+      [&]() -> rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task> {
+        return rt::test::draw_map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>(
             g.rng, [&] { return draw_0(g); }, [&] { return draw_10(g); });
       },
-      [&](const rt::Map<todo::model::TaskNo, todo::model::Task>& value) {
-        return (std::ranges::all_of(value, [](const auto& entry) { return todo::model::valid_task_no(entry.first); }) &&
-                std::ranges::all_of(value, [](const auto& entry) { return todo::model::valid_task(entry.second); }));
+      [&](const rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>& value) {
+        return (std::ranges::all_of(
+                    value, [](const auto& entry) { return slg_program::todo::model::valid_task_no(entry.first); }) &&
+                std::ranges::all_of(
+                    value, [](const auto& entry) { return slg_program::todo::model::valid_task(entry.second); }));
       },
-      "rt::Map<todo::model::TaskNo, todo::model::Task>");
+      "rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task>");
 }
 
 rt::Int draw_7([[maybe_unused]] Gen& g) {
@@ -113,20 +117,24 @@ rt::Int draw_7([[maybe_unused]] Gen& g) {
 rt::Text draw_8([[maybe_unused]] Gen& g) {
   return rt::test::keep<rt::Text>(
       g.rng, nullptr, [&]() -> rt::Text { return draw_12(g); },
-      [&](const rt::Text& value) { return todo::model::is_title(value); }, "rt::Text");
+      [&](const rt::Text& value) { return slg_program::todo::model::is_title(value); }, "rt::Text");
 }
 
-todo::model::Tag draw_9([[maybe_unused]] Gen& g) {
-  return rt::test::keep<todo::model::Tag>(
-      g.rng, nullptr, [&]() -> todo::model::Tag { return draw_13(g); },
-      [&](const todo::model::Tag& value) { return todo::model::valid_tag(value); }, "todo::model::Tag");
+slg_program::todo::model::Tag draw_9([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::todo::model::Tag>(
+      g.rng, nullptr, [&]() -> slg_program::todo::model::Tag { return draw_13(g); },
+      [&](const slg_program::todo::model::Tag& value) { return slg_program::todo::model::valid_tag(value); },
+      "slg_program::todo::model::Tag");
 }
 
-todo::model::Task draw_10([[maybe_unused]] Gen& g) {
-  return rt::test::keep<todo::model::Task>(
+slg_program::todo::model::Task draw_10([[maybe_unused]] Gen& g) {
+  return rt::test::keep<slg_program::todo::model::Task>(
       g.rng, nullptr,
-      [&]() -> todo::model::Task { return todo::model::Task{draw_0(g), draw_1(g), draw_14(g), draw_2(g), draw_3(g)}; },
-      [&](const todo::model::Task& value) { return todo::model::valid_task(value); }, "todo::model::Task");
+      [&]() -> slg_program::todo::model::Task {
+        return slg_program::todo::model::Task{draw_0(g), draw_1(g), draw_14(g), draw_2(g), draw_3(g)};
+      },
+      [&](const slg_program::todo::model::Task& value) { return slg_program::todo::model::valid_task(value); },
+      "slg_program::todo::model::Task");
 }
 
 rt::Int draw_11([[maybe_unused]] Gen& g) {
@@ -140,11 +148,11 @@ rt::Text draw_12([[maybe_unused]] Gen& g) {
 rt::Text draw_13([[maybe_unused]] Gen& g) {
   return rt::test::keep<rt::Text>(
       g.rng, nullptr, [&]() -> rt::Text { return draw_12(g); },
-      [&](const rt::Text& value) { return todo::model::is_tag(value); }, "rt::Text");
+      [&](const rt::Text& value) { return slg_program::todo::model::is_tag(value); }, "rt::Text");
 }
 
-todo::model::Status draw_14([[maybe_unused]] Gen& g) {
-  return static_cast<todo::model::Status>(g.rng.below(2));
+slg_program::todo::model::Status draw_14([[maybe_unused]] Gen& g) {
+  return static_cast<slg_program::todo::model::Status>(g.rng.below(2));
 }
 
 Run run_todo_board_three_open_one_done(Suite& suite);
@@ -156,32 +164,37 @@ Run run_todo_tests_scenarios_list_all_and_by_tag(Suite& suite);
 Run run_todo_tests_scenarios_done_and_reopen_move_once(Suite& suite);
 Run run_todo_tests_scenarios_rename_keeps_the_rest(Suite& suite);
 Run run_todo_tests_scenarios_clear_removes_only_done(Suite& suite);
-Run run_todo_tests_scenarios_unknown_numbers_are_refused(Suite& suite, todo::model::TaskNo no);
+Run run_todo_tests_scenarios_unknown_numbers_are_refused(Suite& suite, slg_program::todo::model::TaskNo no);
 
 // a named start world for tests in other modules: three open tasks, one done
 // test todo.board.three_open_one_done (todo/board.slg:98)
 void given_todo_board_three_open_one_done([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
-  rt::Map<todo::model::TaskNo, todo::model::Task> value = rt::Map<rt::Int, todo::model::Task>{
-      {1_i, rt::conforming(todo::model::Task{.no = 1_i, .title = "low one"s, .priority = todo::model::Priority::Low},
-                           todo::model::valid_task, "a new Task")},
-      {2_i, rt::conforming(todo::model::Task{.no = 2_i, .title = "plain"s}, todo::model::valid_task, "a new Task")},
-      {3_i, rt::conforming(todo::model::Task{.no = 3_i,
-                                             .title = "urgent"s,
-                                             .priority = todo::model::Priority::High,
-                                             .tags = rt::Set<rt::Text>{"work"s}},
-                           todo::model::valid_task, "a new Task")},
-      {4_i, rt::conforming(todo::model::Task{.no = 4_i,
-                                             .title = "finished"s,
-                                             .status = todo::model::Status::Done,
-                                             .tags = rt::Set<rt::Text>{"work"s, "home"s}},
-                           todo::model::valid_task, "a new Task")}};
-  rt::claim(
-      (std::ranges::all_of(value, [](const auto& entry_2) { return todo::model::valid_task_no(entry_2.first); }) &&
-       std::ranges::all_of(value, [](const auto& entry_2) { return todo::model::valid_task(entry_2.second); })),
-      "this `@given` value of todo.board.tasks");
+  rt::Map<slg_program::todo::model::TaskNo, slg_program::todo::model::Task> value =
+      rt::Map<rt::Int, slg_program::todo::model::Task>{
+          {1_i, rt::conforming(
+                    slg_program::todo::model::Task{
+                        .no = 1_i, .title = "low one"s, .priority = slg_program::todo::model::Priority::Low},
+                    slg_program::todo::model::valid_task, "a new Task")},
+          {2_i, rt::conforming(slg_program::todo::model::Task{.no = 2_i, .title = "plain"s},
+                               slg_program::todo::model::valid_task, "a new Task")},
+          {3_i, rt::conforming(slg_program::todo::model::Task{.no = 3_i,
+                                                              .title = "urgent"s,
+                                                              .priority = slg_program::todo::model::Priority::High,
+                                                              .tags = rt::Set<rt::Text>{"work"s}},
+                               slg_program::todo::model::valid_task, "a new Task")},
+          {4_i, rt::conforming(slg_program::todo::model::Task{.no = 4_i,
+                                                              .title = "finished"s,
+                                                              .status = slg_program::todo::model::Status::Done,
+                                                              .tags = rt::Set<rt::Text>{"work"s, "home"s}},
+                               slg_program::todo::model::valid_task, "a new Task")}};
+  rt::claim((std::ranges::all_of(
+                 value, [](const auto& entry_2) { return slg_program::todo::model::valid_task_no(entry_2.first); }) &&
+             std::ranges::all_of(
+                 value, [](const auto& entry_2) { return slg_program::todo::model::valid_task(entry_2.second); })),
+            "this `@given` value of todo.board.tasks");
   ctx.world.tasks = std::move(value);
-  todo::model::TaskNo value_3 = 5_i;
-  rt::claim(todo::model::valid_task_no(value_3), "this `@given` value of todo.board.next_no");
+  slg_program::todo::model::TaskNo value_3 = 5_i;
+  rt::claim(slg_program::todo::model::valid_task_no(value_3), "this `@given` value of todo.board.next_no");
   ctx.world.next_no = std::move(value_3);
 }
 void steps_todo_board_three_open_one_done([[maybe_unused]] Machine& ctx) {}
@@ -193,10 +206,11 @@ Run run_todo_board_three_open_one_done(Suite& suite) {
 // test todo.tests.scenarios.numbers_start_at_one (todo/tests/scenarios.slg:8)
 void given_todo_tests_scenarios_numbers_start_at_one([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_todo_tests_scenarios_numbers_start_at_one([[maybe_unused]] Machine& ctx) {
-  rt::test::expect_value([&] { return todo::board::add(ctx, "milk"s); }, [&] { return 1_i; });
+  rt::test::expect_value([&] { return slg_program::todo::board::add(ctx, "milk"s); }, [&] { return 1_i; });
   rt::test::expect_value(
       [&] {
-        return todo::board::add(ctx, "bread"s, todo::model::Priority::Normal, rt::Set<rt::Text>{"shop"s, "home"s});
+        return slg_program::todo::board::add(ctx, "bread"s, slg_program::todo::model::Priority::Normal,
+                                             rt::Set<rt::Text>{"shop"s, "home"s});
       },
       [&] { return 2_i; });
   rt::check(ctx.out->text() == "added 1\nadded 2\n"s);
@@ -210,10 +224,10 @@ Run run_todo_tests_scenarios_numbers_start_at_one(Suite& suite) {
 void given_todo_tests_scenarios_numbers_are_never_reused([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {
 }
 void steps_todo_tests_scenarios_numbers_are_never_reused([[maybe_unused]] Machine& ctx) {
-  rt::test::expect_value([&] { return todo::board::add(ctx, "a"s); }, [&] { return 1_i; });
-  rt::test::expect_value([&] { return todo::board::add(ctx, "b"s); }, [&] { return 2_i; });
-  todo::board::remove(ctx, 2_i);
-  rt::test::expect_value([&] { return todo::board::add(ctx, "c"s); }, [&] { return 3_i; });
+  rt::test::expect_value([&] { return slg_program::todo::board::add(ctx, "a"s); }, [&] { return 1_i; });
+  rt::test::expect_value([&] { return slg_program::todo::board::add(ctx, "b"s); }, [&] { return 2_i; });
+  slg_program::todo::board::remove(ctx, 2_i);
+  rt::test::expect_value([&] { return slg_program::todo::board::add(ctx, "c"s); }, [&] { return 3_i; });
 }
 Run run_todo_tests_scenarios_numbers_are_never_reused(Suite& suite) {
   return suite.run(given_todo_tests_scenarios_numbers_are_never_reused,
@@ -223,8 +237,8 @@ Run run_todo_tests_scenarios_numbers_are_never_reused(Suite& suite) {
 // test todo.tests.scenarios.empty_board_says_so (todo/tests/scenarios.slg:21)
 void given_todo_tests_scenarios_empty_board_says_so([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {}
 void steps_todo_tests_scenarios_empty_board_says_so([[maybe_unused]] Machine& ctx) {
-  todo::board::list(ctx);
-  todo::board::stats(ctx);
+  slg_program::todo::board::list(ctx);
+  slg_program::todo::board::stats(ctx);
   rt::check(ctx.out->text() == "nothing to do\n0 open, 0 done\n"s);
 }
 Run run_todo_tests_scenarios_empty_board_says_so(Suite& suite) {
@@ -237,7 +251,7 @@ void given_todo_tests_scenarios_list_ranks_urgent_first([[maybe_unused]] Suite& 
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
 void steps_todo_tests_scenarios_list_ranks_urgent_first([[maybe_unused]] Machine& ctx) {
-  todo::board::list(ctx);
+  slg_program::todo::board::list(ctx);
   rt::check(ctx.out->text() == "3 [ ] urgent !high #work\n2 [ ] plain\n1 [ ] low one !low\n"s);
 }
 Run run_todo_tests_scenarios_list_ranks_urgent_first(Suite& suite) {
@@ -250,7 +264,7 @@ void given_todo_tests_scenarios_list_all_and_by_tag([[maybe_unused]] Suite& suit
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
 void steps_todo_tests_scenarios_list_all_and_by_tag([[maybe_unused]] Machine& ctx) {
-  todo::board::list(ctx, true, rt::some("work"s));
+  slg_program::todo::board::list(ctx, true, rt::some("work"s));
   rt::check(ctx.out->text() == "3 [ ] urgent !high #work\n4 [x] finished #home #work\n"s);
 }
 Run run_todo_tests_scenarios_list_all_and_by_tag(Suite& suite) {
@@ -264,10 +278,10 @@ void given_todo_tests_scenarios_done_and_reopen_move_once([[maybe_unused]] Suite
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
 void steps_todo_tests_scenarios_done_and_reopen_move_once([[maybe_unused]] Machine& ctx) {
-  todo::board::done(ctx, 2_i);
-  rt::test::expect_fail([&] { todo::board::done(ctx, 2_i); }, "AlreadyDone");
-  todo::board::reopen(ctx, 2_i);
-  rt::test::expect_fail([&] { todo::board::reopen(ctx, 2_i); }, "NotDone");
+  slg_program::todo::board::done(ctx, 2_i);
+  rt::test::expect_fail([&] { slg_program::todo::board::done(ctx, 2_i); }, "AlreadyDone");
+  slg_program::todo::board::reopen(ctx, 2_i);
+  rt::test::expect_fail([&] { slg_program::todo::board::reopen(ctx, 2_i); }, "NotDone");
   rt::check(ctx.out->text() == "2 [x] plain\n2 [ ] plain\n"s);
 }
 Run run_todo_tests_scenarios_done_and_reopen_move_once(Suite& suite) {
@@ -280,14 +294,15 @@ void given_todo_tests_scenarios_rename_keeps_the_rest([[maybe_unused]] Suite& su
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
 void steps_todo_tests_scenarios_rename_keeps_the_rest([[maybe_unused]] Machine& ctx) {
-  todo::board::rename(ctx, 3_i, "urgent, really"s);
+  slg_program::todo::board::rename(ctx, 3_i, "urgent, really"s);
   rt::check([&]() -> bool {
     const auto arg = rt::at(ctx.world.tasks, 3_i);
-    const auto arg_2 = rt::conforming(todo::model::Task{.no = 3_i,
-                                                        .title = "urgent, really"s,
-                                                        .priority = todo::model::Priority::High,
-                                                        .tags = rt::Set<rt::Text>{"work"s}},
-                                      todo::model::valid_task, "a new Task");
+    const auto arg_2 =
+        rt::conforming(slg_program::todo::model::Task{.no = 3_i,
+                                                      .title = "urgent, really"s,
+                                                      .priority = slg_program::todo::model::Priority::High,
+                                                      .tags = rt::Set<rt::Text>{"work"s}},
+                       slg_program::todo::model::valid_task, "a new Task");
     return arg == arg_2;
   }());
 }
@@ -301,8 +316,8 @@ void given_todo_tests_scenarios_clear_removes_only_done([[maybe_unused]] Suite& 
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
 void steps_todo_tests_scenarios_clear_removes_only_done([[maybe_unused]] Machine& ctx) {
-  rt::test::expect_value([&] { return todo::board::clear(ctx); }, [&] { return 1_i; });
-  todo::board::stats(ctx);
+  rt::test::expect_value([&] { return slg_program::todo::board::clear(ctx); }, [&] { return 1_i; });
+  slg_program::todo::board::stats(ctx);
   rt::check(ctx.out->text() == "cleared 1\n3 open, 0 done\n"s);
   rt::check(!rt::contains(ctx.world.tasks, 4_i));
 }
@@ -316,17 +331,18 @@ void given_todo_tests_scenarios_unknown_numbers_are_refused([[maybe_unused]] Sui
                                                             [[maybe_unused]] Machine& ctx) {
   ctx.world = suite.end_world(0, "todo.board.three_open_one_done", run_todo_board_three_open_one_done);
 }
-void steps_todo_tests_scenarios_unknown_numbers_are_refused([[maybe_unused]] Machine& ctx, todo::model::TaskNo no) {
+void steps_todo_tests_scenarios_unknown_numbers_are_refused([[maybe_unused]] Machine& ctx,
+                                                            slg_program::todo::model::TaskNo no) {
   if (no <= 4_i) {
     return;
   }
-  rt::test::expect_fail([&] { todo::board::done(ctx, no); }, "NoTask");
-  rt::test::expect_fail([&] { todo::board::reopen(ctx, no); }, "NoTask");
-  rt::test::expect_fail([&] { todo::board::rename(ctx, no, "x"s); }, "NoTask");
-  rt::test::expect_fail([&] { todo::board::remove(ctx, no); }, "NoTask");
+  rt::test::expect_fail([&] { slg_program::todo::board::done(ctx, no); }, "NoTask");
+  rt::test::expect_fail([&] { slg_program::todo::board::reopen(ctx, no); }, "NoTask");
+  rt::test::expect_fail([&] { slg_program::todo::board::rename(ctx, no, "x"s); }, "NoTask");
+  rt::test::expect_fail([&] { slg_program::todo::board::remove(ctx, no); }, "NoTask");
   rt::check(ctx.out->text() == ""s);
 }
-Run run_todo_tests_scenarios_unknown_numbers_are_refused(Suite& suite, todo::model::TaskNo no) {
+Run run_todo_tests_scenarios_unknown_numbers_are_refused(Suite& suite, slg_program::todo::model::TaskNo no) {
   return suite.run(given_todo_tests_scenarios_unknown_numbers_are_refused,
                    [&](Machine& ctx) { steps_todo_tests_scenarios_unknown_numbers_are_refused(ctx, no); });
 }
@@ -357,8 +373,9 @@ int main() {
       },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
         return rt::reply_of([&] {
-          return todo::board::add(ctx, e.args.at(0).as<rt::Text>(), e.args.at(1).as<todo::model::Priority>(),
-                                  e.args.at(2).as<rt::Set<rt::Text>>());
+          return slg_program::todo::board::add(ctx, e.args.at(0).as<rt::Text>(),
+                                               e.args.at(1).as<slg_program::todo::model::Priority>(),
+                                               e.args.at(2).as<rt::Set<rt::Text>>());
         });
       }};
   suite.rules[program::rule::todo_board_list] = {
@@ -366,39 +383,43 @@ int main() {
         return rt::Event{program::rule::todo_board_list, {rt::Dyn{draw_4(g)}, rt::Dyn{draw_5(g)}}};
       },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of(
-            [&] { todo::board::list(ctx, e.args.at(0).as<bool>(), e.args.at(1).as<rt::Option<rt::Text>>()); });
+        return rt::reply_of([&] {
+          slg_program::todo::board::list(ctx, e.args.at(0).as<bool>(), e.args.at(1).as<rt::Option<rt::Text>>());
+        });
       }};
   suite.rules[program::rule::todo_board_done] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::todo_board_done, {rt::Dyn{draw_0(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { todo::board::done(ctx, e.args.at(0).as<rt::Int>()); });
+        return rt::reply_of([&] { slg_program::todo::board::done(ctx, e.args.at(0).as<rt::Int>()); });
       }};
   suite.rules[program::rule::todo_board_reopen] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::todo_board_reopen, {rt::Dyn{draw_0(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { todo::board::reopen(ctx, e.args.at(0).as<rt::Int>()); });
+        return rt::reply_of([&] { slg_program::todo::board::reopen(ctx, e.args.at(0).as<rt::Int>()); });
       }};
   suite.rules[program::rule::todo_board_rename] = {
       []([[maybe_unused]] Gen& g) {
         return rt::Event{program::rule::todo_board_rename, {rt::Dyn{draw_0(g)}, rt::Dyn{draw_1(g)}}};
       },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { todo::board::rename(ctx, e.args.at(0).as<rt::Int>(), e.args.at(1).as<rt::Text>()); });
+        return rt::reply_of(
+            [&] { slg_program::todo::board::rename(ctx, e.args.at(0).as<rt::Int>(), e.args.at(1).as<rt::Text>()); });
       }};
   suite.rules[program::rule::todo_board_remove] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::todo_board_remove, {rt::Dyn{draw_0(g)}}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { todo::board::remove(ctx, e.args.at(0).as<rt::Int>()); });
+        return rt::reply_of([&] { slg_program::todo::board::remove(ctx, e.args.at(0).as<rt::Int>()); });
       }};
   suite.rules[program::rule::todo_board_clear] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::todo_board_clear, {}}; },
       [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
-        return rt::reply_of([&] { return todo::board::clear(ctx); });
+        return rt::reply_of([&] { return slg_program::todo::board::clear(ctx); });
       }};
   suite.rules[program::rule::todo_board_stats] = {
       []([[maybe_unused]] Gen& g) { return rt::Event{program::rule::todo_board_stats, {}}; },
-      [](Machine& ctx, [[maybe_unused]] const rt::Event& e) { return rt::reply_of([&] { todo::board::stats(ctx); }); }};
+      [](Machine& ctx, [[maybe_unused]] const rt::Event& e) {
+        return rt::reply_of([&] { slg_program::todo::board::stats(ctx); });
+      }};
   // a number is never reused
   // law todo.laws.numbers_below_next (todo/laws.slg:9)
   suite.laws.push_back(
@@ -462,11 +483,14 @@ int main() {
            return rt::all(t.steps, [&](const rt::Step<program::World>& s) {
              return !(s.event.rule == program::rule::todo_board_clear) ||
                     (rt::all(rt::values(s.after.tasks),
-                             [&](const todo::model::Task& it) { return it.status == todo::model::Status::Open; }) &&
-                     rt::size(s.after.tasks) ==
-                         rt::size(rt::filter(rt::values(s.before.tasks), [&](const todo::model::Task& it_2) {
-                           return it_2.status == todo::model::Status::Open;
-                         })));
+                             [&](const slg_program::todo::model::Task& it) {
+                               return it.status == slg_program::todo::model::Status::Open;
+                             }) &&
+                     rt::size(s.after.tasks) == rt::size(rt::filter(rt::values(s.before.tasks),
+                                                                    [&](const slg_program::todo::model::Task& it_2) {
+                                                                      return it_2.status ==
+                                                                             slg_program::todo::model::Status::Open;
+                                                                    })));
            });
          };
        },
@@ -533,98 +557,100 @@ int main() {
   suite.case_fn("todo.model.is_title case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "milk"s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return true; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return true; });
   });
   suite.case_fn("todo.model.is_title case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = ""s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_title case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "   "s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_title case[3]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "a\tb"s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_title case[4]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "　"s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_title case[5]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "a\342\200\250b"s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_title case[6]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "a\302\205b"s;
-    return rt::test::gives([&] { return todo::model::is_title(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_title(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_tag case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "home"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return true; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return true; });
   });
   suite.case_fn("todo.model.is_tag case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "deep-work"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return true; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return true; });
   });
   suite.case_fn("todo.model.is_tag case[2]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "Home"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_tag case[3]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = ""s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_tag case[4]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "a b"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_tag case[5]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "-x"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.model.is_tag case[6]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = "--all"s;
-    return rt::test::gives([&] { return todo::model::is_tag(arg_0); }, [&] { return false; });
+    return rt::test::gives([&] { return slg_program::todo::model::is_tag(arg_0); }, [&] { return false; });
   });
   suite.case_fn("todo.render.tag_text case[0]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::Set<rt::Text>{};
-    return rt::test::gives([&] { return todo::render::tag_text(arg_0); }, [&] { return ""s; });
+    return rt::test::gives([&] { return slg_program::todo::render::tag_text(arg_0); }, [&] { return ""s; });
   });
   suite.case_fn("todo.render.tag_text case[1]", [] {
     [[maybe_unused]] Machine ctx;
     const auto arg_0 = rt::Set<rt::Text>{"work"s, "home"s};
-    return rt::test::gives([&] { return todo::render::tag_text(arg_0); }, [&] { return " #home #work"s; });
+    return rt::test::gives([&] { return slg_program::todo::render::tag_text(arg_0); }, [&] { return " #home #work"s; });
   });
   suite.case_fn("todo.render.line case[0]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 =
-        rt::conforming(todo::model::Task{.no = 1_i, .title = "milk"s}, todo::model::valid_task, "a new Task");
-    return rt::test::gives([&] { return todo::render::line(arg_0); }, [&] { return "1 [ ] milk"s; });
+    const auto arg_0 = rt::conforming(slg_program::todo::model::Task{.no = 1_i, .title = "milk"s},
+                                      slg_program::todo::model::valid_task, "a new Task");
+    return rt::test::gives([&] { return slg_program::todo::render::line(arg_0); }, [&] { return "1 [ ] milk"s; });
   });
   suite.case_fn("todo.render.line case[1]", [] {
     [[maybe_unused]] Machine ctx;
-    const auto arg_0 = rt::conforming(todo::model::Task{.no = 2_i,
-                                                        .title = "ship"s,
-                                                        .status = todo::model::Status::Done,
-                                                        .priority = todo::model::Priority::High,
-                                                        .tags = rt::Set<rt::Text>{"work"s}},
-                                      todo::model::valid_task, "a new Task");
-    return rt::test::gives([&] { return todo::render::line(arg_0); }, [&] { return "2 [x] ship !high #work"s; });
+    const auto arg_0 =
+        rt::conforming(slg_program::todo::model::Task{.no = 2_i,
+                                                      .title = "ship"s,
+                                                      .status = slg_program::todo::model::Status::Done,
+                                                      .priority = slg_program::todo::model::Priority::High,
+                                                      .tags = rt::Set<rt::Text>{"work"s}},
+                       slg_program::todo::model::valid_task, "a new Task");
+    return rt::test::gives([&] { return slg_program::todo::render::line(arg_0); },
+                           [&] { return "2 [x] ship !high #work"s; });
   });
   suite.test("todo.tests.scenarios.numbers_start_at_one", 1, run_todo_tests_scenarios_numbers_start_at_one);
   suite.test("todo.tests.scenarios.numbers_are_never_reused", 2, run_todo_tests_scenarios_numbers_are_never_reused);

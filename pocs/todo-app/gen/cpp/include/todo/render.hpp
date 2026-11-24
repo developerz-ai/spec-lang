@@ -4,25 +4,25 @@
 #include "rt/prelude.hpp"
 #include "todo/model.hpp"
 
-namespace todo::render {
+namespace slg_program::todo::render {
 
 // fn todo.render.mark (todo/render.slg:8)
-rt::Text mark(todo::model::Status s);
+rt::Text mark(slg_program::todo::model::Status s);
 
 // fn todo.render.badge (todo/render.slg:13)
-rt::Text badge(todo::model::Priority p);
+rt::Text badge(slg_program::todo::model::Priority p);
 
 // fn todo.render.tag_text (todo/render.slg:19)
-rt::Text tag_text(const rt::Set<todo::model::Tag>& tags);
+rt::Text tag_text(const rt::Set<slg_program::todo::model::Tag>& tags);
 
 // fn todo.render.urgency (todo/render.slg:22)
-rt::Int urgency(todo::model::Priority p);
+rt::Int urgency(slg_program::todo::model::Priority p);
 
 // most urgent first, then oldest first
 // fn todo.render.rank (todo/render.slg:28)
-std::tuple<rt::Int, rt::Int> rank(const todo::model::Task& t);
+std::tuple<rt::Int, rt::Int> rank(const slg_program::todo::model::Task& t);
 
 // fn todo.render.line (todo/render.slg:31)
-rt::Text line(const todo::model::Task& t);
+rt::Text line(const slg_program::todo::model::Task& t);
 
-}  // namespace todo::render
+}  // namespace slg_program::todo::render

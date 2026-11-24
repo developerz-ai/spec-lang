@@ -3,7 +3,7 @@
 
 #include "program/machine.hpp"
 
-namespace hop::physics {
+namespace slg_program::hop::physics {
 
 rt::Text show(const Axis& value) {
   return rt::Shown("Axis").field("pos", value.pos).field("vel", value.vel).done();
@@ -23,69 +23,70 @@ rt::Text show(const Placed& value) {
 }
 
 bool valid_placed(const Placed& value) {
-  return hop::geom::valid_box(value.box);
+  return slg_program::hop::geom::valid_box(value.box);
 }
 
-const hop::geom::Vec3& body_half() {
-  static const hop::geom::Vec3 value =
-      rt::conforming(hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i}, hop::geom::valid_vec3, "a new Vec3");
+const slg_program::hop::geom::Vec3& body_half() {
+  static const slg_program::hop::geom::Vec3 value = rt::conforming(
+      slg_program::hop::geom::Vec3{.x = 64_i, .y = 192_i, .z = 64_i}, slg_program::hop::geom::valid_vec3, "a new Vec3");
   return value;
 }
 
-const hop::geom::Vec3& crawler_half() {
-  static const hop::geom::Vec3 value =
-      rt::conforming(hop::geom::Vec3{.x = 96_i, .y = 128_i, .z = 96_i}, hop::geom::valid_vec3, "a new Vec3");
+const slg_program::hop::geom::Vec3& crawler_half() {
+  static const slg_program::hop::geom::Vec3 value = rt::conforming(
+      slg_program::hop::geom::Vec3{.x = 96_i, .y = 128_i, .z = 96_i}, slg_program::hop::geom::valid_vec3, "a new Vec3");
   return value;
 }
 
-const hop::geom::Vec3& goal_half() {
-  static const hop::geom::Vec3 value =
-      rt::conforming(hop::geom::Vec3{.x = 64_i, .y = 768_i, .z = 64_i}, hop::geom::valid_vec3, "a new Vec3");
+const slg_program::hop::geom::Vec3& goal_half() {
+  static const slg_program::hop::geom::Vec3 value = rt::conforming(
+      slg_program::hop::geom::Vec3{.x = 64_i, .y = 768_i, .z = 64_i}, slg_program::hop::geom::valid_vec3, "a new Vec3");
   return value;
 }
 
 // fn hop.physics.body (hop/physics.slg:39)
-hop::geom::Box body(const hop::geom::Vec3& at_2) {
-  rt::claim(hop::geom::valid_vec3(at_2), "argument `at`");
-  const auto result = [&]() -> hop::geom::Box {
-    return hop::geom::around_feet(at_2, hop::physics::body_half());
+slg_program::hop::geom::Box body(const slg_program::hop::geom::Vec3& at_2) {
+  rt::claim(slg_program::hop::geom::valid_vec3(at_2), "argument `at`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
+    return slg_program::hop::geom::around_feet(at_2, slg_program::hop::physics::body_half());
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // fn hop.physics.crawler_box (hop/physics.slg:41)
-hop::geom::Box crawler_box(const hop::model::Crawler& c) {
-  rt::claim(hop::model::valid_crawler(c), "argument `c`");
-  const auto result = [&]() -> hop::geom::Box {
-    return hop::geom::around_feet(c.at, hop::physics::crawler_half());
+slg_program::hop::geom::Box crawler_box(const slg_program::hop::model::Crawler& c) {
+  rt::claim(slg_program::hop::model::valid_crawler(c), "argument `c`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
+    return slg_program::hop::geom::around_feet(c.at, slg_program::hop::physics::crawler_half());
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // fn hop.physics.mover_box (hop/physics.slg:43)
-hop::geom::Box mover_box(const hop::model::Mover& m, rt::Int t) {
-  rt::claim(hop::model::valid_mover(m), "argument `m`");
-  const auto result = [&]() -> hop::geom::Box {
-    return hop::geom::shifted(m.home, hop::geom::scaled(m.step, hop::geom::triangle(t, m.span)));
+slg_program::hop::geom::Box mover_box(const slg_program::hop::model::Mover& m, rt::Int t) {
+  rt::claim(slg_program::hop::model::valid_mover(m), "argument `m`");
+  const auto result = [&]() -> slg_program::hop::geom::Box {
+    return slg_program::hop::geom::shifted(
+        m.home, slg_program::hop::geom::scaled(m.step, slg_program::hop::geom::triangle(t, m.span)));
   }();
-  rt::claim(hop::geom::valid_box(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_box(result), "the result");
   return result;
 }
 
 // a rider moves exactly as far as its mover did this tick
 // fn hop.physics.mover_shift (hop/physics.slg:45)
-hop::geom::Vec3 mover_shift(const hop::model::Mover& m, rt::Int t) {
-  rt::claim(hop::model::valid_mover(m), "argument `m`");
-  const auto result_3 = [&]() -> hop::geom::Vec3 {
-    return [&]() -> hop::geom::Vec3 {
-      const auto arg = hop::physics::mover_box(m, t).lo;
-      const auto arg_2 = hop::physics::mover_box(m, t - 1_i).lo;
-      return hop::geom::minus(arg, arg_2);
+slg_program::hop::geom::Vec3 mover_shift(const slg_program::hop::model::Mover& m, rt::Int t) {
+  rt::claim(slg_program::hop::model::valid_mover(m), "argument `m`");
+  const auto result_3 = [&]() -> slg_program::hop::geom::Vec3 {
+    return [&]() -> slg_program::hop::geom::Vec3 {
+      const auto arg = slg_program::hop::physics::mover_box(m, t).lo;
+      const auto arg_2 = slg_program::hop::physics::mover_box(m, t - 1_i).lo;
+      return slg_program::hop::geom::minus(arg, arg_2);
     }();
   }();
-  rt::claim(hop::geom::valid_vec3(result_3), "the result");
+  rt::claim(slg_program::hop::geom::valid_vec3(result_3), "the result");
   return result_3;
 }
 
@@ -96,23 +97,24 @@ rt::Int axis(bool neg, bool pos) {
 
 // x runs right, z runs toward the camera, so forward is minus z
 // fn hop.physics.walk_target (hop/physics.slg:50)
-hop::geom::Vec3 walk_target(const hop::model::Pad& pad) {
-  const auto result = [&]() -> hop::geom::Vec3 {
-    const auto dx = hop::physics::axis(pad.left, pad.right);
-    const auto dz = hop::physics::axis(pad.forward, pad.back);
-    const auto speed = dx != 0_i && dz != 0_i ? hop::physics::diagonal_speed : hop::physics::run_speed;
-    return rt::conforming(hop::geom::Vec3{.x = dx * speed, .y = 0_i, .z = dz * speed}, hop::geom::valid_vec3,
-                          "a new Vec3");
+slg_program::hop::geom::Vec3 walk_target(const slg_program::hop::model::Pad& pad) {
+  const auto result = [&]() -> slg_program::hop::geom::Vec3 {
+    const auto dx = slg_program::hop::physics::axis(pad.left, pad.right);
+    const auto dz = slg_program::hop::physics::axis(pad.forward, pad.back);
+    const auto speed =
+        dx != 0_i && dz != 0_i ? slg_program::hop::physics::diagonal_speed : slg_program::hop::physics::run_speed;
+    return rt::conforming(slg_program::hop::geom::Vec3{.x = dx * speed, .y = 0_i, .z = dz * speed},
+                          slg_program::hop::geom::valid_vec3, "a new Vec3");
   }();
-  rt::claim(hop::geom::valid_vec3(result), "the result");
+  rt::claim(slg_program::hop::geom::valid_vec3(result), "the result");
   return result;
 }
 
 // the hero faces where the pad points, and keeps facing there when it lets go
 // fn hop.physics.facing (hop/physics.slg:59)
-rt::Int facing(const hop::model::Pad& pad, rt::Int was) {
-  const auto dx = hop::physics::axis(pad.left, pad.right);
-  const auto dz = hop::physics::axis(pad.forward, pad.back);
+rt::Int facing(const slg_program::hop::model::Pad& pad, rt::Int was) {
+  const auto dx = slg_program::hop::physics::axis(pad.left, pad.right);
+  const auto dz = slg_program::hop::physics::axis(pad.forward, pad.back);
   if (dx == 1_i) {
     return dz == -1_i ? 45_i : dz == 1_i ? 315_i : 0_i;
   }
@@ -124,120 +126,129 @@ rt::Int facing(const hop::model::Pad& pad, rt::Int was) {
 
 // move on one axis, then stop flush against the first solid in the way
 // fn hop.physics.slide_x (hop/physics.slg:69)
-hop::physics::Axis slide_x(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids) {
-  rt::claim(hop::geom::valid_vec3(at_2), "argument `at`");
-  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return hop::model::valid_solid(item); }),
+slg_program::hop::physics::Axis slide_x(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                        const rt::List<slg_program::hop::model::Solid>& solids) {
+  rt::claim(slg_program::hop::geom::valid_vec3(at_2), "argument `at`");
+  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return slg_program::hop::model::valid_solid(item); }),
             "argument `solids`");
   if (v == 0_i) {
-    return hop::physics::Axis{.pos = at_2.x, .vel = 0_i};
+    return slg_program::hop::physics::Axis{.pos = at_2.x, .vel = 0_i};
   }
-  const auto hits = rt::filter(solids, [&](const hop::model::Solid& s) {
-    return hop::geom::overlaps(hop::physics::body([&] {
-                                 auto changed_2 = at_2;
-                                 changed_2.x = at_2.x + v;
-                                 rt::claim(hop::geom::valid_sub(changed_2.x), "field `x`");
-                                 return changed_2;
-                               }()),
-                               s.box);
+  const auto hits = rt::filter(solids, [&](const slg_program::hop::model::Solid& s) {
+    return slg_program::hop::geom::overlaps(slg_program::hop::physics::body([&] {
+                                              auto changed_2 = at_2;
+                                              changed_2.x = at_2.x + v;
+                                              rt::claim(slg_program::hop::geom::valid_sub(changed_2.x), "field `x`");
+                                              return changed_2;
+                                            }()),
+                                            s.box);
   });
   if (rt::size(hits) == 0_i) {
-    return hop::physics::Axis{.pos = at_2.x + v, .vel = v};
+    return slg_program::hop::physics::Axis{.pos = at_2.x + v, .vel = v};
   }
   if (v > 0_i) {
-    return hop::physics::Axis{.pos = rt::min(rt::map(hits, [&](const hop::model::Solid& it) { return it.box.lo.x; })) -
-                                     hop::physics::body_half().x,
-                              .vel = 0_i};
+    return slg_program::hop::physics::Axis{
+        .pos = rt::min(rt::map(hits, [&](const slg_program::hop::model::Solid& it) { return it.box.lo.x; })) -
+               slg_program::hop::physics::body_half().x,
+        .vel = 0_i};
   }
-  return hop::physics::Axis{
-      .pos = rt::max(rt::map(hits, [&](const hop::model::Solid& it_2) { return it_2.box.hi.x; })) +
-             hop::physics::body_half().x,
+  return slg_program::hop::physics::Axis{
+      .pos = rt::max(rt::map(hits, [&](const slg_program::hop::model::Solid& it_2) { return it_2.box.hi.x; })) +
+             slg_program::hop::physics::body_half().x,
       .vel = 0_i};
 }
 
 // fn hop.physics.slide_z (hop/physics.slg:78)
-hop::physics::Axis slide_z(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids) {
-  rt::claim(hop::geom::valid_vec3(at_2), "argument `at`");
-  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return hop::model::valid_solid(item); }),
+slg_program::hop::physics::Axis slide_z(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                        const rt::List<slg_program::hop::model::Solid>& solids) {
+  rt::claim(slg_program::hop::geom::valid_vec3(at_2), "argument `at`");
+  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return slg_program::hop::model::valid_solid(item); }),
             "argument `solids`");
   if (v == 0_i) {
-    return hop::physics::Axis{.pos = at_2.z, .vel = 0_i};
+    return slg_program::hop::physics::Axis{.pos = at_2.z, .vel = 0_i};
   }
-  const auto hits = rt::filter(solids, [&](const hop::model::Solid& s) {
-    return hop::geom::overlaps(hop::physics::body([&] {
-                                 auto changed_2 = at_2;
-                                 changed_2.z = at_2.z + v;
-                                 rt::claim(hop::geom::valid_sub(changed_2.z), "field `z`");
-                                 return changed_2;
-                               }()),
-                               s.box);
+  const auto hits = rt::filter(solids, [&](const slg_program::hop::model::Solid& s) {
+    return slg_program::hop::geom::overlaps(slg_program::hop::physics::body([&] {
+                                              auto changed_2 = at_2;
+                                              changed_2.z = at_2.z + v;
+                                              rt::claim(slg_program::hop::geom::valid_sub(changed_2.z), "field `z`");
+                                              return changed_2;
+                                            }()),
+                                            s.box);
   });
   if (rt::size(hits) == 0_i) {
-    return hop::physics::Axis{.pos = at_2.z + v, .vel = v};
+    return slg_program::hop::physics::Axis{.pos = at_2.z + v, .vel = v};
   }
   if (v > 0_i) {
-    return hop::physics::Axis{.pos = rt::min(rt::map(hits, [&](const hop::model::Solid& it) { return it.box.lo.z; })) -
-                                     hop::physics::body_half().z,
-                              .vel = 0_i};
+    return slg_program::hop::physics::Axis{
+        .pos = rt::min(rt::map(hits, [&](const slg_program::hop::model::Solid& it) { return it.box.lo.z; })) -
+               slg_program::hop::physics::body_half().z,
+        .vel = 0_i};
   }
-  return hop::physics::Axis{
-      .pos = rt::max(rt::map(hits, [&](const hop::model::Solid& it_2) { return it_2.box.hi.z; })) +
-             hop::physics::body_half().z,
+  return slg_program::hop::physics::Axis{
+      .pos = rt::max(rt::map(hits, [&](const slg_program::hop::model::Solid& it_2) { return it_2.box.hi.z; })) +
+             slg_program::hop::physics::body_half().z,
       .vel = 0_i};
 }
 
 // solids stop the body both ways; a mover's top only catches feet that were above it
 // fn hop.physics.fall (hop/physics.slg:86)
-hop::physics::Fall fall(const hop::geom::Vec3& at_2, rt::Int v, const rt::List<hop::model::Solid>& solids,
-                        const rt::List<hop::physics::Placed>& tops) {
-  rt::claim(hop::geom::valid_vec3(at_2), "argument `at`");
-  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return hop::model::valid_solid(item); }),
+slg_program::hop::physics::Fall fall(const slg_program::hop::geom::Vec3& at_2, rt::Int v,
+                                     const rt::List<slg_program::hop::model::Solid>& solids,
+                                     const rt::List<slg_program::hop::physics::Placed>& tops) {
+  rt::claim(slg_program::hop::geom::valid_vec3(at_2), "argument `at`");
+  rt::claim(std::ranges::all_of(solids, [](const auto& item) { return slg_program::hop::model::valid_solid(item); }),
             "argument `solids`");
-  rt::claim(std::ranges::all_of(tops, [](const auto& item_2) { return hop::physics::valid_placed(item_2); }),
-            "argument `tops`");
-  const auto hits = rt::filter(solids, [&](const hop::model::Solid& s) {
-    return hop::geom::overlaps(hop::physics::body([&] {
-                                 auto changed_3 = at_2;
-                                 changed_3.y = at_2.y + v;
-                                 rt::claim(hop::geom::valid_sub(changed_3.y), "field `y`");
-                                 return changed_3;
-                               }()),
-                               s.box);
+  rt::claim(
+      std::ranges::all_of(tops, [](const auto& item_2) { return slg_program::hop::physics::valid_placed(item_2); }),
+      "argument `tops`");
+  const auto hits = rt::filter(solids, [&](const slg_program::hop::model::Solid& s) {
+    return slg_program::hop::geom::overlaps(slg_program::hop::physics::body([&] {
+                                              auto changed_3 = at_2;
+                                              changed_3.y = at_2.y + v;
+                                              rt::claim(slg_program::hop::geom::valid_sub(changed_3.y), "field `y`");
+                                              return changed_3;
+                                            }()),
+                                            s.box);
   });
   if (rt::size(hits) > 0_i && v > 0_i) {
-    return hop::physics::Fall{.y = rt::min(rt::map(hits, [&](const hop::model::Solid& it) { return it.box.lo.y; })) -
-                                   hop::physics::body_half().y,
-                              .vel = 0_i,
-                              .grounded = false,
-                              .riding = {}};
+    return slg_program::hop::physics::Fall{
+        .y = rt::min(rt::map(hits, [&](const slg_program::hop::model::Solid& it) { return it.box.lo.y; })) -
+             slg_program::hop::physics::body_half().y,
+        .vel = 0_i,
+        .grounded = false,
+        .riding = {}};
   }
   if (rt::size(hits) > 0_i) {
-    return hop::physics::Fall{.y = rt::max(rt::map(hits, [&](const hop::model::Solid& it_2) { return it_2.box.hi.y; })),
-                              .vel = 0_i,
-                              .grounded = true,
-                              .riding = {}};
+    return slg_program::hop::physics::Fall{
+        .y = rt::max(rt::map(hits, [&](const slg_program::hop::model::Solid& it_2) { return it_2.box.hi.y; })),
+        .vel = 0_i,
+        .grounded = true,
+        .riding = {}};
   }
-  const auto catching = rt::filter(tops, [&](const hop::physics::Placed& p) {
-    return v < 0_i && hop::geom::over(hop::physics::body(at_2), p.box) && at_2.y >= p.box.hi.y &&
-           at_2.y + v < p.box.hi.y;
+  const auto catching = rt::filter(tops, [&](const slg_program::hop::physics::Placed& p) {
+    return v < 0_i && slg_program::hop::geom::over(slg_program::hop::physics::body(at_2), p.box) &&
+           at_2.y >= p.box.hi.y && at_2.y + v < p.box.hi.y;
   });
   if (rt::size(catching) == 0_i) {
-    return hop::physics::Fall{.y = at_2.y + v, .vel = v, .grounded = false, .riding = {}};
+    return slg_program::hop::physics::Fall{.y = at_2.y + v, .vel = v, .grounded = false, .riding = {}};
   }
-  const auto top = rt::max(rt::map(catching, [&](const hop::physics::Placed& it_3) { return it_3.box.hi.y; }));
-  return hop::physics::Fall{
+  const auto top =
+      rt::max(rt::map(catching, [&](const slg_program::hop::physics::Placed& it_3) { return it_3.box.hi.y; }));
+  return slg_program::hop::physics::Fall{
       .y = top,
       .vel = 0_i,
       .grounded = true,
-      .riding = rt::some(
-          rt::min(rt::map(rt::filter(catching, [&](const hop::physics::Placed& it_4) { return it_4.box.hi.y == top; }),
-                          [&](const hop::physics::Placed& it_5) { return it_5.no; })))};
+      .riding = rt::some(rt::min(rt::map(
+          rt::filter(catching, [&](const slg_program::hop::physics::Placed& it_4) { return it_4.box.hi.y == top; }),
+          [&](const slg_program::hop::physics::Placed& it_5) { return it_5.no; })))};
 }
 
 // a crawler walks to the end of its beat and turns
 // fn hop.physics.patrol (hop/physics.slg:97)
-hop::model::Crawler patrol(const hop::model::Crawler& c) {
-  rt::claim(hop::model::valid_crawler(c), "argument `c`");
-  const auto result_7 = [&]() -> hop::model::Crawler {
+slg_program::hop::model::Crawler patrol(const slg_program::hop::model::Crawler& c) {
+  rt::claim(slg_program::hop::model::valid_crawler(c), "argument `c`");
+  const auto result_7 = [&]() -> slg_program::hop::model::Crawler {
     const auto x = c.at.x + c.dir * c.speed;
     if (x >= c.hi) {
       return [&] {
@@ -245,11 +256,11 @@ hop::model::Crawler patrol(const hop::model::Crawler& c) {
         changed.at = [&] {
           auto changed_2 = c.at;
           changed_2.x = c.hi;
-          rt::claim(hop::geom::valid_sub(changed_2.x), "field `x`");
+          rt::claim(slg_program::hop::geom::valid_sub(changed_2.x), "field `x`");
           return changed_2;
         }();
         changed.dir = -1_i;
-        rt::claim(hop::geom::valid_vec3(changed.at), "field `at`");
+        rt::claim(slg_program::hop::geom::valid_vec3(changed.at), "field `at`");
         rt::claim((changed.dir >= -1_i && changed.dir <= 1_i), "field `dir`");
         return changed;
       }();
@@ -260,11 +271,11 @@ hop::model::Crawler patrol(const hop::model::Crawler& c) {
         changed_3.at = [&] {
           auto changed_4 = c.at;
           changed_4.x = c.lo;
-          rt::claim(hop::geom::valid_sub(changed_4.x), "field `x`");
+          rt::claim(slg_program::hop::geom::valid_sub(changed_4.x), "field `x`");
           return changed_4;
         }();
         changed_3.dir = 1_i;
-        rt::claim(hop::geom::valid_vec3(changed_3.at), "field `at`");
+        rt::claim(slg_program::hop::geom::valid_vec3(changed_3.at), "field `at`");
         rt::claim((changed_3.dir >= -1_i && changed_3.dir <= 1_i), "field `dir`");
         return changed_3;
       }();
@@ -274,22 +285,22 @@ hop::model::Crawler patrol(const hop::model::Crawler& c) {
       changed_5.at = [&] {
         auto changed_6 = c.at;
         changed_6.x = x;
-        rt::claim(hop::geom::valid_sub(changed_6.x), "field `x`");
+        rt::claim(slg_program::hop::geom::valid_sub(changed_6.x), "field `x`");
         return changed_6;
       }();
-      rt::claim(hop::geom::valid_vec3(changed_5.at), "field `at`");
+      rt::claim(slg_program::hop::geom::valid_vec3(changed_5.at), "field `at`");
       return changed_5;
     }();
   }();
-  rt::claim(hop::model::valid_crawler(result_7), "the result");
+  rt::claim(slg_program::hop::model::valid_crawler(result_7), "the result");
   return result_7;
 }
 
 // from above and falling, on the upper half: a stomp; any other touch hurts
 // fn hop.physics.stomps (hop/physics.slg:109)
-bool stomps(rt::Int feet, rt::Int vy, const hop::model::Crawler& c) {
-  rt::claim(hop::model::valid_crawler(c), "argument `c`");
-  return vy < 0_i && feet >= c.at.y + hop::physics::stomp_line;
+bool stomps(rt::Int feet, rt::Int vy, const slg_program::hop::model::Crawler& c) {
+  rt::claim(slg_program::hop::model::valid_crawler(c), "argument `c`");
+  return vy < 0_i && feet >= c.at.y + slg_program::hop::physics::stomp_line;
 }
 
-}  // namespace hop::physics
+}  // namespace slg_program::hop::physics

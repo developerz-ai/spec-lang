@@ -3,7 +3,7 @@
 
 #include "rt/prelude.hpp"
 
-namespace hop::geom {
+namespace slg_program::hop::geom {
 
 // 4096 m either way from the origin, so every coordinate is exact as an f32 at the C edge
 // type hop.geom.Sub (hop/geom.slg:3)
@@ -13,9 +13,9 @@ bool valid_sub(const Sub& value);
 
 // type hop.geom.Vec3 (hop/geom.slg:9)
 struct Vec3 {
-  hop::geom::Sub x;
-  hop::geom::Sub y;
-  hop::geom::Sub z;
+  slg_program::hop::geom::Sub x;
+  slg_program::hop::geom::Sub y;
+  slg_program::hop::geom::Sub z;
   friend std::strong_ordering operator<=>(const Vec3&, const Vec3&) = default;
   friend bool operator==(const Vec3&, const Vec3&) = default;
   friend rt::Text show(const Vec3& value);
@@ -26,8 +26,8 @@ bool valid_vec3(const Vec3& value);
 // lo is the corner nearest minus infinity on every axis
 // type hop.geom.Box (hop/geom.slg:11)
 struct Box {
-  hop::geom::Vec3 lo;
-  hop::geom::Vec3 hi;
+  slg_program::hop::geom::Vec3 lo;
+  slg_program::hop::geom::Vec3 hi;
   friend std::strong_ordering operator<=>(const Box&, const Box&) = default;
   friend bool operator==(const Box&, const Box&) = default;
   friend rt::Text show(const Box& value);
@@ -40,36 +40,37 @@ bool valid_box(const Box& value);
 inline const rt::Int unit = 256_i;
 
 // fn hop.geom.plus (hop/geom.slg:14)
-hop::geom::Vec3 plus(const hop::geom::Vec3& a, const hop::geom::Vec3& b);
+slg_program::hop::geom::Vec3 plus(const slg_program::hop::geom::Vec3& a, const slg_program::hop::geom::Vec3& b);
 
 // fn hop.geom.minus (hop/geom.slg:17)
-hop::geom::Vec3 minus(const hop::geom::Vec3& a, const hop::geom::Vec3& b);
+slg_program::hop::geom::Vec3 minus(const slg_program::hop::geom::Vec3& a, const slg_program::hop::geom::Vec3& b);
 
 // fn hop.geom.scaled (hop/geom.slg:19)
-hop::geom::Vec3 scaled(const hop::geom::Vec3& v, rt::Int k);
+slg_program::hop::geom::Vec3 scaled(const slg_program::hop::geom::Vec3& v, rt::Int k);
 
 // fn hop.geom.shifted (hop/geom.slg:21)
-hop::geom::Box shifted(const hop::geom::Box& b, const hop::geom::Vec3& by);
+slg_program::hop::geom::Box shifted(const slg_program::hop::geom::Box& b, const slg_program::hop::geom::Vec3& by);
 
 // a body is placed by the centre of its base: its feet
 // fn hop.geom.around_feet (hop/geom.slg:23)
-hop::geom::Box around_feet(const hop::geom::Vec3& feet, const hop::geom::Vec3& half);
+slg_program::hop::geom::Box around_feet(const slg_program::hop::geom::Vec3& feet,
+                                        const slg_program::hop::geom::Vec3& half);
 
 // a gem is placed by its centre
 // fn hop.geom.around_centre (hop/geom.slg:28)
-hop::geom::Box around_centre(const hop::geom::Vec3& c, rt::Int half);
+slg_program::hop::geom::Box around_centre(const slg_program::hop::geom::Vec3& c, rt::Int half);
 
 // solids block only when they share volume: a body standing on a floor touches it and is not inside it
 // fn hop.geom.overlaps (hop/geom.slg:32)
-bool overlaps(const hop::geom::Box& a, const hop::geom::Box& b);
+bool overlaps(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b);
 
 // pickups and hits count a touch, faces included: the same test raylib's CheckCollisionBoxes makes
 // fn hop.geom.touches (hop/geom.slg:40)
-bool touches(const hop::geom::Box& a, const hop::geom::Box& b);
+bool touches(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b);
 
 // the footprints meet strictly: standing needs some floor under the feet, not an edge
 // fn hop.geom.over (hop/geom.slg:48)
-bool over(const hop::geom::Box& a, const hop::geom::Box& b);
+bool over(const slg_program::hop::geom::Box& a, const slg_program::hop::geom::Box& b);
 
 // back and forth along a path without division: 0 up to n, then down to 0, period 2n
 // fn hop.geom.triangle (hop/geom.slg:51)
@@ -79,6 +80,6 @@ rt::Int triangle(rt::Int t, rt::Int n);
 rt::Int approach(rt::Int v, rt::Int target, rt::Int step_2);
 
 // fn hop.geom.vec_text (hop/geom.slg:62)
-rt::Text vec_text(const hop::geom::Vec3& v);
+rt::Text vec_text(const slg_program::hop::geom::Vec3& v);
 
-}  // namespace hop::geom
+}  // namespace slg_program::hop::geom
