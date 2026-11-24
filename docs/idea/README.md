@@ -42,6 +42,7 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | [`33-data-structures-and-algorithms.md`](33-data-structures-and-algorithms.md) | The collection is meaning, its storage is a plan; cost as a tested claim; what is taken from Haskell. |
 | [`34-hygiene.md`](34-hygiene.md) | RAII and the other habits of healthy programs: impossible to break, checked, derived, or still yours. |
 | [`35-packages.md`](35-packages.md) | Sharing ideas: source with laws, over git, and adding one runs none of its code. |
+| [`36-extending.md`](36-extending.md) | Words, policies, worlds and targets can be added; grammar cannot. What replaces macros and code generators. |
 
 ## Reading paths
 
