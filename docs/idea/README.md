@@ -39,6 +39,7 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | [`30-type-rules.md`](30-type-rules.md) | Typing, effects and evaluation, precise enough to build one checker twice. |
 | [`31-dropping-down.md`](31-dropping-down.md) | A little backend code behind a contract, as C keeps a little assembly. |
 | [`32-build-layout.md`](32-build-layout.md) | Where generated software goes, compared with TypeScript. |
+| [`33-data-structures-and-algorithms.md`](33-data-structures-and-algorithms.md) | The collection is meaning, its storage is a plan; cost as a tested claim; what is taken from Haskell. |
 
 ## Reading paths
 
