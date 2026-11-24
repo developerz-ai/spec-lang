@@ -3,9 +3,8 @@
 // belong to the outer call: an inner refusal fails the outer rule and undoes
 // everything, the inner calls that had succeeded included; `inner(..) else
 // fail E` replaces the error; `inner(..) else v` handles a refusal by the
-// inner rule's guard and the outer rule goes on. (What stays of an inner body
-// that wrote and then failed, when the outer rule handles it, is not pinned:
-// see the corpus README, engine findings.)
+// inner rule's guard and the outer rule goes on; an inner body that wrote and
+// then failed leaves nothing behind when the outer rule handles the failure.
 
 use cli;
 
@@ -135,3 +134,30 @@ law a_refusal_at_any_depth_changes_nothing(t: Trace[take | give | transfer | tra
 
 law nobody_goes_negative(t: Trace[take | give | transfer | transfer_with_fee | sweep]) =
   t.states.all(w => w.balance.values.all(it >= 0));
+
+@why("writes, speaks and then refuses")
+@uses(fee_pot.write, ledger.write, out.write)
+rule write_then_fail(n: Int) -> Int = {
+  fee_pot = fee_pot + n;
+  ledger.push("spoiled");
+  out.line("spoiled");
+  fail Spoiled;
+}
+
+@why("goes on after the refusal, with its own writes and none of the inner rule's")
+@uses(fee_pot.write, ledger.write, out.write)
+pub rule try_then_go_on(n: Int) -> Int = {
+  fee_pot = 1;
+  out.line("before");
+  let got = write_then_fail(n) else -1;
+  fee_pot = fee_pot + 10;
+  out.line("after {got}");
+  return got;
+}
+
+test a_handled_failure_leaves_nothing_behind = {
+  try_then_go_on(100) -> -1;
+  assert fee_pot == 11;
+  assert ledger == [];
+  assert out.text == "before\nafter -1\n";
+}

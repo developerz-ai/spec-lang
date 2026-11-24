@@ -135,3 +135,16 @@ fn a_foreign_body_blocks_after_its_arguments_are_checked() {
     assert!(matches!(it.step(rule(&p, "present"), vec![]), Err(Halt::Blocked(d)) if d.message.contains("m.draw")));
     assert_eq!(it.world.states[0], Value::Int(0));
 }
+
+#[test]
+fn a_handled_inner_refusal_undoes_the_inner_rules_writes_and_lines() {
+    let p = program(
+        "state n: Int = 0;\n\
+         rule inner() -> Int = { n = n + 5; out.line(\"inner\"); fail No; }\n\
+         rule outer() -> Int = { n = 1; out.line(\"outer\"); let got = inner() else 0 - 1; n = n + 1; return got; }",
+    );
+    let mut it = Interp::new(&p).unwrap();
+    assert!(matches!(it.step(rule(&p, "outer"), vec![]).unwrap(), Outcome::Ok(Value::Int(-1))));
+    assert_eq!(it.world.states[0], Value::Int(2));
+    assert_eq!(it.handlers[0], vec![Value::list(vec![Value::text("outer")])]);
+}

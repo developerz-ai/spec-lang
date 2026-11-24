@@ -205,9 +205,8 @@ Each is an error at its span, never a silent answer: everything the engine refus
 
 ## Where the LIR differs from the engine
 
-1. **A handled inner refusal.** `inner() else v` inside a rule: the LIR undoes the inner rule's writes and lines (card, How it runs 1); the engine keeps them (`src/corpus/README.md`, engine finding 1). No program of the corpus pins it; `tests/lower.rs` pins the LIR's.
-2. **Types decided before running.** Where the engine decides by the value (`a else b else c` with `a` and `b` Options; `==` between different types), the LIR gives each expression one type: the first is lowered as `a else (b else c)`, which gives the same value on every input; the second is a block that evaluates both sides and gives `false` (`true` for `!=`), as the value order does. A collection whose items nothing types (`[] + [] == []`) has items of type `()`.
-3. **Pretend arms** are lowered as ordinary code; a printer's test runtime runs them as the engine does.
+1. **Types decided before running.** Where the engine decides by the value (`a else b else c` with `a` and `b` Options; `==` between different types), the LIR gives each expression one type: the first is lowered as `a else (b else c)`, which gives the same value on every input; the second is a block that evaluates both sides and gives `false` (`true` for `!=`), as the value order does. A collection whose items nothing types (`[] + [] == []`) has items of type `()`.
+2. **Pretend arms** are lowered as ordinary code; a printer's test runtime runs them as the engine does.
 
 ## Measured
 

@@ -53,7 +53,7 @@ One per feature of the card the engine runs. Each file starts with a comment tha
 | `f22-range-values` | 52 | `a..=b`, `a..<b`, empty when reversed, `size list map filter all any sum fold`, bounds past a word |
 | `f23-rule-guards` | 10 | guards in written order across and inside notes, a failing condition gives its guard's error, replies |
 | `f24-rule-atomic` | 11 | a failure mid-body undoes every write and drops the buffered `out.line` lines; earlier calls stay |
-| `f25-rules-in-rules` | 11 | an inner refusal fails and undoes the outer rule, three levels deep; `inner() else fail E`; a handled guard refusal |
+| `f25-rules-in-rules` | 12 | an inner refusal fails and undoes the outer rule, three levels deep; `inner() else fail E`; a handled guard refusal; a handled failure after writes leaves nothing |
 | `f26-state-ownership` | 9 | three modules: state written only by its own rules, read across modules, one atomic move over two modules |
 | `f27-given-chains` | 9 | `@given(state -> value)`, `@given(test)` four deep, siblings apart, a parent then places on top |
 | `f28-scenarios` | 5 | `call;`, `call -> value;`, `call -> fail E;` for guards, `fail`, `Missing`, `Uneven`, `DivByZero` |
@@ -106,31 +106,10 @@ Every form the ports had to leave out, once. This is the to-do list of the engin
 
 ## Engine findings
 
-Found while writing the corpus. None is fixed here, and no program pins the behaviour in question.
+Found while writing the corpus. Unless marked fixed, no program pins the behaviour in question.
 
-1. **A handled failure of an inner rule keeps the inner rule's writes.** A rule that writes and then fails, called from another rule as `inner(..) else v`, leaves its writes and its `out.line` lines in the outer rule's world. The same call from a test (`assert (inner(5) else -1) == -1;`) undoes them. The card says a rule's writes happen all or none.
+1. **Fixed.** A handled failure of an inner rule kept the inner rule's writes and lines. The engine now undoes them, as the card says; `f25-rules-in-rules` pins it.
 
-   ```slg
-   use cli;
-   state log: List[Text];
-   rule inner(x: Int) -> Int = {
-     log.push("try {x}");
-     out.line("trying {x}");
-     if x > 2 { fail TooBig; }
-     return x;
-   }
-   rule outer(x: Int) -> Int = {
-     let r = inner(x) else -1;
-     log.push("done {r}");
-     return r;
-   }
-   test kept = {
-     outer(5) -> -1;
-     assert log == ["done -1"];
-   }
-   ```
-
-   The assert is false: `log` is `["try 5", "done -1"]` and `out.text` is `"trying 5\n"`.
 2. **`Ok(v)` cannot be written with a value.** `assert Ok(1) == Ok(1);` stops with `E-CLAIM`: field `value` is not a (): 1 is not (). So `s.reply == Ok(s.after.level)` cannot be asked; `f30-laws-traces` compares the printed reply (`"{s.reply}" == "Ok({s.after.level})"`).
 3. **A law with a second parameter is judged on a start world that breaks it.** The start world is accepted as lawful for one value of the parameter and the trace is then judged with another, so the law is "false after 0 call(s) from a random lawful world". Reproduction and the workaround (quantify inside the law) are in [`p02-ledger/README.md`](p02-ledger/README.md).
 4. **`type Change = up | down;` in the module that declares the rules `up` and `down` is `E-NAME-AMBIG`** ("up is declared twice"): the names are read as new variants. The card's form works from another module (`f30-laws-traces`).

@@ -191,8 +191,7 @@ fn a_mistyped_expression_is_an_error_at_its_span() {
 
 #[test]
 fn a_handled_inner_refusal_undoes_the_inner_rules_writes() {
-    // The card (How it runs 1): a failure leaves the world unchanged. The
-    // engine keeps the inner rule's writes here (src/corpus/README.md).
+    // The card (How it runs 1): a failure leaves the world unchanged.
     let (_, l) = lir(
         "state n: Int = 0;\nrule inner() -> Int = { n = 5; fail No; }\nrule outer() -> Int = { return inner() else n; }\ntest t = { outer() -> 0; assert n == 0; }",
     );

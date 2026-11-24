@@ -29,8 +29,6 @@ pub struct Interp<'p> {
     /// handler id; empty for a handler without one. Committed and rolled
     /// back with the world; a new interpreter starts it fresh.
     pub handlers: Vec<Vec<Value>>,
-    /// Depth of rule calls: 0 means a call from outside.
-    pub(crate) depth: u32,
     consts: Vec<Option<Value>>,
     /// Evaluation steps left before `E-RUNTIME`.
     pub steps_left: u64,
@@ -43,7 +41,6 @@ impl<'p> Interp<'p> {
             prog,
             world: World { states: Vec::new() },
             handlers: Vec::new(),
-            depth: 0,
             consts: vec![None; prog.consts.len()],
             steps_left: DEFAULT_BUDGET,
         };
@@ -192,18 +189,14 @@ impl<'p> Interp<'p> {
         Ok(v)
     }
 
-    /// Call a rule. From outside (depth 0) it is one atomic step: a failure
-    /// restores the world and every handler's pretend state (the lines it
-    /// sent); a success commits them. Inside a rule it joins the caller.
+    /// Call a rule: all its writes or none. A failure restores the world and
+    /// every handler's pretend state (the lines it sent) as they were at this
+    /// call, so a caller that handles the failure goes on without them; a
+    /// success inside a rule joins the caller, whose own failure undoes both.
     pub fn call_rule(&mut self, r: RuleId, args: Vec<Option<Value>>) -> Halted<Value> {
-        let outside = self.depth == 0;
-        let saved = if outside { Some((self.world.clone(), self.handlers.clone())) } else { None };
-        self.depth += 1;
+        let (world, handlers) = (self.world.clone(), self.handlers.clone());
         let result = self.rule_body(r, args);
-        self.depth -= 1;
-        if let Some((world, handlers)) = saved
-            && result.is_err()
-        {
+        if result.is_err() {
             self.world = world;
             self.handlers = handlers;
         }
