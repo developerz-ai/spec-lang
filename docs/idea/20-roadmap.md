@@ -18,6 +18,27 @@ Cheapest disproof first. A milestone is a demo plus a fixture that must be green
 
 The compiler's first implementation is Rust, with a small permanent trusted kernel ([10-compiler-and-ir](10-compiler-and-ir.md)). Distribution is npm (`bunx spec-lang`) with a native binary per platform, because the first users live in Bun apps.
 
+## Proofs of concept
+
+The engine grows with small programs, and each program is chosen to break something. Engine and backends are fixed as they go.
+
+| POC | Drives | Answers |
+|---|---|---|
+| seat limits, ledger | parser, types, rules, tests | is it good to write; is feedback fast |
+| invites, webhooks | flows, events, tasks, simulated time | do lifecycles and retries hold up |
+| a task lifecycle, with its past bugs replayed | trace search, laws | would laws have caught real bugs |
+| webhooks inside an existing app | the first backend, parity | does the ratio hold; do the tests agree |
+| a small headless simulation | determinism, fixed step | is it any use beyond the web |
+| one module on a second backend | boundary types, parity | is it platform independent |
+
+The first three need no backend. Three rules:
+
+1. A bug a POC finds becomes a test of the engine.
+2. When engine and [card](01-language-card.md) disagree, the card is settled first. Otherwise the code becomes the specification.
+3. At least one POC is built twice, once on the plain framework, by the same agent under the same effort. That is the measurement; the rest are experience.
+
+This runs beside E0 and does not replace it: a POC shows that something can be built, and E0 whether it was worth a language.
+
 ## Not scheduled
 
 A general UI language (presentation code was not shown to be mechanical), an editor, a package registry, full dependent types, a hosted service.
