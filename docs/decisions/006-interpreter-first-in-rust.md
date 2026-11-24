@@ -2,7 +2,7 @@
 
 **Status:** accepted, 2026-11-24. Nothing is built.
 
-**Decision.** The first program built is the interpreter with its checker and test runner, in Rust, as one binary per system. No backend until it is useful alone.
+**Decision.** The first program built is the spec engine: the interpreter with its checker and test runner, in Rust, as one binary per system. No backend until it is useful alone.
 
 **Why Rust.** No garbage collector, so memory is predictable and low; safe threads; one static binary for Linux, macOS and Windows, and a WebAssembly build for a browser tab. It is also the compiler's language, so the front end is written once.
 
