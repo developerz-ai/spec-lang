@@ -306,7 +306,7 @@ Rule of thumb: if the same rule would be written in three or more places, or get
 | Maths symbols often cost more tokens than words, and only `² ³ ± °C` cost fewer | tokens are not accuracy; no current Claude tokenizer was measured ([02](docs/idea/02-syntax.md)) |
 | Simulations, codecs and kernels are expected to barely shrink | unmeasured; there the gain would be checking, not size ([14](docs/idea/14-systems.md), [16](docs/idea/16-corpus.md)) |
 
-Where to go next: [structure a program](docs/idea/26-program-structure.md) · [who may do what](docs/idea/27-authorization.md) · [standard library](docs/idea/28-standard-library.md) · [first vocabularies](docs/idea/29-first-vocabularies.md) · [type rules](docs/idea/30-type-rules.md) · [a little backend code](docs/idea/31-dropping-down.md) · [build layout](docs/idea/32-build-layout.md) · [algorithms](docs/idea/33-data-structures-and-algorithms.md) · [hygiene](docs/idea/34-hygiene.md)
+Where to go next: [structure a program](docs/idea/26-program-structure.md) · [who may do what](docs/idea/27-authorization.md) · [standard library](docs/idea/28-standard-library.md) · [first vocabularies](docs/idea/29-first-vocabularies.md) · [type rules](docs/idea/30-type-rules.md) · [a little backend code](docs/idea/31-dropping-down.md) · [build layout](docs/idea/32-build-layout.md) · [algorithms](docs/idea/33-data-structures-and-algorithms.md) · [hygiene](docs/idea/34-hygiene.md) · [packages](docs/idea/35-packages.md)
 
 The first milestone tries to kill the idea: the same semantics embedded in TypeScript is the control. If the bespoke language does not beat it, we ship the embedded form ([19](docs/idea/19-density-and-experiments.md), [20](docs/idea/20-roadmap.md)).
 
