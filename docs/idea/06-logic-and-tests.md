@@ -29,17 +29,17 @@ rule transfer(from: Id[Account], to: Id[Account], amount: Cents) = {
   accounts[to] = b + amount;
 }
 
-law conserved(t: Trace[deposit | transfer]) =
-  t.steps.all(it.event.is(transfer(_, _, _)) implies it.after.values.sum() == it.before.values.sum());
+law conserved(t: Trace[transfer]) =
+  t.steps.all(it.after.values.sum() == it.before.values.sum());
 ```
 
 The edit that added `transfer` returns, in the same response:
 
 ```json
 {"code":"E-LAW","law":"conserved","decl":"transfer@b:41f0",
- "counterexample":{"replay":"c:7d","shrunk":[9,2],
-  "trace":["deposit(#1, amount: 1) -> ok","transfer(#1, to: #1, amount: 1) -> ok"],
-  "before":{"#1":1},"after":{"#1":2}},
+ "counterexample":{"replay":"c:7d","shrunk":[9,1],
+  "start":{"world":{"accounts":{"#1":1}},"reached":["deposit(#1, amount: 1)"]},
+  "trace":["transfer(#1, to: #1, amount: 1) -> ok"],"after":{"accounts":{"#1":2}}},
  "question":{"code":"E-OPEN","ask":"a transfer to the same account",
   "options":[{"does":"refuses","edit":"@guard(from != to else SameAccount)"},
              {"does":"changes nothing","edit":"if from == to { return; }"}]}}
@@ -61,14 +61,49 @@ test no_self_transfer = {
 }
 ```
 
-Over `Trace[transfer]` alone no account could exist and the law would hold of nothing: `E-VACUOUS` ([08](08-approval-and-anti-cheating.md)), not a pass.
+## Where a trace starts
+
+From `@given`, or from **any world its types, flows and laws allow**. So `Trace[transfer]` needs no `deposit` to be worth checking, and a law reads only its own module.
+
+| Law is about | At the start | Checked |
+|---|---|---|
+| single states (`t.states.all(...)`) | assumed, with the module's other state laws | the initial world satisfies it, and every step of every rule keeps it: induction |
+| steps (`t.steps.all(...)`) | nothing | every step from every allowed world |
+
+`reached` above names calls that lead from the initial world to the start. When search finds none, the counterexample says so and offers the missing law:
+
+```slg
+state held: Int = 0;
+state sold: Int = 0;
+
+@guard(held + sold < 200 else Full)
+rule hold() = { held = held + 1; }
+
+@guard(held > 0 else NotHeld)
+rule buy() = {
+  held = held - 1;
+  sold = sold + 1;
+}
+
+law never_oversold(t: Trace[hold | buy]) = t.steps.all(it.after.sold <= 200);
+```
+
+```json
+{"code":"E-LAW","law":"never_oversold",
+ "start":{"world":{"held":1,"sold":200},"reached":"none found, bounded(6)"},
+ "trace":["buy() -> ok"],"after":{"held":0,"sold":201},
+ "missingLaw":"law fits(t: Trace[hold | buy]) = t.states.all(s => s.held + s.sold <= 200);",
+ "missingLawHolds":"initially, and kept by hold and buy: proven"}
+```
+
+It stays red either way: the law is false in a world the program allows. Either a rule can get there, which is a bug, or the module never said it cannot, which is a missing law. A missing law is **not free**: it must hold of the initial world and be kept by every rule, or it is refuted itself ([08](08-approval-and-anti-cheating.md)). "None found" is search, not proof.
 
 ## Three things to test
 
 | Subject | Question | Derived by the interpreter | Written by the author |
 |---|---|---|---|
 | **logic** | is the new state right? | values from types, shrinking | scenarios, properties, laws |
-| **guards** | is each refusal reached, and where is its edge? | last accepted and first refused value of every comparison | which error, and why the line is there |
+| **guards** | is each refusal reached, and where is its edge? | last accepted and first refused value of every comparison; for `@access`, one caller on each side of every clause | which error, and why the line is there |
 | **assumptions** | what breaks if the world is not as assumed? | a fault per effect the code uses | what must still hold |
 
 Plumbing is not on the list. It is generated, and its backend has a conformance suite. Because guards, flows and claims are data, the interpreter knows what nobody exercised:
@@ -151,7 +186,7 @@ law joined_by_invite(t: Trace[invite | accept | crash]) =
 
 If a parent fails, its children report `blocked by ana_accepts`: one cause, one failure.
 
-A `@given` world that breaks a law or flow is an error (`E-WORLD`).
+A `@given` world that breaks a law or flow is an error (`E-WORLD`). It sets its own module's state only; another module's world is one of that module's tests, named in `@given(stock.ten_left)`.
 
 The approval rendering of the two scenarios:
 
@@ -167,19 +202,51 @@ accept: "an invite works once, for seven days"
 
 | Handler | Controls | Faults it can inject |
 |---|---|---|
-| `clock` | `at`, `advance`; fires due `tick` and `every` rules | skew, pause |
+| `clock` | `at`, `advance`; fires what falls due: `tick`, `every`, flow deadlines, retry backoff | skew, pause |
 | store (derived from `state` and `entity`) | contents | conflict, crash at any commit boundary |
 | `net`, `http` | `reply`, `calls` | drop, delay, duplicate, reorder, partition |
 | `disk` | durable and volatile contents | torn write, lost flush |
 | scheduler | which enabled rule or task step runs next | every order the triggers allow |
+| events | delivery to each listener, in its own commit | twice, late; never out of order within one rule |
 | `crash` | where execution stops and restarts | between any two steps, inside any outside call |
 | `random`, `Id` | seed | none |
+
+A flow deadline needs no job and no test plumbing:
+
+```slg
+type Status = Open | Accepted | Expired;
+type Offer(status: Status = Open);
+state offers: Map[Token, Offer];
+
+rule take_offer(t: Token) = { offers[t].status = Accepted; }
+
+@edge(Open -> Accepted, via: take_offer)
+@edge(Open -> Expired, after: 7d)
+flow OfferLife(at: Offer.status);
+
+@given(clock.at(0s), offers[t1] -> Offer(Open))
+test lapses_by_itself = {
+  clock.advance(7d);
+  offers[t1].status -> Expired;
+  take_offer(t1) -> fail IllegalMove;
+}
+```
+
+Every edge of a flow is in the coverage report, the deadline included.
 
 The default world is simulated and seeded, so every run replays. A handler is **an assumption about the real thing**. Each ships traces to replay against it; until they pass, results resting on it say `sampled, sim: unconformed`.
 
 ## Testing a task
 
-A `rule` is atomic: nothing to interrupt. A `task` has known steps, so for **every** task the interpreter enumerates three faults with nothing written: a crash at each gap and inside each call, a lost reply, a duplicate trigger. The author writes what must survive.
+A `rule` is atomic: nothing to interrupt. A `task` is a **run** with one key, made of **attempts** made of steps. The interpreter enumerates three faults for every task with nothing written: a crash at each gap and inside each call, a lost reply, a duplicate trigger. The author writes what must survive.
+
+| Event | Finished steps | Key |
+|---|---|---|
+| crash inside an attempt | not run again; the step cut off mid-call is | same |
+| `@retry` after a failure | a new attempt **repeats every step** | same |
+| the trigger delivered twice | `@idempotent` replays a success; a failure runs again | same |
+
+So a step under `@retry` must be safe to repeat. `record` is (it stores one reply per order). Charging a card is not, unless someone else deduplicates; the compiler asks (`E-OPEN`) and the author admits it by name, with `@assume`.
 
 ```slg
 const provider: Url = url"https://pay.example.com";
@@ -192,6 +259,7 @@ rule record(order: Id[Order], r: Receipt) = { receipts[order] = r; }
 rule give_up(order: Id[Order]) = { failed.insert(order); }
 
 @on(ordered)
+@assume("the provider treats one key as one charge")
 @retry(5, backoff: 2s, on: Unreachable, exhausted: give_up)
 @idempotent(order)
 @uses(http.call, receipts.write)
@@ -205,7 +273,7 @@ law settles(t: Trace[capture | crash], o: Id[Order]) =
 
 @given(http.reply(200), net.drop(1))
 test reply_lost_after_charging = {
-  capture(Id(1)) -> fail Unreachable;
+  capture(Id(1)) -> fail Unreachable;  // a direct call is one attempt
   capture(Id(1));
   assert http.calls.size == 2 and http.calls[0].key == http.calls[1].key;
   assert receipts.size == 1;
@@ -222,12 +290,12 @@ test duplicate_trigger = {
 | Fault | Derived run | Reported when the law holds only because |
 |---|---|---|
 | crash after the call, before `record` | restart; the call repeats with the same key | the provider is assumed to dedupe by key |
-| lost reply | the same, through `@retry` | the same |
-| duplicate trigger | second run replays the first reply | `@idempotent`; without it, the second charge is the counterexample |
+| lost reply | a second attempt, every step again, same key | the same |
+| duplicate event (delivery is at least once) | second run replays the first reply | `@idempotent`; without it, the second charge is the counterexample |
 | crash between two rules | the state between them is visible to other rules | no law forbids that state |
 | `all` or `race` in a task | every completion order | no reply depends on which finished first |
 
-Crash points are enumerated up to a small trace, so this is `bounded(k)`. "The provider dedupes" stays `assumed`. Without `exhausted: give_up` the law is refuted by six unreachable replies: an order that is neither received nor failed.
+In a trace, `capture` is a whole run, retries included. Crash points are enumerated up to a small trace, so this is `bounded(k)`. The `@assume` stays `assumed`, listed in every report. Without `exhausted: give_up` the law is refuted by six unreachable replies: an order that is neither received nor failed.
 
 ## Holes run
 
@@ -273,7 +341,7 @@ A test yields an observation: replies plus effects. It is lowered to each target
 ## Limits
 
 - **Same author, same blind spot.** Law, test and logic can share one missing idea. [08](08-approval-and-anti-cheating.md) raises ambiguity; nothing invents the requirement nobody asked for.
-- Exploring all orders explodes. Traces are bounded, and reported as `bounded(k)` or `sampled`.
+- Exploring all orders explodes. Traces are bounded, and reported as `bounded(k)` or `sampled`. Starting from every allowed world finds more bugs and more false alarms: expect to write state laws that only describe where a module can be.
 - Working backwards through a hole is a solver problem: expect `unknown` beyond small state.
 - A simulated service can be wrong in the same way as the author's idea of it. Assumption coverage counts faults the handlers know; an unimagined fault is not uncovered, it is absent.
 - Handler controls beyond `clock.advance`, `net.drop` and `http.reply` are proposals.

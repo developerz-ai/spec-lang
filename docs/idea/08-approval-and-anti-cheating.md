@@ -30,6 +30,7 @@ Author text (`@why`, names) is quoted, attributed and set apart. A risky predica
  "newlyAssumed":[{"fact":"gateway ids are unique","in":"settle"}],
  "evidence":[{"law":"conserved","from":"proven","to":"sampled"}],
  "effects":{"added":["http.call"],"removed":[]},
+ "access":{"refund":{"gained":["support of the same tenant"],"lost":[],"witness":"by: #9 support"}},
  "defaults":[{"policy":"retry","was":3,"now":5,"cause":"compiler upgrade"}],
  "data":{"irreversible":[]},
  "behaviour":{"changed":3,"noDifferenceFound":2,"notSearched":0},
@@ -43,7 +44,7 @@ Dimensions: accepted inputs, replies, laws, time bounds, effects, access, inform
 | Direction is decided by implication, with variance | a stricter `@guard` is a *weaker* service; a stricter `@post` is a stronger one |
 | Undecided means weaker | unknown must cost attention |
 | A changed default is a change | behaviour can move with no source edit |
-| A rung lost is listed even when every test passes | evidence is part of the promise |
+| A lost level is listed even when every test passes | evidence is part of the promise |
 
 ## Approving
 
@@ -69,13 +70,17 @@ It is measured, not imagined. In [ImpossibleBench](https://arxiv.org/html/2510.2
 |---|---|
 | delete or edit a law, test or case | classified by meaning at `land`, whatever the text diff looks like; needs the law's owner |
 | narrow the domain: a new `@guard`, a tighter type, a smaller range | appears under `weaker` with a witness |
-| make a law vacuous: unreachable premise, empty type, `Trace` without the rule that makes state | `E-VACUOUS`: every premise must be reached, every type inhabited, every clause needed by some rejected mutant |
+| make a law vacuous: a premise no allowed world satisfies, an empty type, laws that contradict each other | `E-VACUOUS`: every premise needs a witness, every type an inhabitant, every clause a mutant it rejects |
+| shrink where traces start: add a convenient state law, a flow edge removed, a tight `@given` on the law | a state law must hold of the initial world and be kept by **every** rule of the module, or it is refuted; it lands as a law, with an origin, and other laws list it under what they rest on |
+| hide a reachable bad start as "none found" | that label is search, `bounded(k)`; the law stays red until the missing law holds |
 | special-case the example's literal | a branch on a constant that occurs only in a test is `E-SPECIAL`, shown with perturbed inputs; a signed exception clears it |
-| move logic to `foreign` or `machine` | evidence drops a rung, listed |
+| move logic to `foreign` or `machine` | the claims resting on it drop a level, listed |
+| widen `@access`, drop one in favour of a `@guard` on `by`, make a subject `fn` looser | `@access` is the only access mechanism: no clause is denied, a guard on `by` grants nothing, and the diff shows a caller who gained |
+| expose a rule by adding it to an `app` | access dimension: callers before and after |
 | raise `@within`, stretch `@retry`, drop a monitor | `weaker` |
 | change a handler so the world is kinder | handlers are protected evidence; conformance must re-pass |
 | write laws that match the bug | same-session law, test and body carry one origin and count once |
-| add `assumed` | needs the assumption owner, signed singly |
+| add `@assume` | `newlyAssumed`; needs the assumption owner, signed singly |
 | weaken a dependency | an upgrade is a guarantee diff |
 | change the authority policy | `land` uses the policy of the **base** commit |
 

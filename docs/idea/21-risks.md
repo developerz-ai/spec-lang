@@ -9,7 +9,7 @@
 | 3 | **The specification is the bug** | same author for law, test and logic; correct against the wrong law | independence of evidence, mutation of laws, underdetermination questions ([08](08-approval-and-anti-cheating.md)) | escaped defects that satisfied every law |
 | 4 | **Backend fidelity** | guarantees hold of the meaning, frameworks are only tested | parity harness, attestation per version, honest reports | a production violation of a "proven" claim |
 | 5 | **Vocabulary sprawl** | a small grammar moves errors into invented notes; two vocabularies on one entity conflict | closed note sets, errors that teach, footprints and bridges ([09](09-vocabularies.md)) | unknown-note rate stays high after two card revisions |
-| 6 | **No training data** | models do badly in unfamiliar languages | a card of about 4.7k tokens, familiar words, errors as lessons, generated corpus | ten in-prompt examples still trail TypeScript |
+| 6 | **No training data** | models do badly in unfamiliar languages | a card of about 4.9k tokens, familiar words, errors as lessons, generated corpus | ten in-prompt examples still trail TypeScript |
 | 7 | **Silent loss of hard-won behaviour** | some "mechanical" code is accumulated edge cases | replace one declaration at a time; old tests as oracles ([22](22-lifecycle.md)) | behaviour added back after a port |
 | 8 | **Gaming** | agents weaken laws or special-case examples to go green | authority by meaning, vacuity checks, a legal dispute exit | any bypass in a landing trial |
 | 9 | **Unmaintainable breadth** | "anything" invites forty backends | one backend at a time, each with conformance; kill order in the roadmap | a backend without a green parity run ships |

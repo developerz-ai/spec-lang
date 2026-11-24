@@ -22,18 +22,18 @@
 | a value, a `let`, a `const`, a parameter | never | everywhere |
 | a `var` | inside its block | never escapes; cannot be captured by a lambda |
 | a `state` | only inside a `rule`, atomically | the one shared, mutable thing above machine altitude |
-| a `mut` borrow | through one unique reference | `machine` bodies |
+| a `mut` parameter | by the rule it is passed to | marks what a rule may change; in a `machine` body it is a unique borrow |
 
 There is no `const` method and no interior mutability. `a.with(x: 1)` is a copy in meaning; the backend updates in place when the old value is dead. A cache is not mutation the author manages:
 
 ```slg
 const CRC: List[u32] = (0..<256).map(crc_entry);
 
-@memo
+@memo(size: 1000)
 fn route(a: Stop, b: Stop) -> List[Stop] = ?route;
 ```
 
-`@memo` is legal only on a pure `fn`, so the cache cannot change meaning. Its size and eviction are a policy with a default.
+`@memo` is legal only on a pure `fn`, so the cache cannot change meaning. It states its size, and it is an error together with `@alloc(none)`.
 
 ## Compile time without a keyword
 
@@ -86,7 +86,7 @@ Both exist only at machine altitude. `own`, `ref` and `mut` rule out data races 
 | Kind | Waits | Can call |
 |---|---|---|
 | `fn` | no | `fn` |
-| `rule` | no | `fn`, `rule`; it emits an `event` to start anything slower |
+| `rule` | no | `fn`, `rule`; it starts slower work with an `event` or `name.start(...)`, which runs after it commits |
 | `task` | yes | `fn`, `rule`, `task`, the outside |
 
 Calls look the same everywhere: no `await`, no future type. Concurrency inside a task is structured:
@@ -144,7 +144,7 @@ A rule is atomic and rules interleave: the whole concurrency model above machine
 fn preview(cart: Cart) -> Money[USD] = cart.lines.map(it.price * it.count).sum();
 
 @place(server)
-@access(user -> all)
+@access(signed_in(by))
 pub rule place_order(by: Id[User], cart: Cart) -> Id[Order] = ?place_order;
 ```
 

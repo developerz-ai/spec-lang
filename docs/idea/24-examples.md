@@ -78,7 +78,7 @@ entity Task(
 );
 
 @uses(Task.write)
-@guard(Task[id].owner == by else NotFound)
+@access(Task[id].owner == by)
 @post(result.done)
 pub rule complete(by: Id[User], id: Id[Task]) -> Task = {
   Task[id].done = true;
@@ -92,18 +92,26 @@ pub query mine(by: Id[User]) -> List[Task] =
   Task.filter(it.owner == by and not it.done).sort(it.due);
 
 @at("/")
-@target(ultimate.route)
 page Dashboard(me: Id[User], tasks: Live[List[Task]] = mine(me)) = column(
   heading("Today"),
   form(create, fields: (title, due)),
   list(tasks, empty: text("Nothing due"), row: check(it.title, on: it.done, toggle: complete(me, it.id))),
 );
+
+const ana: Id[User] = Id(1);
+
+test no_such_task = { complete(ana, id: Id(9)) -> fail NotFound; }
+
+@target(ultimate)
+app Todo(rules: [complete], pages: [Dashboard]);
 ```
 
 ## Webhooks: tasks, retries, signing
 
 ```slg
 use web;
+use errors;
+use jobs;
 use postly.orgs;
 use postly.posts;
 
@@ -162,7 +170,7 @@ error UrlRefused(reason: Text) = "the webhook receiver URL {reason}";
 @fix("list the org's endpoints and pass one of their ids")
 error NotFound(id: Id[Endpoint]) = "no webhook endpoint {id} in the acting member's org";
 
-fn administers(by: orgs.Member, org: Id[orgs.Org]) -> Bool = foreign ts "@postly/core#mayAdministerOrg";
+fn administers(by: Id[orgs.Member], org: Id[orgs.Org]) -> Bool = foreign ts "@postly/core#mayAdministerOrg";
 
 @why("a URL the delivery screen refuses would dead-letter every publication and never be disabled")
 @fails(UrlRefused)
@@ -180,24 +188,23 @@ fn screen(url: Url, local: Bool) -> Url = {
 
 @why("the secret is answered here once and never readable again, so no agent surface")
 @uses(Endpoint.write, random.read, clock.read, env.read)
-@guard(administers(by, org) else Forbidden)
+@access(administers(by, org) else Forbidden)
 @guard(Endpoint.filter(it.org == org).size < CAP else LimitReached(org, CAP))
 @fails(UrlRefused)
 @reveals(secret)
-@surface(http)
-pub rule add(by: orgs.Member, org: Id[orgs.Org], url: Url) -> Issued = {
+pub rule add(by: Id[orgs.Member], org: Id[orgs.Org], url: Url) -> Issued = {
   let ok = try screen(url, local: env.local);
-  let secret = random.hex(32);
-  let e = Endpoint.insert(org: org, url: ok, secret: secret, created: clock.instant());
-  return Issued(e.id, url: e.url, secret: secret);
+  let id = Id.fresh();
+  let secret = random.token();
+  Endpoint.insert(Endpoint(id, org: org, url: ok, secret: secret, created: clock.instant()));
+  return Issued(id, url: ok, secret: secret);
 }
 
 @why("revoking is the only remedy for a leaked secret")
 @uses(Endpoint.write)
-@guard(administers(by, org) else Forbidden)
+@access(administers(by, org) else Forbidden)
 @guard(id in Endpoint and Endpoint[id].org == org else NotFound(id))
-@surface(http)
-pub rule remove(by: orgs.Member, org: Id[orgs.Org], id: Id[Endpoint]) -> Id[Endpoint] = {
+pub rule remove(by: Id[orgs.Member], org: Id[orgs.Org], id: Id[Endpoint]) -> Id[Endpoint] = {
   Endpoint.remove(id);
   return id;
 }
@@ -205,13 +212,11 @@ pub rule remove(by: orgs.Member, org: Id[orgs.Org], id: Id[Endpoint]) -> Id[Endp
 query live(org: Id[orgs.Org]) -> List[Id[Endpoint]] =
   Endpoint.filter(it.org == org and it.disabled == none).sort(it.created).map(it.id);
 
-event due(post: Id[posts.Post], endpoint: Id[Endpoint]);
-
 @why("announced in the publisher's own commit: a rolled-back publish tells nobody")
 @on(posts.published)
 @uses(Endpoint.read, posts.Post.read)
 rule announce(post: Id[posts.Post]) = {
-  for e in live(posts.Post[post].org) { due.emit(post, endpoint: e); }
+  for e in live(posts.Post[post].org) { deliver.start(post, endpoint: e); }
 }
 
 type Outcome = Answered(status: Int) | Failed(error: Text);
@@ -222,7 +227,6 @@ fn delivered(o: Outcome) -> Bool = match o {
 }
 
 @why("retry and disabling are facts about one endpoint, so one delivery is one task")
-@on(due)
 @retry(8, backoff: exponential, on: Unreachable)
 @within(30s)
 @idempotent((post, endpoint))
@@ -239,11 +243,12 @@ task deliver(post: Id[posts.Post], endpoint: Id[Endpoint]) = {
     Ok(reply) => Answered(reply.status);
     Err(x) => Failed(x.text);
   }
-  record(e.id, post: post, attempt: retry.attempt, out: out, took: clock.instant() - began);
+  record(e.id, post: post, attempt: run.attempt, out: out, took: clock.instant() - began);
   if not delivered(out) { fail Unreachable; }
 }
 
 @why("the streak is stored on the row, so the next attempt reads one row, not the history")
+@idempotent((endpoint, post, attempt))
 @uses(Delivery.write, Endpoint.write, clock.read)
 rule record(endpoint: Id[Endpoint], post: Id[posts.Post], attempt: Int, out: Outcome, took: Time) -> Int = {
   if not (endpoint in Endpoint) { return 0; }
@@ -252,11 +257,11 @@ rule record(endpoint: Id[Endpoint], post: Id[posts.Post], attempt: Int, out: Out
   let streak = if delivered(out) then 0 else (mine.last.streak else 0) + 1;
   let status = match out { Answered(n) => Some(n); Failed(_) => none; }
   let error = match out { Answered(_) => none; Failed(text) => Some(text.take(500)); }
-  Delivery.insert(
-    org: e.org, endpoint: e.id, seq: mine.size + 1, webhook: "deliver", event: post.text, topic: TOPIC,
-    attempt: attempt, ok: delivered(out), status: status, took: took, error: error, streak: streak,
-    at: clock.instant(),
-  );
+  Delivery.insert(Delivery(
+    Id.fresh(), org: e.org, endpoint: e.id, seq: mine.size + 1, webhook: "deliver", event: post.text,
+    topic: TOPIC, attempt: attempt, ok: delivered(out), status: status, took: took, error: error,
+    streak: streak, at: clock.instant(),
+  ));
   if streak >= DISABLE_AFTER and e.disabled == none {
     Endpoint[e.id].disabled = Some("{streak} consecutive failures");
   }
@@ -267,7 +272,7 @@ law cap_holds(t: Trace[add | remove], org: Id[orgs.Org]) =
   t.states.all(s => s.Endpoint.filter(it.org == org).size <= CAP);
 
 law seq_counts_from_one(t: Trace[deliver | record], e: Id[Endpoint]) =
-  t.states.all(s => s.Delivery.filter(it.endpoint == e).sort(it.seq).map(it.seq) == (1..=s.Delivery.filter(it.endpoint == e).size).list);
+  t.states.all(s => s.Delivery.filter(it.endpoint == e).sort(it.seq).map(it.seq) == (1..=s.Delivery.filter(it.endpoint == e).size));
 
 @given(orgs.seeded)
 test refuses_unroutable = {
@@ -331,7 +336,7 @@ test publish_delivers_signed_to_live_endpoints = {
 }
 
 @target(ultimate)
-app Webhooks(rules: [add, remove, announce, deliver]);
+app Webhooks(rules: [add, remove, announce, deliver], http: [add, remove]);
 ```
 
 ## Game movement
@@ -368,7 +373,6 @@ test falls_one_second = {
 ```slg
 use infra;
 
-@target(k8s)
 @replicas(2..=20)
 @scale(cpu.mean(60s) > 70% -> up, cpu.mean(5min) < 30% -> down)
 @cpu(0.25..=1)
@@ -390,6 +394,9 @@ test survives_node_loss = {
   clock.advance(60s);
   assert Api.errors.rate(60s) < 0.1%;
 }
+
+@target(k8s)
+app Cluster(services: [Api], networks: [Edge]);
 ```
 
 ## PID controller
@@ -403,7 +410,6 @@ const KI: Float[1/rad] = 0.06[1/rad];
 const KD: Float[s²/rad] = 0.00001[s²/rad];
 
 @why("the motor must not overshoot into the end stop")
-@target(cortex_m4)
 @on(every(10ms))
 @within(200us)
 @alloc(none)
@@ -436,6 +442,9 @@ law settles(r: 0[rad/s]..=250[rad/s]) =
 
 law no_overshoot(r: 0[rad/s]..=250[rad/s]) =
   simulate(Speed, Motor, want: r, span: 2s).all(it.w <= r * 101%);
+
+@target(cortex_m4)
+app Drive(rules: [Speed]);
 ```
 
 ## Kernel page allocator
@@ -502,7 +511,8 @@ state cache: Map[PageId, Page];
 @guard(cache[id].has_room(key, value) else PageFull)
 @post(cache[id].lsn == result, cache[id].get(key) == Some(value))
 pub rule put(tx: TxId, id: PageId, key: Bytes, value: Bytes) -> Lsn = {
-  let lsn = wal.append(Put(tx, id, key, value));
+  wal.push(Put(tx, id, key, value));
+  let lsn = wal.end;
   cache[id].insert(key, value);
   cache[id].lsn = lsn;
   return lsn;
@@ -512,14 +522,18 @@ pub rule put(tx: TxId, id: PageId, key: Bytes, value: Bytes) -> Lsn = {
 @fails(DiskError)
 @post(wal.durable >= result)
 pub rule commit(tx: TxId) -> Lsn = {
-  let lsn = wal.append(Commit(tx));
+  wal.push(Commit(tx));
+  let lsn = wal.end;
   try wal.sync(lsn);
   return lsn;
 }
 
 @uses(cache.write, disk.write)
 @guard(cache[id].lsn <= wal.durable else WalFirst, cache[id].committed else Pinned)
-pub rule evict(id: PageId) = machine { disk.pwrite(cache.take(id), at: id * 8KiB); }
+pub rule evict(id: PageId) = machine {
+  disk.pwrite(cache[id], at: id * 8KiB);
+  cache.remove(id);
+}
 
 law durable(t: Trace[put | commit | evict | crash]) =
   t.states.all(s => s.wal.committed.all(it in recover(s.wal.disk)));

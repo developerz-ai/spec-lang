@@ -21,8 +21,20 @@ A vocabulary is a module of ordinary declarations. Each part uses a form from th
 
 A vocabulary never ships target code. Implementations belong to backends, so a vocabulary cannot smuggle a runtime in.
 
+The notes that describe a vocabulary are not core either. Apart from `@allows`, they are declared by the `vocab` vocabulary that every vocabulary `use`s:
+
 ```slg
-use data;
+@allows(kind, note) note reads(aspects: List[Aspect]) = footprint;
+@allows(kind, note) note writes(aspects: List[Aspect]) = footprint;
+@allows(kind) note explain(text: Text) = explanation;
+@allows(note) note default(policy: Policy) = default_policy;
+@allows(kind) note bridges(a: Kind, b: Kind) = bridge;
+```
+
+Then a slice of `data`:
+
+```slg
+use vocab;
 
 @allows(module)
 @reads(fields)
@@ -72,6 +84,7 @@ The optimiser cannot use a rule nobody checked, because there is no second place
 | Terminating | an expansion `fn` is pure, uses structural recursion over its own declaration and bounded folds; no `while`, no effects |
 | Stratified | an expansion may emit only core kinds and kinds from vocabularies it `use`s; the `use` graph is acyclic, so depth is bounded |
 | Hygienic | an expansion sees its own declaration and the typed interfaces of declarations it names; never bodies, never names in scope |
+| Ownership | expanded declarations land in the module that wrote the kind, so that module owns any `state` they create and only its rules write it; an expansion cannot add a writer to another module's state |
 | Stable names | generated names are derived from the declaration's identity and a role (`Note.store`, `Note.create`); no counters |
 | Typed once | expansion output is checked against the lower vocabulary for every shape the kind's parameters allow, when the package is built |
 | No ambient power | opening, viewing and checking a module run no package code outside this machinery ([08](08-approval-and-anti-cheating.md)) |
@@ -156,6 +169,8 @@ Order follows the judged ranking in [16-corpus](16-corpus.md): removable share, 
 | 7 | adapters to third parties | `adapter`, `@auth` `@limit` `@maps` | hardest to make honest; needs 4 |
 | 8 | one source, many targets | boundary types | pays only with a second backend |
 | 9 | workload shape | `service` `network`, `@replicas` `@scale` | independent and small |
+
+Every note named in this table is a `note` declaration in its vocabulary, typed and placed like `page` above ([29](29-first-vocabularies.md)); none is core unless marked so.
 
 Not early: a general UI vocabulary. Presentation code is large and was not shown to be mechanical. `game`, `kernel`, `storage`, `control` and `lang` follow the roadmap in [20](20-roadmap.md).
 

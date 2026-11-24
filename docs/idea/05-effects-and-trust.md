@@ -16,7 +16,7 @@
 
 1. **Effects are a row, checked structurally.** A `fn` has the empty row. A body that performs an effect missing from a `pub` declaration's `@uses` is an error, at once.
 2. **An effect is the static shadow of a capability.** `@uses(Invoice.read)` is legal only where the authority to read invoices is in scope. Authority is minted in one place, the `app`, so the set an app mints **is** its permission manifest, its access policy and its network policy.
-3. **Capabilities narrow, never widen.** Inside a rule exposed with `by`, store access is already restricted to what `@access` and `@tenant` allow for that caller. Absent `@access` means denied.
+3. **Capabilities narrow, never widen.** Inside a rule exposed with `by`, store access is already restricted to what `@access` and `@tenant` allow for that caller. Who may call is `@access` alone ([27-authorization](27-authorization.md)); where there is a caller and no `@access`, the call is denied.
 4. **Handlers make every program simulable.** Clock, network, disk, store and model are effects; a test swaps their handlers.
 5. **Errors are part of the interface.** No exceptions and no panics. A partial operation (`m[k]`, `a.div(b, floor)`) carries a claim; if it is not discharged the author picks `@pre`, `@guard` or `else`. The compiler never inserts a hidden check.
 6. **Absence is a fact.** `clock.read`, `random`, `alloc` and `float.native` are effects. A row without them is deterministic, allocation-free or bit-exact by a structural check.
@@ -70,6 +70,7 @@ use web;
 entity Invoice(id: Id[Invoice], org: Id[Org], total: Money[USD], @pii memo: Text[0..=500]);
 
 @uses(Invoice.read)
+@access(member(by))
 pub query unpaid(by: Id[User]) -> List[Invoice] = Invoice.filter(it.total > 0USD).sort(it.id);
 
 fn seen(t: Trace[bill | unpaid], o: Id[Org]) -> List[Step] =
@@ -129,7 +130,7 @@ rule run(org: Id[Org], q: Select) -> List[Row] = db.query(q);
 @fails(Rejected)
 @within(8s)
 @spend(tokens: 4000, cost: 0.02USD)
-@access(user -> all)
+@access(member(by))
 pub task answer(by: Id[User], q: Text) -> List[Row] = {
   let org = org_of(by);
   let raw = llm.call("One read-only SELECT answering: {q}", context: schema_of(org)) else fail Rejected;
