@@ -52,6 +52,14 @@ law sold_is_final(t: Trace[hold], n: SeatNo) =
 | examples, properties, laws | test suites for the interpreter and every backend |
 | budgets and deadlines | layout choices, monitors, deploy configuration |
 
+## Three names
+
+| Name | Is |
+|---|---|
+| **spec-lang** | the language |
+| **spec engine** | an engine for ideas: the interpreter that runs logic and tests in memory, with no real sleep, file, network or database. Time, faults and chance are inputs it controls ([06](docs/idea/06-logic-and-tests.md), [decision 006](docs/decisions/006-interpreter-first-in-rust.md)) |
+| **backends** | what turns a tested module into real software |
+
 ## Where it sits
 
 ```text
