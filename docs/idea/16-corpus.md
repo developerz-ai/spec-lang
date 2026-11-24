@@ -71,7 +71,7 @@ By filename alone, about 40% of scanner lines look statable as a type, effect or
 
 ## Five sketches in card syntax
 
-They parse; their types, names and behaviour are unchecked. Notes and kinds outside the card (`@page`, `Date`, `Token`, `blob`, `decimal`) are assumed vocabulary; `t1` is a test constant. No UI, copy, history or vendor tests: length is **not comparable** with the sizes above.
+They parse; their types, names and behaviour are unchecked. Notes and kinds outside the card (`@page`, `Date`, `Token`, `blob`, `decimal`) are assumed vocabulary; `t1` and `boss` (an admin) are test constants, and `admin` is a subject `fn` ([27](27-authorization.md)). No UI, copy, history or vendor tests: length is **not comparable** with the sizes above.
 
 ### A. Owned fact (cases 1, 3, 13)
 
@@ -86,14 +86,13 @@ state viewers: Map[Id[Item], Set[Id[User]]];
 
 @why("one current opinion per person per item; unseen and absent look alike")
 @on(http.put("/items/{item}/rating"))
-@access(user -> all)
+@access(by in viewers[item])
 @uses(ratings.write, viewers.read, clock.read)
-@guard(by in viewers[item] else NotFound)
 pub rule rate(by: Id[User], item: Id[Item], vote: Vote) = {
   ratings[Key(by, item: item)] = Rating(vote, at: now());
 }
 
-@access(user -> all)
+@access(true)
 @uses(ratings.read)
 @page(50)
 pub query mine(by: Id[User]) -> List[Rating] =
@@ -126,7 +125,7 @@ state members: Set[Text];
 @edge(Pending -> Expired, after: 7d)
 flow InviteLife(at: Invite.status);
 
-@access(anyone -> all)
+@access(true)
 @uses(invites.write, members.write)
 @guard(invites[id].token == token else NotFound)
 @guard(invites[id].status == Pending else Gone)
@@ -135,15 +134,15 @@ pub rule accept(id: Id[Invite], @secret token: Token) = {
   members.insert(invites[id].email);
 }
 
-@access(admin -> all)
+@access(admin(by))
 @uses(invites.write)
 @guard(invites[id].status == Pending else Gone)
-pub rule revoke(id: Id[Invite]) = { invites[id].status = Revoked; }
+pub rule revoke(by: Id[User], id: Id[Invite]) = { invites[id].status = Revoked; }
 
-@access(admin -> all)
+@access(admin(by))
 @uses(invites.write, random.token, mail.send)
 @guard(invites[id].status == Pending else Gone)
-pub rule resend(id: Id[Invite]) = {
+pub rule resend(by: Id[User], id: Id[Invite]) = {
   invites[id].token = random.token();
   mail.send(invites[id].email, body: invites[id].token); // after commit, at least once
 }
@@ -153,7 +152,7 @@ test pending = { assert members.size == 0; }
 
 @given(pending)
 test revoked_is_dead = {
-  revoke(Id(1));
+  revoke(boss, id: Id(1));
   accept(Id(1), token: t1) -> fail Gone;
 }
 
@@ -225,9 +224,8 @@ state docs: Map[Id[Doc], Doc];
 
 fn clash(a: Layout, b: Layout) -> Bool = a.any(p => b.any(q => q.item == p.item));
 
-@access(user -> all)
+@access(docs[id].owner == by)
 @uses(docs.write)
-@guard(docs[id].owner == by else NotFound)
 @guard(docs[id].version == base else Conflict(docs[id]))
 @guard(not docs.values.any(it.owner == by and it.id != id and clash(it.layout, layout)) else Held)
 pub rule save(by: Id[User], id: Id[Doc], base: Int, layout: Layout) -> Doc = {
@@ -268,7 +266,7 @@ fn sign(kind: Text) -> Int = if kind == "in" then 1 else if kind == "out" then -
   Item("??", amount: "1.50", day: "2026-01-02", code: "a") -> fail Unreadable,
 )
 fn entry(i: Item) -> Entry =
-  Entry(sign(i.kind) * (decimal(i.amount) else fail Unreadable), day: try parse_day(i.day), code: i.code);
+  Entry(sign(i.kind) * (decimal(i.amount) else fail Unreadable), day: parse_day(i.day), code: i.code);
 
 rule keep(link: Id[Link], found: List[Entry]) = {
   for e in found { ledger[Place(link, code: e.code)] = e; }

@@ -159,7 +159,7 @@ state spaces: Map[Asid, Space];
 @within(5us)
 @alloc(none)
 pub rule map(s: Asid, va: Page, f: own Frame, p: Perm) = machine {
-  let leaf = try spaces[s].descend(va);
+  let leaf = spaces[s].descend(va);
   leaf.store(Pte(frame: f.number, present: 1, write: p.write, nx: not p.exec));
   flush_tlb(va);
 }

@@ -31,14 +31,13 @@ The reference is the meaning. The fast version is an implementation of it for on
 ```slg
 @why("profiled: this is most of the import time")
 @fast(parse_simd, on: rust)
-@post(result.size <= text.size)
+@post(result.size <= text.size + 1)
 fn parse(text: Bytes) -> List[Field] = {
   var out: List[Field] = [];
   for part in text.split(b",") { out.push(Field(part)); }
   return out;
 }
 
-@alloc(none)
 fn parse_simd(text: Bytes) -> List[Field] = foreign rust "fast/parse.rs#parse_simd";
 
 law same(text: Bytes) = parse(text) == parse_simd(text);
@@ -56,10 +55,9 @@ For things spec-lang cannot say: a vendor library, a boot instruction, a canvas 
 ```slg
 @uses(gpu)
 @within(2ms)
-fn draw(scene: Scene) -> Frame = foreign cpp "render/frame.cpp#draw";
+rule draw(scene: Scene) -> Frame = foreign cpp "render/frame.cpp#draw";
 
-@secret
-fn sign(key: Bytes, body: Bytes) -> Bytes = foreign ts "./sign.ts#hmac";
+fn sign(@secret key: Bytes, body: Bytes) -> Bytes = foreign ts "./sign.ts#hmac";
 ```
 
 The text names a symbol (`path#name`), a linked symbol or an instruction. It never holds code: code in a string has no formatter, no linter, no tests and no debugger.

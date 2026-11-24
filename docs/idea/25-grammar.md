@@ -46,7 +46,7 @@ fail: "fail" wexpr
 ?range: sum | sum (RNG|PM) sum
 ?sum: prod | sum SIGN prod
 ?prod: un | prod (MULOP|"mod") un
-?un: pow | SIGN un | ("own"|"ref"|"mut"|"try") un
+?un: pow | SIGN un | ("own"|"ref"|"mut") un
 ?pow: post | post "^" un | post SUP
 ?post: atom | post "." NAME | post "(" args? ")" | post "[" args "]"
 args: arg ("," arg)* ","?

@@ -112,14 +112,14 @@ use sales.orders;
 use stock.items;
 
 @target(ultimate)
-app Shop(rules: [orders.place, orders.cancel, items.reserve]);
+app Shop(rules: [orders.place, orders.cancel, items.search]);
 
 @target(go)
 @place(worker)
 app Pipeline(rules: [orders.ship]);
 ```
 
-What is listed is exposed; what is not listed is unreachable from outside. Two apps over the same modules share one set of types, so nothing is synchronised by hand ([11](11-backends-and-parity.md)).
+What is listed is exposed, and needs `@access` ([27](27-authorization.md)); what is not listed, such as `reserve` above, is unreachable from outside. Two apps over the same modules share one set of types, so nothing is synchronised by hand ([11](11-backends-and-parity.md)).
 
 ## The same shape in each domain
 

@@ -88,14 +88,14 @@ state wal: Log[Record];
 state acked: Set[TxId];
 
 @uses(wal.write)
-rule put(tx: TxId, key: Bytes, value: Bytes) = { wal.append(Put(tx, key, value)); }
+rule put(tx: TxId, key: Bytes, value: Bytes) = { wal.push(Put(tx, key, value)); }
 
 @why("an acknowledged commit survives power loss")
 @uses(wal.write, disk.sync, acked.write)
 @fails(DiskError)
 pub rule commit(tx: TxId) = {
-  let lsn = wal.append(Commit(tx));
-  try wal.sync(lsn);
+  wal.push(Commit(tx));
+  wal.sync();
   acked.insert(tx);
 }
 

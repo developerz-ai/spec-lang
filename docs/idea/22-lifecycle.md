@@ -101,6 +101,26 @@ Cheap truth first. Each stage runs only if the one before is green, and only for
 
 A red stage names a kind of fault, so an agent knows where to look. An edit that changes only comments, local names or formatting stops after stage 1. An edit to one rule rebuilds that rule's targets, so a game with one changed rule does not need a full build to learn the rule is wrong.
 
+**Locally: is the logic right? In CI: does the real thing agree?**
+
+| | Local, every edit | CI, every landing |
+|---|---|---|
+| Question | is the logic correct | does the built software do the same |
+| Needs | the interpreter | databases, devices, browsers, target compilers |
+| Runs | affected tests, laws, guarantee diff | generate, compile, parity, load, screens |
+| Who waits | the agent, briefly | nobody: the agent goes on to other work |
+| A failure is | author work | a backend, a simulator, or the world |
+
+What makes the split safe is that a CI failure comes back as something local. The real run's effects are recorded and become a replay: the failing input, what the simulator answered, what the real system answered. Three results follow:
+
+| The replay shows | Then |
+|---|---|
+| the backend did something the meaning forbids | backend bug; the author's logic stands |
+| the simulator was wrong about the world | the handler is corrected, so every later local run knows it |
+| the logic assumed something false | a candidate test, red locally, fixed in the fast loop |
+
+So each surprise is paid for once, and the local world gets closer to the real one. An agent may run one parity test locally when it wants to; it is not the default.
+
 Stage 1 never replaces stage 5. Green logic with a wrong backend is a wrong program.
 
 ## Production feeds the next test

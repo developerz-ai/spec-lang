@@ -12,7 +12,7 @@
 | behaviour per source token | "behaviour" has no unit; whoever counts it decides the winner |
 | pass rate on small functions | models are near the ceiling there in familiar languages ([18](18-prior-art.md)) |
 
-**Static size is a diagnostic only.** It is reported, never ranked, and never in a headline. One measurement shows why (`o200k_base`, a proxy; counts say nothing about accuracy): [`seats.slg`](24-examples.md#seats-pure-logic-scenarios-laws) is 578 tokens, and the [language card](01-language-card.md) is 4,868 (2026-11-24, still changing). The card is as long as about eight such modules, before the first one is written. One program cannot pay for a language; a year of changes might.
+**Static size is a diagnostic only.** It is reported, never ranked, and never in a headline. One measurement shows why (`o200k_base`, a proxy; counts say nothing about accuracy): [`seats.slg`](24-examples.md#seats-pure-logic-scenarios-laws) is 578 tokens, and the [language card](01-language-card.md) is 4,884 (2026-11-24, still changing). The card is as long as about eight such modules, before the first one is written. One program cannot pay for a language; a year of changes might.
 
 ## Half one: cost per accepted change
 
@@ -67,8 +67,8 @@ SD = probes decided by 1 / (source tokens + package tokens amortised over its us
 | B | A plus equal effort: tuned docs, property tests, fault simulation, the same agent protocol where it fits | better tooling, no new semantics |
 | C | spec-lang | the proposal |
 | **D** | **the same semantics embedded in TypeScript**: same IR, interpreter, server, diagnostics, tests | **whether a language is needed** |
-| F | Dafny, pure-logic tasks only | whether an existing verified language already does it |
 | E | spec-lang IR with longer, more familiar spelling | the notation choices |
+| F | Dafny, pure-logic tasks only | whether an existing verified language already does it |
 
 **D is the decisive control.** C against A shows only that something helped. If D matches C, the value is the checker and the loop, and the right product is a library in a language models already know. Wasp went that way ([18](18-prior-art.md)). D gets the same polish as C.
 

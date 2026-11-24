@@ -24,8 +24,8 @@ layout Uart(@ro rbr: u8, @wo @at(0) thr: u8, @ro @at(5) lsr: u8) {
 @fails(WouldBlock)
 @uses(files.write, user.read)
 pub rule write(by: Pid, fd: Fd, buf: UserPtr[u8], len: u64) -> u64 = machine {
-  let src = try user.borrow(buf, len);
-  return try files[by][fd].write(src);
+  let src = user.borrow(buf, len);
+  return files[by][fd].write(src);
 }
 
 @on(irq(10))

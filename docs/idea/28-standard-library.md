@@ -228,7 +228,7 @@ Usable as calls in a test, or in `@given`. Rows marked **new** are proposals ([0
 | `now() -> Time` | `clock.read` | since the world began; the same for a whole rule |
 | `clock.at(t: Time)` | test | sets the time; fires nothing |
 | `clock.advance(d: Time)` | test | fires all due timers and deadlines in time order, then source order |
-| `http.call(url: Url, body: Data) -> Reply` | `http.call` | task only; fails `Unreachable`; a 503 is a `Reply` |
+| `http.call(url: Url, body: Data) -> Reply` | `http.call` | task only; fails `Unreachable`; a 503 is a `Reply`. **new**: further named arguments (`topic:`, `attempt:`) travel with the request and read back as fields of the `Call` |
 | `http.reply(status: Int, body: Data = none)` | test | the answer from now on |
 | `http.calls: List[Call]` | test | `url body key at`, in order, whether or not the reply arrived |
 | `net.drop(n: Int, leg: Leg = reply)` | test | loses the next `n`; `request` **new** |

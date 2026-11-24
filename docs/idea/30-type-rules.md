@@ -84,12 +84,11 @@ T-Var     Γ(x) = T @ m ,  m ≠ moved                    ⊢ x ⇒ T (and T whe
 T-Lit     n : n..=n      10ms : Time      19.99USD : Money[USD]      9.81[u] : Float[u]
 T-Call    Σ(f) = (x_i: T_i) -> R ! ε_f;F_f  with @pre P, @post Q
           e_i ⇐ T_i[e/x]      O += { Φ ⊨ P[e/x] }      Φ += Q[e/x, call/result]
-          F_f ≠ ∅  requires  try | else | try_call | a test arrow        else E-FAIL-UNHANDLED
+          F_f joins the caller's F, unless `else`, try_call or a test arrow handles it here
           ⊢ f(e...) ⇒ R[e/x] ! ε_f ∪ ε_args ; F as handled
 T-Index   m ⇒ Map[K, V] ,  k ⇐ K
           Φ ⊨ k in m is an obligation of code INFO only: if open, F += Missing     ⊢ m[k] ⇒ V
 T-Else    e ⇒ T ! F ,  d ⇐ T (or d = fail E)          ⊢ e else d ⇒ T ! F minus {Missing, none} (plus E)
-T-Try     e ⇒ T ! F                                    ⊢ try e ⇒ T ! F      (propagates; marks the point)
 T-Fail    E names an error; a new name declares itself ⊢ fail E ⇐ any T ! {E}
 T-If      c ⇐ Bool ;  a under Φ ∧ c ;  b under Φ ∧ ¬c ;  result is the join of both branches
 T-Is      e ⇒ T ,  p ⇐ T ⊣ Γ';φ                       ⊢ e.is(p) ⇒ Bool ; where it holds, Γ' and φ are in scope
@@ -170,7 +169,7 @@ E-Sub     an expression's row is the union of its parts' rows
 E-Kind    fn    ε ⊆ { s.read }                     "pure" for @memo and the build means ε = ∅
           rule  wait ∉ ε ; an outside effect in a rule is a send after commit and has type Unit
           task  any ε
-          law, @access, @guard, @pre, @post:  ε ⊆ { s.read }                     E-EFFECT-KIND
+          law:  ε ⊆ { s.read }.   @access, @guard, @pre, @post:  ε ⊆ { s.read, clock.read }   E-EFFECT-KIND
 E-Call    a rule calls fn and rule; a task calls fn, rule, task; t.start(args) is legal in both
 ```
 
@@ -186,7 +185,8 @@ N-Use               n ∈ Σ  (E-NOTE-UNKNOWN) ;  kind(d) ∈ allows(n)  (E-NOTE
 N-Once              a note appears once per declaration unless declared repeatable
                     (@guard, @edge, @access clauses, @retry)                           E-NOTE-DUP
 N-Clash             pairs declared contradictory, e.g. @memo with @alloc(none)        E-NOTE-CLASH
-N-Access            a declaration with a caller has @access; one without has none     E-ACCESS-MISSING / -ORPHAN
+N-Access            a declaration someone can call in to (a calling trigger, an app surface) has @access;
+                    one with no `by` and no way in has none                          E-ACCESS-MISSING / -ORPHAN
 ```
 
 ```text
@@ -229,7 +229,7 @@ Ev-Emit      e.emit(v) inside a rule appends to E; nothing is visible before R-C
 Ev-Deliver   an item (listener, v) of Q runs the listener as its own R-step, then leaves Q
 Ev-Again     a delivered item may be delivered once more (at least once)
 Ev-Order     items of one commit reach one listener in emission order; nothing else is promised
-Tm-Advance   clock.advance(d): now += d; every `every`, `tick` and flow deadline falling due enters Q in time order
+Tm-Advance   clock.advance(d): now += d; every `every`, `tick`, flow deadline and retry backoff falling due enters Q in time order
 ```
 
 **Tasks.** A run is `(key, task, args, attempt, journal)`. A *step* is a rule call, an outside call, a clock or random read, or an `all`/`race` block; each has index `i` in program order.
@@ -288,17 +288,17 @@ Ts-Prop     parameters are generated from types and claims; failures are shrunk 
 | types | `E-TYPE-MISMATCH` `E-TYPE-AMBIG` `E-TYPE-ARITY` `E-MATCH-MISSING` `E-MATCH-DEAD` |
 | units | `E-UNIT-MISMATCH` `E-UNIT-ROUND` |
 | places | `E-PLACE-MOVED` `E-PLACE-ALIAS` `E-PLACE-ESCAPE` `E-PLACE-CAPTURE` `E-PLACE-ASSIGN` |
-| effects | `E-EFFECT-KIND` `E-EFFECT-UNDECLARED` `E-FAIL-UNHANDLED` `E-FAIL-UNDECLARED` `E-LABEL-FLOW` |
+| effects | `E-EFFECT-KIND` `E-EFFECT-UNDECLARED` `E-FAIL-UNDECLARED` `E-LABEL-FLOW` |
 | access, flows | `E-ACCESS-MISSING` `E-ACCESS-ORPHAN` `E-FLOW-MOVE` `E-FLOW-EDGE` |
 | claims | `E-CLAIM` `E-CLAIM-PRE` `E-CLAIM-POST` `E-LAW` `E-BUDGET` (each: `refuted`, or `open` under `release`) |
 | holes, choices | `E-HOLE` `E-HOLE-TYPE` `E-OPEN` |
 
-Every diagnostic carries the code, the span, the failed judgment, a counterexample where one exists, and at most one fix.
+These refine the list in [07](07-agent-loop.md), which stays the one a model is shown: a code here is reported under its family there (`E-NAME-*` and `E-KIND-UNKNOWN` as `E-NAME`, `E-NOTE-*` as `E-NOTE`, `E-ACCESS-*` as `E-ACCESS`, `E-STATE-FOREIGN` as `E-OWNER`, `E-USE-CYCLE` as `E-CYCLE`, the types, units, places, effects, flows and claims families as `E-TYPE`), with the finer code as a field. Every diagnostic carries the code, the span, the failed judgment, a counterexample where one exists, and the fixes [07](07-agent-loop.md) allows.
 
 ## Limits
 
 - **Not yet two-team precise:** label joins across `match` arms, cost composition for `O-Budget`, and the expansion contract of vocabulary kinds are only outlined.
-- **`E-FAIL-UNHANDLED` versus implicit `Missing`.** Index failures propagate silently while call failures must be marked: one rule too many, and the least settled choice here.
+- **Failures pass up without a mark.** A call site does not show that it can fail; only the signature does. That is shorter to write and easier to miss.
 - **Second-class borrows** (`M-Borrow`) remove lifetime inference at the price of expressiveness: an iterator holding a reference cannot be written without `own` or an index.
 - **Fact killing on state writes** is by syntactic path: sound and coarse. Joins drop claims.
 - **`Ts-When` runs to quiescence**, hiding interleavings between a call and its deliveries; only traces explore those.

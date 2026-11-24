@@ -1,6 +1,6 @@
 <h1 align="center">spec-lang</h1>
 
-<p align="center"><strong>Executable pseudocode for AIs.</strong></p>
+<p align="center"><strong>Executable pseudocode for AIs: testable at once, compilable into real software.</strong></p>
 
 <p align="center">The AI writes logic and tests. The interpreter runs them at once. The compiler generates the software.</p>
 
@@ -52,6 +52,46 @@ law sold_is_final(t: Trace[hold], n: SeatNo) =
 | examples, properties, laws | test suites for the interpreter and every backend |
 | budgets and deadlines | layout choices, monitors, deploy configuration |
 
+## Where it sits
+
+```text
+idea (human or AI) -> spec-lang (AI) -> software                -> machine code, or an
+many meanings         one meaning       TS, Ruby, Python, Rust,    interpreter such as
+                                        Swift, SQL, frameworks     Ruby, Python or a browser
+```
+
+The aim is the highest level that still has exactly one meaning. The first arrow is where guessing happens, so tests, laws, the compiler's questions and human approval all sit there. The later arrows are deterministic. A backend may be compiled or interpreted; either way it runs the same tests and refuses what it cannot keep.
+
+## The point: a shorter dev cycle
+
+| Today | Designed here |
+|---|---|
+| spread a rule over schema, service, route, client, job, tests | write it once |
+| compile, boot, migrate, seed, click | run the logic; nothing is started |
+| `sleep`, poll, retry flaky tests | simulated time; same seed, same result |
+| agents queue for one database, one compiler, one port | every test has its own world, on any core, in any order |
+| "something failed in CI" | the stage says whose fault it is: logic, backend or world |
+| an error message | the failing input and a checked edit |
+| format, lint, guard scripts | one format; most rules are types |
+
+### Slim locally, heavy in CI
+
+```text
+ agent's machine            CI                           production
+ one binary            ->   toolchains, databases,  ->   the built software
+ logic + tests              devices, browsers
+ no services                same tests, real systems
+      ^                          |                            |
+      |   a replay, run locally  |    a candidate test        |
+      +--------------------------+----------------------------+
+```
+
+No package install, container, database, browser or compiler where the agent works. The agent gets the logic right in a short loop and moves on; CI checks that the real thing agrees. When it does not, CI sends back a replay: the failing input and what the real system answered, as a red test the agent runs locally.
+
+**The bet:** the bugs worth an agent's time are mostly in the logic: a missed edge, a wrong guard, two things racing, a rule nobody wrote down. If so, most are found before anything is built. Backend, hardware and look-and-feel bugs remain, and how the two divide is the first thing to measure ([19](docs/idea/19-density-and-experiments.md)).
+
+Fewer lines is the means. None of this has been timed: the design goal is feedback in milliseconds for a module, and a model's own thinking time will still be most of the wait. Real databases, devices and screens are tested after the logic is green, and stay as slow as they are ([06](docs/idea/06-logic-and-tests.md), [22](docs/idea/22-lifecycle.md)).
+
 **The short analogy:** TypeScript is a front end whose back end is JavaScript. spec-lang is meant to be a front end with many back ends, frameworks included, and the logic and tests live in the front end. The difference that makes it harder: TypeScript's meaning is JavaScript's, while every spec-lang backend has to match spec-lang's meaning and is tested against it.
 
 ## Examples
@@ -95,7 +135,7 @@ test sent_twice_moves_once = {
 Delete the `SameAccount` guard and nothing breaks here, because the two assignments still cancel out. Write them as `let x = accounts[from].balance` and `let y = accounts[to].balance` first, and the law catches it:
 
 ```text
-LAW.REFUTED  conserved
+E-LAW  conserved
   input     transfer(r1, from: a, to: a, amount: 1)   balance 1
   expected  total 1
   got       total 2
@@ -122,7 +162,8 @@ pub query mine(by: Id[User]) -> List[Task] =
   Task.filter(it.owner == by and not it.done).sort(it.title);
 
 @at("/")
-page Today(me: Id[User], tasks: Live[List[Task]] = mine(me)) = column(
+@access(by in User)
+page Today(by: Id[User], tasks: Live[List[Task]] = mine(by)) = column(
   form(create, fields: [title]),
   list(tasks, empty: text("Nothing due"), row: check(it.title, on: it.done)),
 );
@@ -181,7 +222,8 @@ pub rule alloc() -> own Frame = machine {
   return frame_at(word * 64 + bit);
 }
 
-law never_shared(t: Trace[alloc | release]) = t.live(Frame).distinct();
+law never_shared(t: Trace[alloc | release]) =
+  t.states.all(s => s.live(Frame).distinct().size == s.live(Frame).size);
 ```
 
 Same language, same laws, same tests, down to the bits. `own` makes a double free a type error.
@@ -195,6 +237,20 @@ fn price(base: Money[USD], early: Time) -> Money[USD] = ?price;
 
 A strong model writes the types, the cases and the laws. A small model fills `?price`, and the cases say whether it is right. More: [whole programs](docs/idea/24-examples.md), [one program per domain](docs/idea/15-domain-tour.md).
 
+## Platform independent
+
+A module names no language, framework, database, operating system or chip. Integers, text, time, order and rounding mean the same everywhere, so the logic and its tests run unchanged in the interpreter on any machine, and on every backend that keeps the meaning. Only three places may know a platform:
+
+| Place | Knows |
+|---|---|
+| `app` | which targets, places and handlers |
+| `foreign` | one symbol in one language, behind a contract |
+| `machine` | layout, memory order, registers |
+
+The same goes for the author's machine: macOS, Linux or Windows, one binary and the source. Tests use no real files or clock, so paths, line endings and time zones cannot change a result. Building for a platform still needs that platform's tools, such as a Mac for iOS, and those live in the build pool. The interpreter's own suite has to pass on all three systems from its first release for this to hold.
+
+Independent meaning does not promise equal speed or equal reach: a backend that cannot keep a guarantee refuses to build, and a phone screen is still not a console screen.
+
 ## The ideas
 
 Design goals. None has been demonstrated.
@@ -204,7 +260,7 @@ Design goals. None has been demonstrated.
 3. **Languages are intermediate.** TypeScript, Rust, C++, Swift and SQL are build output, as assembly is to C. Frameworks are backends: [Ultimate](https://github.com/developerz-ai/ultimate) first, [anygame](https://github.com/developerz-ai/anygame-engine) once it has an engine to target.
 4. **Four altitudes.** Declare, define, machine, foreign: one type system from a form to an interrupt handler, so there is no wall.
 5. **No model in the build.** Models write source; compilation is deterministic.
-6. **Evidence is never rounded up.** Proven, bounded, sampled, assumed: every claim says which, and what it trusts.
+6. **Evidence is never rounded up.** Proven, bounded, sampled, assumed, stated: every claim says which, and what it trusts.
 7. **Errors teach.** The failing input, the checked edit, the one line of the card you need, so that a small model might be productive.
 8. **Minimal and sufficient.** If two behaviours are possible, the compiler asks instead of guessing.
 
@@ -236,13 +292,13 @@ Rule of thumb: if the same rule would be written in three or more places, or get
 
 | Finding | Caveat |
 |---|---|
-| One real feature (webhooks in Ultimate's example app): 6,705 tokens of TypeScript, 2,510 of spec-lang, **2.7x** | one feature, no UI, parsed but never run ([12](docs/idea/12-frameworks.md)) |
+| One real feature (webhooks in Ultimate's example app): 6,705 tokens of TypeScript, 2,509 of spec-lang, **2.7x** | one feature, no UI, parsed but never run ([12](docs/idea/12-frameworks.md)) |
 | Two models given only the card wrote 20 modules: **16 parsed first try** | syntax only; the first author marked 183 lines as guesses. A small model's later 10 of 10 is not comparable: its card held near-answers ([02](docs/idea/02-syntax.md)) |
 | In a private corpus, one opinion per person per item took about 2k lines in about 50 files; 10 to 20% of the production code was judged essential | one reader's judgement, one organisation ([16](docs/idea/16-corpus.md)) |
 | Maths symbols often cost more tokens than words, and only `² ³ ± °C` cost fewer | tokens are not accuracy; no current Claude tokenizer was measured ([02](docs/idea/02-syntax.md)) |
 | Simulations, codecs and kernels are expected to barely shrink | unmeasured; there the gain would be checking, not size ([14](docs/idea/14-systems.md), [16](docs/idea/16-corpus.md)) |
 
-Where to go next: [structure a program](docs/idea/26-program-structure.md) · [who may do what](docs/idea/27-authorization.md) · [standard library](docs/idea/28-standard-library.md) · [first vocabularies](docs/idea/29-first-vocabularies.md) · [type rules](docs/idea/30-type-rules.md) · [a little backend code](docs/idea/31-dropping-down.md) · [build layout](docs/idea/32-build-layout.md)
+Where to go next: [structure a program](docs/idea/26-program-structure.md) · [who may do what](docs/idea/27-authorization.md) · [standard library](docs/idea/28-standard-library.md) · [first vocabularies](docs/idea/29-first-vocabularies.md) · [type rules](docs/idea/30-type-rules.md) · [a little backend code](docs/idea/31-dropping-down.md) · [build layout](docs/idea/32-build-layout.md) · [algorithms](docs/idea/33-data-structures-and-algorithms.md) · [hygiene](docs/idea/34-hygiene.md)
 
 The first milestone tries to kill the idea: the same semantics embedded in TypeScript is the control. If the bespoke language does not beat it, we ship the embedded form ([19](docs/idea/19-density-and-experiments.md), [20](docs/idea/20-roadmap.md)).
 

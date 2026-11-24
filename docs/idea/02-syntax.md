@@ -26,7 +26,7 @@ The [card](01-language-card.md) is the syntax. This file is the argument for it.
 
 ## Grammar facts
 
-[The grammar](25-grammar.md) builds in Lark's strict mode as LALR(1) with zero conflicts and a lexer that needs no parser state. 31 reserved words, 41 nonterminals. Strict mode finds conflicts, not wrong trees: it missed that `x²` lexed as one name (fixed).
+[The grammar](25-grammar.md) builds in Lark's strict mode as LALR(1) with zero conflicts and a lexer that needs no parser state. 30 reserved words, 41 nonterminals. Strict mode finds conflicts, not wrong trees: it missed that `x²` lexed as one name (fixed).
 
 The same file can drive constrained decoding. Mask with the complete base grammar, never with a vocabulary's closed list unless that list is complete: [a 2026 preprint](https://arxiv.org/abs/2606.21619) reports that constrainers rejecting valid programs cut functional correctness by up to 97% (read in summary only).
 
@@ -69,11 +69,11 @@ Extra tokens for the symbol inside `x _ y`, or whole-expression counts where sho
 
 spec-lang is 32 to 41% below Ruby. Without tests and contracts the gap is 16 to 25%. Maths saves 5% of the characters and costs more tokens on seven of nine.
 
-**Caveats.** One program, chosen and written on both sides by the language's designer. A library could shorten Ruby's generators and trace loop. Ruby needs no card: ours is 4,868 o200k tokens on 2026-11-24, so at 369 saved per module of this size it takes fourteen modules to break even, before prompt caching and any repair. The [library reference](28-standard-library.md), if loaded whole, is another 5,000. [19](19-density-and-experiments.md) owns the real comparison.
+**Caveats.** One program, chosen and written on both sides by the language's designer. A library could shorten Ruby's generators and trace loop. Ruby needs no card: ours is 4,884 o200k tokens on 2026-11-24, so at 369 saved per module of this size it takes fourteen modules to break even, before prompt caching and any repair. The [library reference](28-standard-library.md), if loaded whole, is another 5,000. [19](19-density-and-experiments.md) owns the real comparison.
 
 ### Layout
 
-Text transforms of the eight programs in [24](24-examples.md) on 2026-11-24 (5,065 o200k tokens), change against the canonical form, range over nine.
+Text transforms of the eight programs in [24](24-examples.md) on 2026-11-24 (5,073 o200k tokens), change against the canonical form, range over nine.
 
 | Variant | Change |
 |---|---|

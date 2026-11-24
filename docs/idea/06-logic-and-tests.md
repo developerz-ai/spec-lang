@@ -73,8 +73,9 @@ From `@given`, or from **any world its types, flows and laws allow**. So `Trace[
 `reached` above names calls that lead from the initial world to the start. When search finds none, the counterexample says so and offers the missing law:
 
 ```slg
-state held: Int = 0;
-state sold: Int = 0;
+type Count = Int where self >= 0;
+state held: Count = 0;
+state sold: Count = 0;
 
 @guard(held + sold < 200 else Full)
 rule hold() = { held = held + 1; }
@@ -295,7 +296,7 @@ test duplicate_trigger = {
 | crash between two rules | the state between them is visible to other rules | no law forbids that state |
 | `all` or `race` in a task | every completion order | no reply depends on which finished first |
 
-In a trace, `capture` is a whole run, retries included. Crash points are enumerated up to a small trace, so this is `bounded(k)`. The `@assume` stays `assumed`, listed in every report. Without `exhausted: give_up` the law is refuted by six unreachable replies: an order that is neither received nor failed.
+In a trace, `capture` is a whole run, retries included. Crash points are enumerated up to a small trace, so this is `bounded(k)`. The `@assume` stays `assumed`, listed in every report. Without `exhausted: give_up` the law is refuted by five unreachable replies: an order that is neither received nor failed.
 
 ## Holes run
 
@@ -311,6 +312,112 @@ In a trace, `capture` is a whole run, retries included. Crash points are enumera
 Where the later expectations are finite or solvable, the runtime works backwards to the value or write that would make each test pass. So the failing tests *are* the hole's specification. Where it cannot, it says `needs: unknown`.
 
 This splits the work by strength. A strong model or a person writes types, guards, laws and tests and leaves holes. A small, cheap model fills them: each is one expression, with a type, allowed effects, live values, the required result, and an error that carries the edit ([07](07-agent-loop.md)). Filling is an ordinary edit, the filler's role cannot touch laws or tests ([08](08-approval-and-anti-cheating.md)), and the compiler never calls a model. Whether it pays is an arm of the experiments ([19](19-density-and-experiments.md)).
+
+## Nothing to wait for
+
+A logic test touches no database, file, network, browser, port or real clock. The world is values in memory, so what usually makes a suite slow or flaky is absent.
+
+| Cost today | Here |
+|---|---|
+| start a database, migrate, truncate between tests | the world is a value; each test gets its own copy at no cost |
+| one shared fixture, so tests take turns | nothing shared: any number of cores, any order |
+| several agents on one checkout clear each other's data | each has its own worlds; no lock, no port, no build folder |
+| `sleep(2)` and poll until it happens | `clock.advance(7d)` happens at once |
+| timeouts tuned for a slow machine | time moves only when the test says |
+| a failure that comes and goes | same seed, same order, same result; retrying tells nothing new |
+| start a browser or an engine | not needed until the parity stage ([22](22-lifecycle.md)) |
+| compile and link first | the interpreter reads source |
+
+```slg
+@given(clock.at(0s), invites[t1] -> Pending(7d))
+test a_week_passes = {
+  clock.advance(7d);
+  accept(bob, t: t1) -> fail Gone;
+  clock.advance(400d);
+  accept(bob, t: t1) -> fail Gone;
+}
+```
+
+Over a year of simulated time, no waiting.
+
+**Linting mostly disappears.** There is one format, so nothing to argue about. Unused names, missing cases, unit mistakes, unlisted effects, floats for money and writes to another module's state are type errors. House rules are notes in a vocabulary, checked in the same pass as types, per declaration and in parallel.
+
+| Check | Runs on | Parallel by |
+|---|---|---|
+| format | one file | file |
+| names, types, effects, house rules | one declaration and the contracts it uses | declaration |
+| tests | one world each | test |
+| property cases | seeds | seed range |
+| bounded search | starting states | state range |
+| proof | one claim | claim |
+
+A failing case found by any core is the same case on every core, because results do not depend on which finished first: the smallest by a fixed order is reported.
+
+## The whole world is a value
+
+State, clock, random source, disk, network and queues live in memory. The interpreter has no way to open a real file or socket.
+
+| Because it is a value | You get |
+|---|---|
+| copy | try several bodies from the same moment, and see where they differ |
+| rewind | step back to before the failure and change one thing |
+| fork | `@given(other_test)` starts from where another test ended |
+| save | a failure is a small file that replays the same anywhere |
+| no reach | running logic an agent has just written cannot touch the machine |
+| faults are data | a full disk, a torn write or a lost reply is one line, at every step |
+
+```slg
+law survives_power_loss(t: Trace[put | commit | crash]) =
+  t.states.all(s => s.acked.all(tx => recover(s.wal.disk).contains(Commit(tx))));
+```
+
+A program that uses files still says so: `@uses(disk.write)`. While testing, a handler answers; after compiling, the real disk does. A fake disk that never fails would make everything look safe, so a handler states its faults, and what real hardware shows in CI goes back into it ([22](22-lifecycle.md)).
+
+## Small machines
+
+Agents need big machines today mostly for the tools around the logic: compilers, databases, browsers, containers, package folders, build caches. Writing and testing logic needs none of them.
+
+| Where | Runs | Needs |
+|---|---|---|
+| the agent's machine | interpreter, tests, checker | memory for the program and its worlds; no services |
+| a shared build pool | generate, compile, parity | the heavy tools, once, for everyone |
+| CI | the same pool | as today |
+
+**Slim locally.** One binary and the source. No package install, database, container, browser, SDK or target compiler; vocabularies and contracts are data, fetched by hash. A fresh machine is ready when the binary is there.
+
+| | Local | CI | Production |
+|---|---|---|---|
+| Installed | one binary | every toolchain and service | the built software |
+| Runs | logic | generate, compile, parity, load | the real thing |
+| Finds | wrong logic | wrong backend, wrong simulator | wrong idea of the world |
+| Sends back | - | a local replay | a candidate test |
+
+The exception is work that needs eyes or hardware: screens, games, devices. Then the one target being looked at is installed, or watched from a preview the build pool serves.
+
+So many agents can share one small machine, and the heavy tools are provisioned for landings and not for every agent. Solvers and deep searches are the exception: they use all the memory and cores they get, so they run in the pool, under a counted budget.
+
+## Ask the logic
+
+Prolog runs a rule backwards: given the answer, it finds what would produce it. That is too unpredictable for program code and exactly right for checking. So the language has no backtracking, and the tools do.
+
+```text
+$ spec-lang test --find "buy(a, n) and buy(b, n) both succeed, a != b"
+none in 4 steps from any allowed world        bounded(4)
+
+$ spec-lang test --find "buy(u, n) fails NotHeld after hold(u, n) succeeded"
+found   hold(ana, 1) at 0s;  clock.advance(10min);  buy(ana, 1)
+        keep as test?   edit: add test hold_can_lapse
+```
+
+| Question | Answered by |
+|---|---|
+| how can this state be reached | search over traces |
+| which input makes this true | the solver, else generated cases |
+| which value at `?hole` passes these tests | the same, from the failing side |
+| who can call this, and why | `@access` as rules over facts, in the manner of Datalog: it always finishes |
+| what else fits the laws | two worlds the laws allow and the author may not have meant ([08](08-approval-and-anti-cheating.md)) |
+
+"None" always says how far it looked. The question is written in the language's own expressions; the sentences above are its rendering. `--find` is a proposal.
 
 ## Run almost nothing
 
@@ -340,6 +447,10 @@ A test yields an observation: replies plus effects. It is lowered to each target
 
 ## Limits
 
+- **Small machines are a design argument.** No interpreter exists to weigh. Worlds with much data cost memory, and a model running locally would dwarf all of this.
+- **Fast checks do not make the model faster.** Most of an agent's time is its own turns ([07](07-agent-loop.md)). Instant tests help by allowing more tries per turn and by never queueing agents behind one another; how much is unmeasured.
+- **What is simulated can be wrong.** A real database locks, a real disk lies, a real network stalls. Those bugs wait for the parity stage, which keeps its database, files and browser, and stays slow.
+- **Search grows faster than cores.** Interleavings multiply; twelve cores buy about one more step of depth, not a different class of answer.
 - **Same author, same blind spot.** Law, test and logic can share one missing idea. [08](08-approval-and-anti-cheating.md) raises ambiguity; nothing invents the requirement nobody asked for.
 - Exploring all orders explodes. Traces are bounded, and reported as `bounded(k)` or `sampled`. Starting from every allowed world finds more bugs and more false alarms: expect to write state laws that only describe where a module can be.
 - Working backwards through a hole is a solver problem: expect `unknown` beyond small state.
