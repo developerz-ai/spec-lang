@@ -64,6 +64,22 @@ law sold_is_final(t: Trace[hold], n: SeatNo) =
 | an error message | the failing input and a checked edit |
 | format, lint, guard scripts | one format; most rules are types |
 
+### Slim locally, heavy in CI
+
+```text
+ agent's machine            CI                           production
+ one binary            ->   toolchains, databases,  ->   the built software
+ logic + tests              devices, browsers
+ no services                same tests, real systems
+      ^                          |                            |
+      |   a replay, run locally  |    a candidate test        |
+      +--------------------------+----------------------------+
+```
+
+No package install, container, database, browser or compiler where the agent works. The agent gets the logic right in a short loop and moves on; CI checks that the real thing agrees. When it does not, CI sends back a replay: the failing input and what the real system answered, as a red test the agent runs locally.
+
+**The bet:** the bugs worth an agent's time are mostly in the logic: a missed edge, a wrong guard, two things racing, a rule nobody wrote down. If so, most are found before anything is built. Backend, hardware and look-and-feel bugs remain, and how the two divide is the first thing to measure ([19](docs/idea/19-density-and-experiments.md)).
+
 Fewer lines is the means. None of this has been timed: the design goal is feedback in milliseconds for a module, and a model's own thinking time will still be most of the wait. Real databases, devices and screens are tested after the logic is green, and stay as slow as they are ([06](docs/idea/06-logic-and-tests.md), [22](docs/idea/22-lifecycle.md)).
 
 **The short analogy:** TypeScript is a front end whose back end is JavaScript. spec-lang is meant to be a front end with many back ends, frameworks included, and the logic and tests live in the front end. The difference that makes it harder: TypeScript's meaning is JavaScript's, while every spec-lang backend has to match spec-lang's meaning and is tested against it.
