@@ -1,0 +1,46 @@
+# The platformer POC gate. It runs pocs/platformer/bin/check and nothing else, so green locally is green here.
+name: platformer
+
+on:
+  pull_request:
+    paths: ["pocs/platformer/**", "src/**", "libs/**", "docs/idea/25-grammar.md", ".github/workflows/platformer.yml"]
+  push:
+    branches: [main]
+    paths: ["pocs/platformer/**", "src/**", "libs/**", "docs/idea/25-grammar.md", ".github/workflows/platformer.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platformer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.5
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          components: clippy, rustfmt
+      - uses: ruby/setup-ruby@78c62f2208e480ce3d5ae4dfd9b9e181acf48b63 # v1.344.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: false
+      - name: C++ and C toolchain (cmake, g++, gcc from the runner image)
+        run: cmake --version && g++ --version && gcc --version
+      - name: clang-format, pinned (the C++ printer's output depends on its version)
+        run: uv tool install clang-format==22.1.8 && clang-format --version
+      - name: raylib build deps, a virtual X server and software GL
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxinerama-dev libxcursor-dev libxrandr-dev libxi-dev libgl-dev libgl1-mesa-dri xvfb
+      - name: setup
+        run: pocs/platformer/bin/setup
+      - name: gate
+        run: pocs/platformer/bin/check

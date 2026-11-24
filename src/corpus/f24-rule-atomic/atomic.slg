@@ -1,0 +1,149 @@
+// f24-rule-atomic pins: a rule is atomic. A failure in the middle of a body
+// (an explicit `fail`, a missing key, a `mod 0`, `x else fail E`, a failure
+// inside a loop after several rounds) undoes every earlier write of that
+// call, to every state, and drops the `out.line` lines it had buffered; lines
+// and writes of earlier, successful calls stay.
+
+use cli;
+
+state stock: Map[Text, Int];
+state shipped: List[Text];
+state orders: Int = 0;
+
+@why("stock arrives in whole lots")
+@uses(stock.write, out.write)
+@guard(qty > 0 else NotPositive)
+pub rule receive(item: Text, qty: Int) = {
+  stock[item] = (stock[item] else 0) + qty;
+  out.line("received {qty} {item}");
+}
+
+@why("an order ships whole or not at all: no half-picked shelves, no notice for a parcel that never left")
+@uses(stock.write, shipped.write, orders.write, out.write)
+pub rule ship(items: List[Text]) -> Int = {
+  orders = orders + 1;
+  out.line("order {orders}");
+  for item in items {
+    let have = stock[item] else fail Unknown;
+    if have == 0 { fail OutOfStock; }
+    stock[item] = have - 1;
+    shipped.push(item);
+    out.line("picked {item}");
+  }
+  out.line("shipped {items.size}");
+  return orders;
+}
+
+@why("shares are whole numbers; a split that cannot be made changes nothing")
+@uses(stock.write, out.write)
+pub rule split(item: Text, ways: Int) -> Int = {
+  let have = stock[item];
+  out.line("splitting {item}");
+  stock.remove(item);
+  let each = have - have mod ways;
+  stock["{item}/{ways}"] = each;
+  return each;
+}
+
+@why("an audit that writes its mark first and then finds the fault leaves no mark")
+@uses(stock.write, orders.write, out.write)
+pub rule audit(limit: Int) = {
+  orders = 0;
+  stock["audited"] = 1;
+  out.line("audit begins");
+  if stock.values.sum() > limit { fail OverLimit; }
+  out.line("audit ok");
+}
+
+@given(stock -> Map("nut" -> 2, "bolt" -> 1, "cog" -> 0), orders -> 7)
+test a_shelf = {
+  assert shipped == [];
+}
+
+@given(a_shelf)
+test a_good_order_ships_whole = {
+  ship(["nut", "bolt", "nut"]) -> 8;
+  assert stock == Map("nut" -> 0, "bolt" -> 0, "cog" -> 0);
+  assert shipped == ["nut", "bolt", "nut"] and orders == 8;
+  assert out.text == "order 8\npicked nut\npicked bolt\npicked nut\nshipped 3\n";
+}
+
+@given(a_shelf)
+test a_fail_after_writes_undoes_them = {
+  ship(["nut", "bolt", "cog"]) -> fail OutOfStock;
+  assert stock == Map("nut" -> 2, "bolt" -> 1, "cog" -> 0);
+  assert shipped == [] and orders == 7;
+  assert out.text == "";
+}
+
+@given(a_shelf)
+test a_missing_key_late_in_a_loop_undoes_the_rounds_before = {
+  ship(["nut", "nut", "gear"]) -> fail Unknown;
+  assert stock["nut"] == 2 and shipped == [] and orders == 7 and out.text == "";
+  ship(["nut", "nut", "nut"]) -> fail OutOfStock;
+  assert stock["nut"] == 2 and shipped == [] and orders == 7 and out.text == "";
+}
+
+@given(a_shelf)
+test earlier_calls_keep_their_writes_and_lines = {
+  ship(["nut"]) -> 8;
+  ship(["bolt", "bolt"]) -> fail OutOfStock;
+  receive("cog", qty: 0) -> fail NotPositive;
+  ship(["bolt"]) -> 9;
+  assert stock == Map("nut" -> 1, "bolt" -> 0, "cog" -> 0);
+  assert shipped == ["nut", "bolt"] and orders == 9;
+  assert out.text == "order 8\npicked nut\nshipped 1\norder 9\npicked bolt\nshipped 1\n";
+}
+
+@given(a_shelf)
+test a_library_failure_rolls_back_too = {
+  split("nut", ways: 0) -> fail DivByZero;
+  assert stock == Map("nut" -> 2, "bolt" -> 1, "cog" -> 0) and out.text == "";
+  split("gear", ways: 2) -> fail Missing;
+  assert out.text == "";
+  split("nut", ways: 2) -> 2;
+  assert stock == Map("bolt" -> 1, "cog" -> 0, "nut/2" -> 2);
+  assert out.text == "splitting nut\n";
+}
+
+@given(a_shelf)
+test a_reset_that_fails_is_no_reset = {
+  audit(3) -> fail OverLimit;
+  assert orders == 7 and not ("audited" in stock) and out.text == "";
+  audit(4);
+  assert orders == 0 and stock["audited"] == 1 and out.text == "audit begins\naudit ok\n";
+}
+
+type Part = Nut | Bolt | Cog | Gear;
+
+fn label(p: Part) -> Text = match p {
+  Nut => "nut";
+  Bolt => "bolt";
+  Cog => "cog";
+  Gear => "gear";
+}
+
+@given(a_shelf)
+test ship_is_all_or_nothing(parts: List[Part]) = {
+  let order = parts.map(p => label(p));
+  let before = stock;
+  let fine = order.all(i => i in before and before[i] >= order.filter(it == i).size);
+  if fine {
+    ship(order) -> 8;
+    assert shipped == order;
+    assert stock.values.sum() == 3 - order.size;
+    assert out.text.split("\n").size == order.size + 3;
+  } else {
+    assert (ship(order) else -1) == -1;
+    assert stock == before and shipped == [] and orders == 7 and out.text == "";
+  }
+}
+
+law a_refused_call_changes_nothing(t: Trace[receive | ship | split | audit]) =
+  t.steps.all(s => s.reply.is(Err(_)) implies s.after == s.before);
+
+law stock_is_never_negative(t: Trace[receive | ship]) =
+  t.states.all(w => w.stock.values.all(it >= 0));
+
+law every_pick_leaves_the_shelf(t: Trace[ship]) =
+  t.steps.all(s => s.after.shipped.size - s.before.shipped.size == s.before.stock.values.sum() - s.after.stock.values.sum());

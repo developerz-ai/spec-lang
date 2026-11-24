@@ -36,7 +36,8 @@ fn a_failing_rule_leaves_the_world_and_output_unchanged() {
     assert!(matches!(it.step(rule(&p, "up"), vec![]).unwrap(), Outcome::Refused(f) if f.name == "Full"));
     assert!(matches!(it.step(rule(&p, "twice"), vec![]).unwrap(), Outcome::Refused(f) if f.name == "Late"));
     assert_eq!(it.world.states[0], Value::Int(1));
-    assert_eq!(it.out_text(), "up\n");
+    // The `out` pretend kept the committed line only.
+    assert_eq!(it.handlers[0], vec![Value::list(vec![Value::text("up")])]);
 }
 
 #[test]
@@ -115,4 +116,35 @@ fn unsupported_forms_are_errors_with_a_place() {
     let f = load_sources(vec![("m".into(), "m.slg".into(), "const t = 10ms;\n".into())]).unwrap_err();
     assert_eq!(f.errors[0].code, "E-UNSUPPORTED");
     assert!(f.errors[0].human(&f.sources).contains("m.slg:1:11"));
+}
+
+#[test]
+fn a_foreign_body_blocks_after_its_arguments_are_checked() {
+    let p = program(
+        "type Small = Int where self < 3;\nfn native(x: Small) -> Int = foreign c \"lib#native\";\n\
+         state n: Int = 0;\nrule draw() = foreign c \"lib#draw\";\nrule present() = { n = 1; draw(); }",
+    );
+    let mut it = Interp::new(&p).unwrap();
+    assert!(matches!(call(&p, &mut it, "native", vec![Value::Int(5)]), Err(Halt::Fatal(d)) if d.code == "E-CLAIM"));
+    let blocked = call(&p, &mut it, "native", vec![Value::Int(1)]);
+    assert!(
+        matches!(&blocked, Err(Halt::Blocked(d)) if d.code == "B-FOREIGN" && d.found.as_deref() == Some("foreign c \"lib#native\"")),
+        "{blocked:?}"
+    );
+    // A rule that reaches one is blocked, and its writes are undone like a failure's.
+    assert!(matches!(it.step(rule(&p, "present"), vec![]), Err(Halt::Blocked(d)) if d.message.contains("m.draw")));
+    assert_eq!(it.world.states[0], Value::Int(0));
+}
+
+#[test]
+fn a_handled_inner_refusal_undoes_the_inner_rules_writes_and_lines() {
+    let p = program(
+        "state n: Int = 0;\n\
+         rule inner() -> Int = { n = n + 5; out.line(\"inner\"); fail No; }\n\
+         rule outer() -> Int = { n = 1; out.line(\"outer\"); let got = inner() else 0 - 1; n = n + 1; return got; }",
+    );
+    let mut it = Interp::new(&p).unwrap();
+    assert!(matches!(it.step(rule(&p, "outer"), vec![]).unwrap(), Outcome::Ok(Value::Int(-1))));
+    assert_eq!(it.world.states[0], Value::Int(2));
+    assert_eq!(it.handlers[0], vec![Value::list(vec![Value::text("outer")])]);
 }

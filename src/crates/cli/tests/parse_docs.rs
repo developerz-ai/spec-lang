@@ -1,5 +1,5 @@
 //! Differential check against the reference: every `slg` fence in `docs/`
-//! and `README.md`, and every `.slg` file of the todo POC, parses — as it
+//! and `README.md`, and every `.slg` file of the todo POC and of `libs/`, parses — as it
 //! does with the Lark grammar (`pocs/todo-app/scripts/slg/check.py`, which
 //! reports 0 failures on the same inputs). Fences are found with the
 //! reference's own regex, re-implemented in `spec_lang_syntax::fence`.
@@ -33,6 +33,7 @@ fn every_fence_and_slg_file_parses() {
     files(&root.join("docs"), "md", &mut md);
     let mut slg = Vec::new();
     files(&root.join("pocs/todo-app/src"), "slg", &mut slg);
+    files(&root.join("libs"), "slg", &mut slg);
     let mut map = SourceMap::new();
     let mut texts = Vec::new();
     for f in &md {

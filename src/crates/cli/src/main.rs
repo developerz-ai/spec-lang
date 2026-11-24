@@ -5,11 +5,13 @@
 //! spec-lang test <dir|file> [--seed N] [--runs N] [--traces N] [--steps N] [--json] [--deny warnings]
 //! spec-lang view <dir|file> <decl> [--json] | --as pseudo|diagram ...
 //! spec-lang build <dir|file> [--app <name>] --out <dir>
+//! spec-lang lir <dir|file> [--json] [--eval [--seed N] ...]
 //! ```
 //! Exit codes: 0 all green, 1 a check failed, 2 usage or load error.
 
 mod args;
 mod build_cmd;
+mod lir_cmd;
 mod output;
 mod parse_cmd;
 mod sources;
@@ -32,6 +34,8 @@ commands:
     --deny warnings                lint warnings fail the run
   view <project> <decl> [--json]   a declaration: source, what names it, every check that reaches it
   build <project> [--app <name>] --out <dir>   check, then print each app with the printer its @target names
+  lir <project> [--json]           the program lowered to the LIR (crates/lir/README.md)
+  lir <project> --eval [options]   run every check on the LIR evaluator; options as `test`; --json: one object per check
   view <project> --as pseudo [<module>]
   view <project> --as diagram --kind <kind> [--format mermaid|plantuml|json|markdown] [<subject>]
 ";
@@ -43,6 +47,7 @@ fn main() -> ExitCode {
         Some("test") => test_cmd::run(argv.get(1..).unwrap_or(&[])),
         Some("view") => view_cmd::run(argv.get(1..).unwrap_or(&[])),
         Some("build") => build_cmd::run(argv.get(1..).unwrap_or(&[])),
+        Some("lir") => lir_cmd::run(argv.get(1..).unwrap_or(&[])),
         Some("--help" | "-h") => {
             print!("{USAGE}");
             0

@@ -1,0 +1,119 @@
+// f17-equality-order pins: `==` is structural on every type, and every value
+// has one order, used by `sort`, `min`, `max`, Set and Map: `false < true`;
+// numbers by value; Text by code point; records field by field in declared
+// order; sums by declared variant, then fields; lists and tuples item by
+// item, a prefix first; `Some(_) < none` (the engine's open choice 12).
+// `<` in source compares only numbers and Text.
+
+type Level = Low | Mid | High;
+type Shape = Dot | Circle(r: Int) | Rect(w: Int, h: Int);
+type Version(major: Int, minor: Int, tag: Text = "");
+type Job(level: Level, name: Text);
+
+@cases([true, false, true, false] -> [false, false, true, true])
+pub fn bools(xs: List[Bool]) -> List[Bool] = xs.sort();
+
+@cases([High, Low, Mid, Low] -> [Low, Low, Mid, High])
+pub fn levels(xs: List[Level]) -> List[Level] = xs.sort();
+
+@cases(
+  [Rect(1, h: 1), Circle(5), Dot, Circle(2), Rect(0, h: 9), Rect(1, h: 0)]
+    -> [Dot, Circle(2), Circle(5), Rect(0, h: 9), Rect(1, h: 0), Rect(1, h: 1)],
+)
+pub fn shapes(xs: List[Shape]) -> List[Shape] = xs.sort();
+
+@cases(
+  [Version(1, minor: 10), Version(1, minor: 9), Version(0, minor: 99), Version(1, minor: 9, tag: "rc"), Version(1, minor: 9, tag: "b")]
+    -> [Version(0, minor: 99), Version(1, minor: 9), Version(1, minor: 9, tag: "b"), Version(1, minor: 9, tag: "rc"), Version(1, minor: 10)],
+)
+pub fn versions(xs: List[Version]) -> List[Version] = xs.sort();
+
+@cases(
+  [[2], [1, 2], [1], [], [1, 1, 5], [1, 2, 0]] -> [[], [1], [1, 1, 5], [1, 2], [1, 2, 0], [2]],
+)
+pub fn lists(xs: List[List[Int]]) -> List[List[Int]] = xs.sort();
+
+@cases(
+  [(2, "a"), (1, "b"), (1, "a"), (1, "B")] -> [(1, "B"), (1, "a"), (1, "b"), (2, "a")],
+)
+pub fn pairs(xs: List[(Int, Text)]) -> List[(Int, Text)] = xs.sort();
+
+@cases(
+  [none, Some(2), none, Some(1)] -> [Some(1), Some(2), none, none],
+)
+pub fn options(xs: List[Option[Int]]) -> List[Option[Int]] = xs.sort();
+
+@cases(
+  [Set(2), Set(1, 3), Set(), Set(1, 2)] -> [Set(), Set(1, 2), Set(1, 3), Set(2)],
+)
+pub fn sets(xs: List[Set[Int]]) -> List[Set[Int]] = xs.sort();
+
+@cases([-1, 9007199254740993, 9007199254740992, -18446744073709551616, 0] -> [-18446744073709551616, -1, 0, 9007199254740992, 9007199254740993])
+pub fn numbers(xs: List[Int]) -> List[Int] = xs.sort();
+
+test min_max_follow_the_same_order = {
+  assert [High, Low, Mid].min() == Low and [High, Low, Mid].max() == High;
+  assert [Circle(9), Rect(0, h: 0), Dot].max() == Rect(0, h: 0);
+  assert [true, false].min() == false;
+  assert [[1, 2], [1]].min() == [1];
+  assert [(1, "b"), (1, "a")].min() == (1, "a");
+  assert ["b", "a", "B"].max() == "b";
+  assert [Version(2, minor: 0), Version(10, minor: 0)].max() == Version(10, minor: 0);
+}
+
+test sets_and_maps_iterate_in_that_order = {
+  assert Set(High, Low, Mid).list == [Low, Mid, High];
+  assert Set(Rect(1, h: 1), Dot, Circle(1)).list == [Dot, Circle(1), Rect(1, h: 1)];
+  assert Set(true, false).list == [false, true];
+  assert Map(High -> 1, Low -> 2).keys == [Low, High];
+  assert Map(Job(High, name: "a") -> 1, Job(Low, name: "z") -> 2, Job(Low, name: "b") -> 3).values == [3, 2, 1];
+  assert Map([2] -> "x", [1, 9] -> "y", [] -> "z").values == ["z", "y", "x"];
+  assert Set(none, Some(3), Some(1)).list == [Some(1), Some(3), none];
+}
+
+test sort_keys_can_be_any_data = {
+  let jobs = [Job(Mid, name: "b"), Job(High, name: "a"), Job(Low, name: "c"), Job(Mid, name: "a")];
+  assert jobs.sort().map(it.name).join("") == "caba";
+  assert jobs.sort(it.level).map(it.name).join("") == "cbaa";
+  assert jobs.sort(j => (j.name, j.level)).map(it.name).join("") == "aabc";
+  assert jobs.sort(j => (j.name, j.level)).map(it.level) == [Mid, High, Mid, Low];
+  assert jobs.sort(j => [j.name.size, 0]) == jobs;
+  assert jobs.max(it.level).name == "a" and jobs.min(it.level).name == "c";
+  assert jobs.group_by(it.level).keys == [Low, Mid, High];
+}
+
+test equality_is_structural = {
+  assert Version(1, minor: 2) == Version(1, minor: 2, tag: "");
+  assert Version(1, minor: 2) != Version(1, minor: 2, tag: " ");
+  assert Circle(1) != Dot and Circle(1) == Circle(1);
+  assert (1, "a") == (1, "a") and (1, "a") != (1, "b");
+  assert [Set(1, 2)] == [Set(2, 1)];
+  assert Map(1 -> [Low]) == Map(1 -> [Low]) and Map(1 -> [Low]) != Map(1 -> [Mid]);
+  assert (Low == Low) == true and (Low != Low) == false;
+  assert [1, 2].contains(2) and [[1], [2]].contains([2]) and not [[1], [2]].contains([1, 2]);
+  assert [Job(Low, name: "a")].position(it == Job(Low, name: "a")) == Some(0);
+}
+
+test less_than_reads_numbers_and_text = {
+  assert 1 < 2 and not (2 < 1) and 2 <= 2 and 3 >= 3 and 3 > 2;
+  assert -9223372036854775809 < -9223372036854775808;
+  assert "a" < "b" and "B" < "a" and "" < "a" and "a" < "aa" and "a" <= "a";
+  assert "é" > "z" and "😀" > "\u{FFFF}";
+  assert 1 <= 2 <= 2 and not (1 <= 3 <= 2) and 1 < 2 < 3;
+}
+
+test sort_agrees_with_less_than(a: Int, b: Int, s: Text, t: Text) = {
+  assert ([a, b].sort() == [a, b]) == (a <= b);
+  assert ([s, t].sort() == [s, t]) == (s <= t);
+  assert [a, b].min() == a.min(b) and [a, b].max() == a.max(b);
+  assert ([(a, s), (a, t)].sort() == [(a, s), (a, t)]) == (s <= t);
+  assert ([[a], [a, b]].sort()) == [[a], [a, b]];
+}
+
+test shapes_order_is_total(a: Shape, b: Shape, c: Shape) = {
+  let xs = [a, b, c].sort();
+  assert [c, b, a].sort() == xs and [b, c, a].sort() == xs;
+  assert xs.first == [a, b, c].min() and xs.last == [a, b, c].max();
+  assert (a == b) == ([a, b].distinct().size == 1);
+  assert Set(a, b, c).list == xs.distinct();
+}

@@ -2,11 +2,9 @@
   "name": "todo-bun",
   "private": true,
   "type": "module",
-  "trustedDependencies": [],
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
     "@types/bun": "1.3.3",
-    "fast-check": "4.10.2",
     "typescript": "5.9.3"
   }
 }

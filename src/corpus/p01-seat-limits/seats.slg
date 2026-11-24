@@ -1,0 +1,62 @@
+// seats: port of docs/pocs/01-seat-limits. Pins a record used as a map key, guards in
+// written order over two notes, a ranged field with a default written through
+// `orgs[org].limit = ..`, and two laws that need every guard to hold from any lawful world.
+// `@access` is modelled as the first guard; see README.md for every cut.
+
+pub type OrgId = 1..=4;
+pub type UserId = 1..=4;
+
+pub type Role = Owner | Member;
+pub type Seat(org: OrgId, user: UserId);
+pub type Org(limit: 1..=500 = 3);
+
+state orgs: Map[OrgId, Org];
+state seats: Map[Seat, Role];
+
+pub fn taken(org: OrgId) -> Int = seats.keys.filter(it.org == org).size;
+
+fn owners(org: OrgId) -> Int =
+  seats.keys.filter(k => k.org == org and seats[k] == Owner).size;
+
+fn owns(by: UserId, org: OrgId) -> Bool =
+  seats.get(Seat(org, user: by)) == Some(Owner);
+
+@why("a plan sells a number of seats")
+@uses(seats.write, orgs.read)
+@guard(owns(by, org: org) else NotFound)
+@guard(not (Seat(org, user: user) in seats) else AlreadyIn)
+@guard(taken(org) < orgs[org].limit else Full)
+pub rule add(by: UserId, org: OrgId, user: UserId) = {
+  seats[Seat(org, user: user)] = Member;
+}
+
+@why("an organisation nobody owns cannot be repaired by its members")
+@uses(seats.write)
+@guard(owns(by, org: org) else NotFound)
+@guard(Seat(org, user: user) in seats else NotIn)
+@guard(seats[Seat(org, user: user)] == Member or owners(org) > 1 else LastOwner)
+pub rule remove(by: UserId, org: OrgId, user: UserId) = {
+  seats.remove(Seat(org, user: user));
+}
+
+@why("an owner shares the keys before leaving")
+@uses(seats.write)
+@guard(owns(by, org: org) else NotFound)
+@guard(Seat(org, user: user) in seats else NotIn)
+pub rule promote(by: UserId, org: OrgId, user: UserId) = {
+  seats[Seat(org, user: user)] = Owner;
+}
+
+@why("a plan can shrink only to what is already in use")
+@uses(orgs.write, seats.read)
+@guard(owns(by, org: org) else NotFound)
+@guard(taken(org) <= limit else TooMany)
+pub rule set_limit(by: UserId, org: OrgId, limit: 1..=500) = {
+  orgs[org].limit = limit;
+}
+
+@why("a named start world: one organisation of three seats, owned by user 1")
+@given(orgs -> Map(1 -> Org(limit: 3)), seats -> Map(Seat(1, user: 1) -> Owner))
+test one_owner = {
+  assert taken(1) == 1;
+}

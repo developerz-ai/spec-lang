@@ -1,0 +1,87 @@
+// f01-records pins: record construction (positional first field, named rest),
+// defaults (constant and computed from a call), field access, nested records,
+// `.with` as a copy that leaves the original alone, structural equality.
+
+type Point(x: Int, y: Int = 0);
+type Colour = Red | Green | Blue;
+type Pen(at: Point = Point(0), colour: Colour = Green, width: Int = unit() * 2, label: Text = "pen");
+type Line(from: Point, to: Point, pen: Pen = Pen());
+
+fn unit() -> Int = 3;
+
+@cases(
+  Point(1) -> Point(1, y: 0),
+  Point(1, y: 5) -> Point(1, y: 5),
+  Point(-7, y: -7) -> Point(-7, y: -7),
+)
+pub fn same(p: Point) -> Point = p;
+
+@cases(Point(1) -> 1, Point(4, y: 5) -> 9, Point(-4, y: 3) -> -1)
+pub fn total(p: Point) -> Int = p.x + p.y;
+
+@cases(
+  (Point(1, y: 2), 9) -> Point(9, y: 2),
+  (Point(1), 0) -> Point(0),
+)
+pub fn move_x(p: Point, x: Int) -> Point = p.with(x: x);
+
+@cases(Point(1, y: 2) -> Point(2, y: 1), Point(0) -> Point(0, y: 0))
+pub fn swapped(p: Point) -> Point = p.with(x: p.y, y: p.x);
+
+@cases(
+  Pen() -> "0,0 Green 6 pen",
+  Pen(Point(2, y: 3), colour: Red) -> "2,3 Red 6 pen",
+  Pen(width: 1, label: "") -> "0,0 Green 1 ",
+)
+pub fn show(p: Pen) -> Text = "{p.at.x},{p.at.y} {p.colour} {p.width} {p.label}";
+
+@cases(
+  Line(Point(0), to: Point(3, y: 4)) -> 7,
+  Line(Point(3, y: 4), to: Point(0)) -> 7,
+  Line(Point(1, y: 1), to: Point(1, y: 1)) -> 0,
+)
+pub fn manhattan(l: Line) -> Int = (l.to.x - l.from.x).abs() + (l.to.y - l.from.y).abs();
+
+fn thick(l: Line) -> Line = l.with(pen: l.pen.with(width: l.pen.width + 1));
+
+test defaults_fill_every_missing_field = {
+  let p = Pen();
+  assert p.at == Point(0, y: 0);
+  assert p.colour == Green;
+  assert p.width == 6;
+  assert p.label == "pen";
+  assert Line(Point(1), to: Point(2)).pen == p;
+}
+
+test with_copies_and_leaves_the_original = {
+  let a = Point(1, y: 2);
+  let b = a.with(y: 20);
+  assert a == Point(1, y: 2);
+  assert b == Point(1, y: 20);
+  assert a != b;
+  assert b.with(y: 2) == a;
+  assert a.with() == a;
+}
+
+test with_reaches_one_level_at_a_time = {
+  let l = Line(Point(0), to: Point(1));
+  let t = thick(thick(l));
+  assert t.pen.width == 8;
+  assert l.pen.width == 6;
+  assert t.from == l.from and t.to == l.to;
+  assert t.pen.with(width: 6) == l.pen;
+}
+
+test equality_is_field_by_field = {
+  assert Point(1, y: 0) == Point(1);
+  assert Point(1, y: 2) != Point(2, y: 1);
+  assert Pen(label: "a") != Pen(label: "b");
+  assert Line(Point(0), to: Point(0)) == Line(Point(0), to: Point(0), pen: Pen(width: 6));
+}
+
+test with_then_with_is_one_with(x: Int, y: Int, z: Int) = {
+  let p = Point(x, y: y);
+  assert p.with(x: z).with(y: z) == Point(z, y: z);
+  assert p.with(x: z).x == z and p.with(x: z).y == y;
+  assert p.with(x: p.x) == p;
+}

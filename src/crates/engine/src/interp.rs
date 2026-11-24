@@ -25,12 +25,10 @@ pub enum Outcome {
 pub struct Interp<'p> {
     pub prog: &'p Program,
     pub world: World,
-    /// Lines `out.line` sent and committed, in order.
-    pub out: Vec<String>,
-    /// Lines sent by the rule running now, not yet committed.
-    pub(crate) pending: Vec<String>,
-    /// Depth of rule calls: 0 means a call from outside.
-    pub(crate) depth: u32,
+    /// The state of each library handler's pretend (`pretend.slg`), by
+    /// handler id; empty for a handler without one. Committed and rolled
+    /// back with the world; a new interpreter starts it fresh.
+    pub handlers: Vec<Vec<Value>>,
     consts: Vec<Option<Value>>,
     /// Evaluation steps left before `E-RUNTIME`.
     pub steps_left: u64,
@@ -42,9 +40,7 @@ impl<'p> Interp<'p> {
         let mut it = Interp {
             prog,
             world: World { states: Vec::new() },
-            out: Vec::new(),
-            pending: Vec::new(),
-            depth: 0,
+            handlers: Vec::new(),
             consts: vec![None; prog.consts.len()],
             steps_left: DEFAULT_BUDGET,
         };
@@ -75,6 +71,17 @@ impl<'p> Interp<'p> {
             }
         }
         it.world.states = states;
+        for h in &prog.handlers {
+            let mut state = Vec::new();
+            for p in h.pretend.iter().flat_map(|p| &p.state) {
+                let v = match &p.default {
+                    Some(e) => it.eval(&mut Env::default(), e)?,
+                    None => it.empty_of(&p.ty).unwrap_or(Value::Unit),
+                };
+                state.push(v);
+            }
+            it.handlers.push(state);
+        }
         Ok(it)
     }
 
@@ -174,29 +181,24 @@ impl<'p> Interp<'p> {
         let d = self.prog.func(f);
         let (mut env, vals) = self.complete_args(&d.params, args)?;
         self.check_params(&d.info, &d.params, &vals)?;
+        if let Some(f) = &d.foreign {
+            return Err(Halt::foreign(&self.prog.qualified(&d.info), f));
+        }
         let v = self.eval(&mut env, &d.body)?;
         self.check_result(&d.info, &d.result, &v)?;
         Ok(v)
     }
 
-    /// Call a rule. From outside (depth 0) it is one atomic step: a failure
-    /// restores the world and drops the lines it sent; a success commits them.
-    /// Inside a rule it joins the caller.
+    /// Call a rule: all its writes or none. A failure restores the world and
+    /// every handler's pretend state (the lines it sent) as they were at this
+    /// call, so a caller that handles the failure goes on without them; a
+    /// success inside a rule joins the caller, whose own failure undoes both.
     pub fn call_rule(&mut self, r: RuleId, args: Vec<Option<Value>>) -> Halted<Value> {
-        let outside = self.depth == 0;
-        let saved = if outside { Some(self.world.clone()) } else { None };
-        let pending = self.pending.len();
-        self.depth += 1;
+        let (world, handlers) = (self.world.clone(), self.handlers.clone());
         let result = self.rule_body(r, args);
-        self.depth -= 1;
-        if let Some(world) = saved {
-            match &result {
-                Ok(_) => self.out.append(&mut self.pending),
-                Err(_) => {
-                    self.world = world;
-                    self.pending.truncate(pending);
-                }
-            }
+        if result.is_err() {
+            self.world = world;
+            self.handlers = handlers;
         }
         result
     }
@@ -227,6 +229,9 @@ impl<'p> Interp<'p> {
                 Err(h) => return Err(h),
             }
         }
+        if let Some(f) = &d.foreign {
+            return Err(Halt::foreign(&self.prog.qualified(&d.info), f));
+        }
         let v = self.eval(&mut env, &d.body)?;
         self.check_result(&d.info, &d.result, &v)?;
         Ok(v)
@@ -242,9 +247,42 @@ impl<'p> Interp<'p> {
         self.eval(env, e)
     }
 
-    /// Everything `out.line` sent and committed, each line ending in `\n`.
-    pub fn out_text(&self) -> String {
-        self.out.iter().map(|l| format!("{l}\n")).collect()
+    /// Run an operation of a library handler with its pretend: bind the
+    /// pretend's state and the arguments, run the arm, keep the new state.
+    pub(crate) fn run_effect(&mut self, e: Effect, args: Vec<Value>, span: spec_lang_syntax::Span) -> Halted<Value> {
+        let prog = self.prog;
+        let h = prog.handler(e.handler);
+        let name = prog.effect_name(e);
+        let (Some(pretend), Some(op)) = (&h.pretend, prog.effect_op(e)) else {
+            return Err(Diag::error(
+                "E-UNSUPPORTED",
+                span,
+                format!("`{name}`: library `{}` has no pretend for handler `{}`", h.library, h.name),
+            )
+            .into());
+        };
+        let Some(Some(arm)) = pretend.arms.get(e.op as usize) else {
+            return Err(Diag::error("E-UNSUPPORTED", span, format!("`{name}`: its pretend has no arm")).into());
+        };
+        for (p, a) in op.params.iter().flatten().zip(&args) {
+            if let Some(reason) = self.conform(a, &p.ty)? {
+                return Err(Diag::error("E-CLAIM", span, format!("argument `{}` of `{name}`: {reason}", p.name)).into());
+            }
+        }
+        let mut env = Env::default();
+        let state = self.handlers.get(e.handler.index()).cloned().unwrap_or_default();
+        for (p, v) in pretend.state.iter().zip(state) {
+            env.push(&p.name, v);
+        }
+        for (n, v) in arm.params.iter().zip(args) {
+            env.push(n, v);
+        }
+        let v = self.eval(&mut env, &arm.body)?;
+        let state: Vec<Value> = pretend.state.iter().filter_map(|p| env.get(&p.name).cloned()).collect();
+        if let Some(slot) = self.handlers.get_mut(e.handler.index()) {
+            *slot = state;
+        }
+        Ok(v)
     }
 
     /// A [`Value::World`] of the current states.

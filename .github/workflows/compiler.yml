@@ -3,10 +3,10 @@ name: compiler
 
 on:
   pull_request:
-    paths: ["src/**", "docs/**", "pocs/todo-app/src/**", "README.md", ".github/workflows/compiler.yml"]
+    paths: ["src/**", "libs/**", "docs/**", "pocs/todo-app/src/**", "README.md", ".github/workflows/compiler.yml"]
   push:
     branches: [main]
-    paths: ["src/**", "docs/**", "pocs/todo-app/src/**", "README.md", ".github/workflows/compiler.yml"]
+    paths: ["src/**", "libs/**", "docs/**", "pocs/todo-app/src/**", "README.md", ".github/workflows/compiler.yml"]
 
 permissions:
   contents: read

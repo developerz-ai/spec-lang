@@ -1,0 +1,47 @@
+// f26-state-ownership pins (module shop.till): a module owns its state; only
+// its own rules write it. Another module reads it and changes it by calling
+// this module's `pub` rules. A private fn and a private state stay usable
+// inside the module.
+
+use cli;
+
+pub type Coin = 1..=200;
+
+state cash: Int = 0;
+state sales: List[Int];
+state opened: Bool = false;
+
+fn is_open() -> Bool = opened;
+
+pub fn takings() -> Int = sales.sum();
+
+@why("a till counts only while it is open")
+@uses(opened.write, out.write)
+@guard(not is_open() else AlreadyOpen)
+pub rule open() = {
+  opened = true;
+  out.line("till open");
+}
+
+@why("every sale is a line in the till's own record")
+@uses(cash.write, sales.write, opened.read)
+@guard(is_open() else Closed)
+pub rule ring(amount: Coin) -> Int = {
+  cash = cash + amount;
+  sales.push(amount);
+  return cash;
+}
+
+@why("money leaves the drawer only through the till, never below zero")
+@uses(cash.write, opened.read)
+@guard(is_open() else Closed, amount > 0 else NotPositive, amount <= cash else NotEnough)
+pub rule pay_out(amount: Int) -> Int = {
+  cash = cash - amount;
+  return cash;
+}
+
+@why("a named start for other modules: an open till with two sales")
+@given(cash -> 30, sales -> [10, 20], opened -> true)
+test two_sales = {
+  assert takings() == 30;
+}

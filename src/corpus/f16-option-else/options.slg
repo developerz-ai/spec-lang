@@ -1,0 +1,111 @@
+// f16-option-else pins: `Some(v)` and `none` as ordinary values, `match` and
+// `.is` on them, `x else v` in its two meanings (a failure handled; an
+// Option unwrapped), `x else fail E` replacing an error, `else` chains read
+// left to right, an index on a Map of Options handling only the missing key,
+// and the right side evaluated only when needed.
+
+type User(name: Text, nick: Option[Text] = none, age: Option[Int] = none);
+
+const ana: User = User("Ana", nick: Some("an"), age: Some(30));
+const bob: User = User("Bob");
+
+@cases(Some(3) -> 3, none -> 0, Some(0) -> 0, Some(-1) -> -1)
+pub fn or_zero(o: Option[Int]) -> Int = o else 0;
+
+@cases(Some(3) -> "3", none -> "-")
+pub fn show(o: Option[Int]) -> Text = match o {
+  Some(n) => "{n}";
+  none => "-";
+}
+
+@cases(Some(3) -> true, none -> false)
+pub fn present(o: Option[Int]) -> Bool = o.is(Some(_));
+
+@cases(Some(3) -> Some(4), none -> none)
+pub fn bumped(o: Option[Int]) -> Option[Int] = match o {
+  Some(n) => Some(n + 1);
+  none => none;
+}
+
+@cases((Some(1), Some(2)) -> 1, (none, Some(2)) -> 2, (none, none) -> 9, (Some(1), none) -> 1)
+pub fn first_of(a: Option[Int], b: Option[Int]) -> Int = a else b else 9;
+
+@cases(User("Ana", nick: Some("an")) -> "an", User("Bob") -> "Bob")
+pub fn display(u: User) -> Text = u.nick else u.name;
+
+@cases(([1, 2], 1) -> 2, ([1, 2], 5) -> -1)
+pub fn item(xs: List[Int], i: Int) -> Int = xs[i] else -1;
+
+@cases(([4, 6], 5) -> 6, ([4], 5) -> 0)
+pub fn above(xs: List[Int], n: Int) -> Int = xs.find(it > n) else 0;
+
+@cases((Map("a" -> Some(1), "b" -> none), "a") -> Some(1), (Map("a" -> Some(1), "b" -> none), "b") -> none, (Map("a" -> Some(1), "b" -> none), "c") -> Some(-1))
+pub fn stored(m: Map[Text, Option[Int]], k: Text) -> Option[Int] = m[k] else Some(-1);
+
+fn need(o: Option[Int]) -> Int = o else fail Absent;
+
+fn need_key(m: Map[Text, Int], k: Text) -> Int = m[k] else fail NoSuchKey;
+
+fn third(xs: List[Int]) -> Int = xs[2];
+
+fn strict(xs: List[Int]) -> Int = third(xs) else fail TooShort;
+
+test else_fail_names_the_error = {
+  need(Some(4)) -> 4;
+  need(none) -> fail Absent;
+  need_key(Map("a" -> 1), k: "a") -> 1;
+  need_key(Map("a" -> 1), k: "b") -> fail NoSuchKey;
+  third([1, 2]) -> fail Missing;
+  strict([1, 2]) -> fail TooShort;
+  strict([1, 2, 3]) -> 3;
+}
+
+test options_compare_by_content = {
+  assert Some(1) == Some(1) and Some(1) != Some(2) and Some(1) != none;
+  assert Some(none) != none;
+  assert Some(Some(1)) != Some(1);
+  assert [Some(1), none].contains(none);
+  assert ana.age == Some(30) and bob.age == none;
+  assert Set(Some(1), Some(1), none, none).size == 2;
+}
+
+test the_right_side_runs_only_when_needed = {
+  assert (Some(1) else [].first) == 1;
+  assert ([1].first else [].first) == 1;
+  assert (Some(5) else 1 mod 0) == 5;
+}
+
+test else_handles_a_failure_anywhere_inside = {
+  let m = Map("a" -> [1, 2]);
+  assert (m["a"][5] else 0) == 0;
+  assert (m["z"][0] else 0) == 0;
+  assert (m["a"][1] + m["z"][0] else -1) == -1;
+  assert m["a"][1] + (m["z"][0] else -1) == 1;
+  assert (need(none) else 7) == 7;
+  assert (10 mod (m["a"].size - 2) else 0) == 0;
+}
+
+test optional_fields_default_to_none = {
+  assert bob == User("Bob", nick: none, age: none);
+  assert display(ana) == "an" and display(bob) == "Bob";
+  assert ana.with(nick: none).nick == none;
+  assert (bob.age else 18) == 18 and (ana.age else 18) == 30;
+  assert [ana, bob].filter(it.age.is(Some(_))).map(it.name) == ["Ana"];
+  assert [ana, bob].map(u => u.age else 0).sum() == 30;
+}
+
+test else_agrees_with_match(o: Option[Int], d: Int) = {
+  let by_match = match o {
+    Some(n) => n;
+    none => d;
+  }
+  assert (o else d) == by_match;
+  assert present(o) == (o != none);
+  assert (bumped(o) else d + 1) == (o else d) + 1;
+}
+
+test get_else_agrees_with_index_else(xs: List[Int], i: -2..=10, d: Int) = {
+  assert (xs.get(i) else d) == (xs[i] else d);
+  assert (xs.find(it == d) else d) == d;
+  assert (xs.position(it == d) else -1) < xs.size;
+}

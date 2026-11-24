@@ -1,6 +1,6 @@
 [package]
 name = "spec-lang-emit-rust"
-description = "The Rust backend: typed lowering of the IR, Rust target trees printed with prettyplease, runtime shims."
+description = "The Rust printer over the LIR: a Cargo project per program (its checks) or per app (with its libraries' runtimes)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,11 +9,14 @@ publish.workspace = true
 [dependencies]
 spec-lang-ir.workspace = true
 spec-lang-syntax.workspace = true
-spec-lang-diag = { path = "../diag" }
-proc-macro2 = { version = "1", default-features = false }
-quote = { version = "1", default-features = false }
+spec-lang-diag.workspace = true
+spec-lang-lir.workspace = true
 syn = { version = "2", default-features = false, features = ["full", "parsing", "printing"] }
+proc-macro2 = { version = "1", default-features = false, features = ["span-locations"] }
 prettyplease = { version = "0.2", features = ["verbatim"] }
+
+[dev-dependencies]
+spec-lang-check.workspace = true
 
 [lints]
 workspace = true

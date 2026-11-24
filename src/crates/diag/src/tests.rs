@@ -36,7 +36,7 @@ fn every_code_is_registered() {
                     let rest = &text[i + 1..];
                     let end = rest.find('"').unwrap_or(0);
                     let s = &rest[..end];
-                    let looks = (s.starts_with("E-") || s.starts_with("W-") || s.starts_with("F-"))
+                    let looks = ["E-", "W-", "F-", "B-"].iter().any(|p| s.starts_with(p))
                         && s.len() > 2
                         && s.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '-');
                     if looks {

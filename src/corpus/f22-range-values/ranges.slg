@@ -1,0 +1,77 @@
+// f22-range-values pins: a range as a value: `a..=b` closed, `a..<b` half
+// open, empty when reversed, with `size list map filter all any sum fold`,
+// `for`, `in`, bounds that are expressions, negative bounds, and bounds past
+// a 64-bit word.
+
+@cases((1, 5) -> [1, 2, 3, 4, 5], (3, 3) -> [3], (4, 3) -> [], (-2, 1) -> [-2, -1, 0, 1], (5, 1) -> [])
+pub fn closed(a: Int, b: Int) -> List[Int] = (a..=b).list;
+
+@cases((1, 5) -> [1, 2, 3, 4], (3, 3) -> [], (3, 4) -> [3], (-2, 1) -> [-2, -1, 0], (5, 1) -> [])
+pub fn half_open(a: Int, b: Int) -> List[Int] = (a..<b).list;
+
+@cases((1, 5) -> 5, (3, 3) -> 1, (4, 3) -> 0, (9, 1) -> 0, (-5, 5) -> 11, (0, 99999) -> 100000)
+pub fn closed_size(a: Int, b: Int) -> Int = (a..=b).size;
+
+@cases((1, 5) -> 4, (3, 3) -> 0, (9, 1) -> 0, (9223372036854775807, 9223372036854775810) -> 3)
+pub fn half_open_size(a: Int, b: Int) -> Int = (a..<b).size;
+
+@cases(0 -> [], 3 -> [0, 1, 4], 5 -> [0, 1, 4, 9, 16])
+pub fn squares(n: Int) -> List[Int] = (0..<n).map(it * it);
+
+@cases(10 -> [3, 6, 9], 2 -> [])
+pub fn threes(n: Int) -> List[Int] = (1..=n).filter(it mod 3 == 0);
+
+@cases(4 -> 10, 0 -> 0, 100 -> 5050)
+pub fn total(n: Int) -> Int = (1..=n).sum();
+
+@cases(5 -> 120, 0 -> 1)
+pub fn product(n: Int) -> Int = (1..=n).fold(1, (acc, i) => acc * i);
+
+@cases(2 -> true, 3 -> true, 4 -> false, 97 -> true, 91 -> false, 1 -> false)
+pub fn prime(n: Int) -> Bool = n >= 2 and (2..<n).all(n mod it != 0);
+
+@cases(12 -> true, 13 -> false)
+pub fn has_divisor(n: Int) -> Bool = (2..<n).any(n mod it == 0);
+
+@cases((5, 1, 9) -> true, (1, 1, 9) -> true, (9, 1, 9) -> true, (0, 1, 9) -> false, (10, 1, 9) -> false, (5, 9, 1) -> false)
+pub fn inside(x: Int, lo: Int, hi: Int) -> Bool = x in lo..=hi;
+
+@cases((9, 1, 9) -> false, (8, 1, 9) -> true, (1, 1, 9) -> true, (1, 1, 1) -> false)
+pub fn inside_half(x: Int, lo: Int, hi: Int) -> Bool = x in lo..<hi;
+
+test membership_and_short_ranges_work_past_a_word = {
+  assert 9223372036854775808 in 0..=18446744073709551616;
+  assert not (-1 in 0..=18446744073709551616);
+  assert (9007199254740992..=9007199254740994).list == [9007199254740992, 9007199254740993, 9007199254740994];
+  assert (9223372036854775806..<9223372036854775809).sum() == 27670116110564327421;
+}
+
+test bounds_are_expressions = {
+  let xs = [10, 20, 30];
+  var seen: List[Int] = [];
+  for i in 0..<xs.size { seen.push(xs[i] + i); }
+  assert seen == [10, 21, 32];
+  for i in (xs.size - 2)..=(xs.size - 1) { seen.push(i); }
+  assert seen.drop(3) == [1, 2];
+  assert (xs.first - 9..=xs.size).list == [1, 2, 3];
+}
+
+test a_range_is_a_value = {
+  let r = 2..=4;
+  assert r.size == 3 and r.list == [2, 3, 4];
+  assert r.map(it * 2) == [4, 6, 8] and r.sum() == 9;
+  assert 3 in r and not (5 in r);
+  assert (1..=3).list == (1..<4).list;
+}
+
+test a_range_is_its_list(a: -20..=20, n: 0..=30) = {
+  let b = a + n;
+  assert (a..<b).size == n and (a..=b).size == n + 1;
+  assert (a..<b).list.size == n;
+  assert (a..=b).list == (a..<b).list + [b];
+  assert (a..<b).sum() == (a..<b).list.sum();
+  assert (a..=b).all(a <= it <= b) and (a..=b).any(it == b);
+  assert (a..=b).list == (a..=b).list.sort() and (a..=b).list.distinct().size == n + 1;
+  assert (b..<a).size == 0 and (b + 1..=a).list == [];
+  assert (a..=b).map(it - a) == (0..=n).list;
+}

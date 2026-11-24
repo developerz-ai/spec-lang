@@ -1,0 +1,73 @@
+// ledger: port of docs/pocs/02-ledger. Pins four guard notes in order, two writes inside
+// map entries plus a `push` in one atomic rule, `sum(f)` over filtered lists, a claim type
+// (`Cents`) monitored on every write, a law over `t.steps` and one over `t.states` that
+// must start from a world where it holds, a `@given` chain and a property with a range.
+// `@idempotent` is cut; see README.md for every cut.
+
+type AccountId = 1..=4;
+type RequestId = 1..=9;
+
+type Cents = Int where self >= 0;
+type Account(balance: Cents = 0);
+type Entry(request: RequestId, from: AccountId, to: AccountId, amount: Cents);
+
+state accounts: Map[AccountId, Account];
+state history: List[Entry];
+state opening: Map[AccountId, Cents];
+
+fn moved(x: AccountId, xs: List[Entry]) -> Int =
+  xs.filter(it.to == x).sum(it.amount) - xs.filter(it.from == x).sum(it.amount);
+
+@why("money moves between two accounts or not at all")
+@uses(accounts.write, history.write)
+@guard(from in accounts and to in accounts else NoAccount)
+@guard(from != to else SameAccount)
+@guard(amount > 0 else NotPositive)
+@guard(accounts[from].balance >= amount else Insufficient)
+rule transfer(request: RequestId, from: AccountId, to: AccountId, amount: Cents) = {
+  accounts[from].balance = accounts[from].balance - amount;
+  accounts[to].balance = accounts[to].balance + amount;
+  history.push(Entry(request, from: from, to: to, amount: amount));
+}
+
+@why("a transfer creates and destroys nothing")
+law conserved(t: Trace[transfer]) =
+  t.steps.all(it.before.accounts.values.sum(y => y.balance) == it.after.accounts.values.sum(y => y.balance));
+
+@why("every balance is its opening balance plus what the history moved")
+law history_explains(t: Trace[transfer]) =
+  t.states.all(s => s.accounts.keys.all(x => x in s.opening implies
+    s.accounts[x].balance == s.opening[x] + moved(x, xs: s.history)));
+
+const left: AccountId = 1;
+const right: AccountId = 2;
+const r1: RequestId = 1;
+const r2: RequestId = 2;
+
+@given(accounts -> Map(left -> Account(100), right -> Account(5)), opening -> Map(left -> 100, right -> 5))
+test two_accounts = {
+  assert history.size == 0;
+}
+
+@given(two_accounts)
+test moves = {
+  transfer(r1, from: left, to: right, amount: 30);
+  assert accounts[left].balance == 70;
+  assert accounts[right].balance == 35;
+  assert history == [Entry(r1, from: left, to: right, amount: 30)];
+}
+
+@given(two_accounts)
+test refusals = {
+  transfer(r1, from: left, to: right, amount: 101) -> fail Insufficient;
+  transfer(r2, from: left, to: left, amount: 1) -> fail SameAccount;
+  transfer(3, from: left, to: 4, amount: 1) -> fail NoAccount;
+  transfer(4, from: left, to: right, amount: 0) -> fail NotPositive;
+  assert history.size == 0;
+}
+
+@given(two_accounts)
+test any_affordable_amount(n: 1..=100) = {
+  transfer(r1, from: left, to: right, amount: n);
+  assert accounts[left].balance == 100 - n;
+}

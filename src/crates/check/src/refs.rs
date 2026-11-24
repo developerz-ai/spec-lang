@@ -94,7 +94,7 @@ impl Collect<'_, '_> {
                 self.params(&p.law(l).params);
                 self.expr(&p.law(l).body);
             }
-            DeclRef::App(a) => self.set.extend(p.app(a).rules.iter().map(|r| DeclRef::Rule(*r))),
+            DeclRef::App(a) => self.set.extend(p.app(a).named()),
         }
     }
 

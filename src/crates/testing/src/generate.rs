@@ -71,7 +71,7 @@ impl GenError {
             GenError::Halt(Halt::Fail(f)) => {
                 Diag::error("E-GEN", span, format!("a claim failed with {} while generating", f.name))
             }
-            GenError::Halt(Halt::Blocked(h, s)) => Diag::error("F-BLOCKED", s, format!("generation reached ?{h}")),
+            GenError::Halt(Halt::Blocked(d)) => d.with_note("while generating a value"),
         }
     }
 }

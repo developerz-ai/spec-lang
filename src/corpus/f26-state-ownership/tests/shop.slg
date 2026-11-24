@@ -1,0 +1,58 @@
+// f26-state-ownership pins (module tests.shop): tests in a third module read
+// both modules' states, start from another module's named world, and see one
+// atomic move across two modules' states.
+
+use shop.till;
+use shop.floor;
+
+test a_closed_till_refuses_the_floor = {
+  floor.serve("ana", price: 10, tip: 2) -> fail Closed;
+  assert floor.served == 0 and floor.tips == Map() and till.cash == 0;
+}
+
+@given(till.two_sales)
+test serving_writes_both_modules = {
+  floor.serve("ana", price: 15, tip: 5) -> 45;
+  floor.serve("bob", price: 5, tip: 0) -> 50;
+  floor.serve("ana", price: 1, tip: 1) -> 51;
+  assert till.sales == [10, 20, 15, 5, 1] and till.takings() == 51;
+  assert floor.served == 3 and floor.tips == Map("ana" -> 6, "bob" -> 0);
+  assert floor.drawer_covers_tips();
+}
+
+@given(serving_writes_both_modules)
+test tips_leave_through_the_till = {
+  floor.cash_out("bob") -> fail NoTips;
+  floor.cash_out("eve") -> fail NoTips;
+  floor.cash_out("ana") -> 6;
+  assert till.cash == 45 and floor.tips == Map("bob" -> 0);
+  floor.cash_out("ana") -> fail NoTips;
+}
+
+@given(till.two_sales)
+test a_refusal_in_the_other_module_undoes_this_one = {
+  floor.serve("ana", price: 1, tip: 50) -> 31;
+  till.pay_out(31) -> 0;
+  floor.cash_out("ana") -> fail NotEnough;
+  assert floor.tips == Map("ana" -> 50) and till.cash == 0;
+  assert not floor.drawer_covers_tips();
+}
+
+@given(till.two_sales)
+test the_till_adds_every_sale(prices: List[1..=200]) = {
+  for p in prices { floor.serve("ana", price: p, tip: 0); }
+  assert till.cash == 30 + prices.sum();
+  assert till.takings() == till.cash and floor.served == prices.size;
+}
+
+law the_drawer_is_never_negative(t: Trace[till.ring | till.pay_out | floor.serve | floor.cash_out]) =
+  t.states.all(w => w.cash >= 0);
+
+law a_visit_is_a_sale_at_an_open_till(t: Trace[floor.serve]) =
+  t.steps.all(s => s.reply.is(Ok(_)) implies
+    s.before.opened and s.after.opened
+    and s.after.served == s.before.served + 1 and s.after.sales.size == s.before.sales.size + 1
+    and s.after.cash == s.before.cash + s.event.price);
+
+law a_refusal_crosses_the_module_line_whole(t: Trace[floor.serve | floor.cash_out]) =
+  t.steps.all(s => s.reply.is(Err(_)) implies s.after == s.before);

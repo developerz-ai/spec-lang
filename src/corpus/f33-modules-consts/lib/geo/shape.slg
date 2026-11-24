@@ -1,0 +1,20 @@
+// f33-modules-consts pins (module lib.geo.shape): a module three names deep
+// that uses a sibling tree by module (`units.kilo`) and by declaration
+// (`origin`), and whose sum type other modules import with its variants.
+
+use lib.units;
+use lib.units.origin;
+
+pub type Shape = Square(side: Int) | Strip(w: Int, h: Int);
+
+pub const unit_square: Shape = Square(1);
+pub const hectare: Shape = Square(units.kilo - 900);
+
+@cases(Square(3) -> 9, Strip(2, h: 5) -> 10)
+pub fn area(s: Shape) -> Int = match s {
+  Square(side) => side * side;
+  Strip(w, h) => w * h;
+}
+
+@cases((0, 0) -> true, (0, 1) -> false)
+pub fn at_origin(p: (Int, Int)) -> Bool = p == origin;

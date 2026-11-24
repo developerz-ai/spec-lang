@@ -1,0 +1,42 @@
+{
+  "rust": {
+    "run": [
+      "out/rust/target/release/skyhop"
+    ]
+  },
+  "bun": {
+    "run": [
+      "out/bun/dist/skyhop"
+    ]
+  },
+  "ruby": {
+    "run": [
+      "out/ruby/exe/skyhop"
+    ]
+  },
+  "cpp": {
+    "run": [
+      "out/cpp/build/skyhop"
+    ]
+  },
+  "gen-rust": {
+    "run": [
+      "gen/rust/target/release/skyhop"
+    ]
+  },
+  "gen-bun": {
+    "run": [
+      "gen/bun/dist/skyhop"
+    ]
+  },
+  "gen-ruby": {
+    "run": [
+      "gen/ruby/exe/skyhop"
+    ]
+  },
+  "gen-cpp": {
+    "run": [
+      "gen/cpp/build/skyhop"
+    ]
+  }
+}

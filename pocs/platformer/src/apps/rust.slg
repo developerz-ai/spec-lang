@@ -1,0 +1,10 @@
+use game;
+use hop.world;
+use hop.render;
+use hop.screen;
+
+@why("the game as one native binary")
+@target(rust)
+@bin("skyhop")
+@window(960, 540, "Skyhop")
+app SkyhopRust(start: world.start, tick: world.step, input: screen.read_pad, frame: screen.present, dump: render.dump, report: world.summary);

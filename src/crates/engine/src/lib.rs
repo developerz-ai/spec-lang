@@ -6,7 +6,8 @@
 //! * [`world::World`]: the value of every `state`. Forking a world copies a
 //!   vector of shared roots.
 //! * [`Interp`]: evaluation. A rule called from outside runs atomically: on a
-//!   failure the world and the pending `out.line` lines are restored.
+//!   failure the world and the state of every library pretend (the lines
+//!   `out.line` sent) are restored.
 //! * `Int` is `i128`; a result outside it stops evaluation with `E-RUNTIME`
 //!   instead of wrapping. The language says unbounded; this is the engine's limit.
 

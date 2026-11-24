@@ -1,0 +1,19 @@
+// laws: the two claims of docs/pocs/01-seat-limits, over every rule, from reached and from
+// random lawful worlds. Pins `t.states` with a second law parameter and `t.steps` before/after.
+
+use seats;
+use seats.OrgId;
+use seats.Role;
+
+type Change = seats.add | seats.remove | seats.promote | seats.set_limit;
+
+@why("nobody sits in a seat the plan did not sell")
+law never_over(t: Trace[Change], o: OrgId) =
+  t.states.all(s => o in s.orgs implies
+    s.seats.keys.filter(it.org == o).size <= s.orgs[o].limit);
+
+@why("an owned organisation stays owned")
+law always_owned(t: Trace[seats.add | seats.remove | seats.promote], o: OrgId) =
+  t.steps.all(s =>
+    s.before.seats.keys.any(k => k.org == o and s.before.seats[k] == Owner) implies
+    s.after.seats.keys.any(k => k.org == o and s.after.seats[k] == Owner));

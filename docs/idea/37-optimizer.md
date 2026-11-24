@@ -1,6 +1,6 @@
 # Optimizer
 
-> **Design.** Partly runs: the four hand projections and the first emitters in [the todo POC](../../pocs/todo-app/README.md) apply some of these by hand or per rule; no planner exists. How the compiler produces code better than a careful person writes, by borrowing what gcc, LLVM, the JVM and other JITs, databases and functional compilers already know, and why it can go further than they do.
+> **Design.** The four hand projections in [the todo POC](../../pocs/todo-app/README.md) apply some of these. Where a table below says "generated", it means the first emitters, since replaced by general printers that apply none ([009](../decisions/009-one-compiler-any-language.md)); no planner exists. How the compiler produces code better than a careful person writes, by borrowing what gcc, LLVM, the JVM and other JITs, databases and functional compilers already know, and why it can go further than they do.
 
 **Rule: an optimization is a named strategy whose precondition is a fact the source states.** It is never a guess about intent. gcc must prove that two pointers do not alias before it reorders loads; spec-lang is told, by `@uses`, read sets, claims and laws, what a rule touches and what must hold. So the catalogue of 50 years of compilers applies, with better facts. The [strategy catalogue](10-compiler-and-ir.md) holds each one: preconditions, cost formula, version.
 

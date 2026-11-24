@@ -1,143 +1,209 @@
-/** A base value that passed a claim: `type Title = Text where is_title(self)`. */
-export type Brand<Base, Name extends string> = Base & { readonly __brand: Name };
+// The spec-lang runtime of the TypeScript printer: `Option`, structural equality, and the List operations the
+// native array methods do not already mean.
 
-/** A value outside its type reached a place of that type. Edges check first, so this is a bug in the program. */
-export class ClaimViolation extends Error {}
+import { OrdMap, OrdSet, Range } from "./collections.ts";
+import { Failure, fail, missing, stop } from "./failure.ts";
+import type { Int } from "./int.ts";
+import type { Type } from "./types.ts";
 
-/** `map[key]` on a key the map does not hold. */
-export class Missing extends Error {}
+export type Option<T> = { readonly kind: "Some"; readonly value: T } | { readonly kind: "none" };
 
-export interface Claimed<Base, T extends Base> {
-  readonly name: string;
-  /** At an edge (an argument, a store): the value, or undefined when the claim does not hold. */
-  readonly parse: (value: Base) => T | undefined;
-  /** Inside the program: the value, checked; a failure is a bug. */
-  readonly of: (value: Base) => T;
+export const none: Option<never> = Object.freeze({ kind: "none" });
+
+export function some<T>(value: T): Option<T> {
+  return { kind: "Some", value };
 }
 
-export function claimed<Base, T extends Base>(name: string, holds: (self: Base) => boolean): Claimed<Base, T> {
-  const parse = (value: Base): T | undefined => (holds(value) ? (value as T) : undefined);
-  return Object.freeze({
-    name,
-    parse,
-    of: (value: Base): T => {
-      const checked = parse(value);
-      if (checked === undefined) throw new ClaimViolation(`not a ${name}: ${String(value)}`);
-      return checked;
-    },
+/** `opt else fallback` on an Option: `Some(v)` gives `v`, `none` the fallback. */
+export function someOr<T>(value: Option<T>, fallback: () => T): T {
+  return value.kind === "Some" ? value.value : fallback();
+}
+
+/** `opt else fallback` where `opt` may also fail: a failure or `none` give the fallback. */
+export function someOrElse<T>(value: () => Option<T>, fallback: () => T): T {
+  let v: Option<T>;
+  try {
+    v = value();
+  } catch (e) {
+    if (e instanceof Failure) return fallback();
+    throw e;
+  }
+  return v.kind === "Some" ? v.value : fallback();
+}
+
+function equalItems(a: readonly unknown[], b: readonly unknown[]): boolean {
+  return a.length === b.length && a.every((x, i) => equal(x, b[i]));
+}
+
+/** Structural `==` on every type but functions. */
+export function equal(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  if (Array.isArray(a)) return Array.isArray(b) && equalItems(a, b);
+  if (a instanceof OrdSet) return b instanceof OrdSet && equalItems(a.items, b.items);
+  if (a instanceof OrdMap) {
+    return b instanceof OrdMap && equalItems(a.keyList, b.keyList) && equalItems(a.valueList, b.valueList);
+  }
+  if (a instanceof Range) return b instanceof Range && a.lo === b.lo && a.hi === b.hi && a.inclusive === b.inclusive;
+  const keys = Object.keys(a);
+  if (Object.keys(b).length !== keys.length) return false;
+  return keys.every((k) => equal((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+
+/** An index as a JS number, or -1 when it is not one of `xs`. */
+function index(xs: readonly unknown[], i: Int): number {
+  return i >= 0n && i < BigInt(xs.length) ? Number(i) : -1;
+}
+
+/** `xs[i]`: outside the list fails `Missing`. */
+export function at<T>(xs: readonly T[], i: Int): T {
+  const n = index(xs, i);
+  return n < 0 ? missing() : (xs[n] as T);
+}
+
+/** `xs.get(i)`. */
+export function get<T>(xs: readonly T[], i: Int): Option<T> {
+  const n = index(xs, i);
+  return n < 0 ? none : some(xs[n] as T);
+}
+
+/** `xs[i] = v`. */
+export function setAt<T>(xs: readonly T[], i: Int, v: T): readonly T[] {
+  const n = index(xs, i);
+  return n < 0 ? missing() : xs.with(n, v);
+}
+
+export function first<T>(xs: readonly T[]): T {
+  return xs.length === 0 ? missing() : (xs[0] as T);
+}
+
+export function last<T>(xs: readonly T[]): T {
+  return xs.length === 0 ? missing() : (xs[xs.length - 1] as T);
+}
+
+export function find<T>(xs: readonly T[], holds: (x: T) => boolean): Option<T> {
+  for (const x of xs) if (holds(x)) return some(x);
+  return none;
+}
+
+export function position<T>(xs: readonly T[], holds: (x: T) => boolean): Option<Int> {
+  for (let i = 0; i < xs.length; i++) if (holds(xs[i] as T)) return some(BigInt(i));
+  return none;
+}
+
+/** Left to right from the start value. */
+export function fold<T, A>(xs: readonly T[], start: A, f: (acc: A, x: T) => A): A {
+  let acc = start;
+  for (const x of xs) acc = f(acc, x);
+  return acc;
+}
+
+export function sum(xs: readonly Int[]): Int {
+  let total = 0n;
+  for (const x of xs) total += x;
+  return total;
+}
+
+export function sumBy<T>(xs: readonly T[], f: (x: T) => Int): Int {
+  let total = 0n;
+  for (const x of xs) total += f(x);
+  return total;
+}
+
+/** The item with the least (`sign` -1) or greatest (1) key; the earliest of ties; empty fails `Missing`. */
+function best<T, K>(xs: readonly T[], key: (x: T) => K, type: Type<K>, sign: number): T {
+  let found: { readonly key: K; readonly item: T } | undefined;
+  for (const x of xs) {
+    const k = key(x);
+    if (found === undefined || type.compare(k, found.key) * sign > 0) found = { key: k, item: x };
+  }
+  return found === undefined ? missing() : found.item;
+}
+
+export function min<T>(xs: readonly T[], type: Type<T>): T {
+  return best(xs, (x) => x, type, -1);
+}
+
+export function max<T>(xs: readonly T[], type: Type<T>): T {
+  return best(xs, (x) => x, type, 1);
+}
+
+export function minBy<T, K>(xs: readonly T[], key: (x: T) => K, type: Type<K>): T {
+  return best(xs, key, type, -1);
+}
+
+export function maxBy<T, K>(xs: readonly T[], key: (x: T) => K, type: Type<K>): T {
+  return best(xs, key, type, 1);
+}
+
+export function contains<T>(xs: readonly T[], x: T): boolean {
+  return xs.some((y) => equal(x, y));
+}
+
+/** The earliest of each group of equal items, in order. */
+export function distinct<T>(xs: readonly T[], type: Type<T>): readonly T[] {
+  let seen = OrdSet.empty(type);
+  return xs.filter((x) => {
+    if (seen.has(x)) return false;
+    seen = seen.insert(x);
+    return true;
   });
 }
 
-/** Order on Int, Text (by code point) and tuples of them. */
-export function compare(a: unknown, b: unknown): number {
-  if (typeof a === "string" && typeof b === "string") return compareText(a, b);
-  if (Array.isArray(a) && Array.isArray(b)) {
-    for (let i = 0; i < a.length && i < b.length; i++) {
-      const d = compare(a[i], b[i]);
-      if (d !== 0) return d;
-    }
-    return a.length - b.length;
+/** A stable sort by the key's value order; `desc` reverses the order, not the ties. */
+export function sortBy<T, K>(xs: readonly T[], key: (x: T) => K, type: Type<K>, desc = false): readonly T[] {
+  const keyed = xs.map((item) => ({ key: key(item), item }));
+  const sign = desc ? -1 : 1;
+  return keyed.sort((a, b) => type.compare(a.key, b.key) * sign).map((k) => k.item);
+}
+
+export function sort<T>(xs: readonly T[], type: Type<T>, desc = false): readonly T[] {
+  return sortBy(xs, (x) => x, type, desc);
+}
+
+function count(n: Int, op: string): number {
+  if (n < 0n) stop("E-TYPE-ARITY", `\`${op}\` takes one Int, at least 0`);
+  return n > 2n ** 32n ? 2 ** 32 : Number(n);
+}
+
+export function take<T>(xs: readonly T[], n: Int): readonly T[] {
+  return xs.slice(0, count(n, "take"));
+}
+
+export function drop<T>(xs: readonly T[], n: Int): readonly T[] {
+  return xs.slice(count(n, "drop"));
+}
+
+/** Pairs by position; unequal sizes fail `Uneven`. */
+export function zip<T, U>(xs: readonly T[], ys: readonly U[]): readonly (readonly [T, U])[] {
+  if (xs.length !== ys.length) fail("Uneven");
+  return xs.map((x, i) => [x, ys[i] as U] as const);
+}
+
+/** Items by key, the order kept inside a group. */
+export function groupBy<T, K>(xs: readonly T[], key: (x: T) => K, type: Type<K>): OrdMap<K, readonly T[]> {
+  let groups = OrdMap.empty<K, readonly T[]>(type);
+  for (const x of xs) {
+    const k = key(x);
+    const group = groups.get(k);
+    groups = groups.set(k, group.kind === "Some" ? [...group.value, x] : [x]);
   }
-  if ((typeof a === "bigint" || typeof a === "number") && (typeof b === "bigint" || typeof b === "number")) {
-    return a < b ? -1 : a > b ? 1 : 0;
-  }
-  throw new TypeError("values of this type have no order");
+  return groups;
 }
 
-/** UTF-16 order differs from code-point order only where a surrogate meets a unit above U+DFFF. */
-function compareText(a: string, b: string): number {
-  if (a === b) return 0;
-  const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i++) {
-    const x = a.charCodeAt(i);
-    const y = b.charCodeAt(i);
-    if (x !== y) return fix(x) - fix(y);
-  }
-  return a.length - b.length;
+/** `x` put before index `at` (0 to size). */
+export function insert<T>(xs: readonly T[], at: Int, x: T): readonly T[] {
+  if (at < 0n || at > BigInt(xs.length)) missing();
+  return xs.toSpliced(Number(at), 0, x);
 }
 
-function fix(unit: number): number {
-  return unit >= 0xd800 && unit <= 0xdfff ? unit + 0x2000 : unit >= 0xe000 ? unit - 0x800 : unit;
+/** The item at `at` removed. */
+export function removeAt<T>(xs: readonly T[], at: Int): readonly T[] {
+  const n = index(xs, at);
+  return n < 0 ? missing() : xs.toSpliced(n, 1);
 }
 
-/** `xs.sort(key)`: ascending by key, stable. */
-export function sortBy<T>(items: readonly T[], key: (item: T) => unknown): T[] {
-  return items
-    .map((item) => ({ item, key: key(item) }))
-    .sort((a, b) => compare(a.key, b.key))
-    .map((pair) => pair.item);
-}
-
-/** A `Set`: a frozen array, ascending and without repeats, so `==` is element-wise. */
-export function setOf<T>(items: Iterable<T>): readonly T[] {
-  const sorted = [...items].sort(compare);
-  return Object.freeze(sorted.filter((item, i) => i === 0 || compare(sorted[i - 1], item) !== 0));
-}
-
-/** `map[key]`. */
-export function at<K, V>(map: ReadonlyMap<K, V>, key: K): V {
-  const value = map.get(key);
-  if (value === undefined) throw new Missing(String(key));
-  return value;
-}
-
-/**
- * `map[key] = value`. A `Map` iterates in ascending key order, and a JS Map in insertion order,
- * so the two are kept equal: a key above every other is appended, any other new key re-sorts.
- */
-export function put<K, V>(map: Map<K, V>, key: K, value: V): void {
-  if (map.has(key)) {
-    map.set(key, value);
-    return;
-  }
-  let last: K | undefined;
-  for (const k of map.keys()) last = k;
-  map.set(key, value);
-  if (last === undefined || compare(last, key) < 0) return;
-  const entries = [...map].sort((a, b) => compare(a[0], b[0]));
-  map.clear();
-  for (const [k, v] of entries) map.set(k, v);
-}
-
-const owned = new WeakSet<object>();
-
-/** The store session read this world for one rule call and holds no other use of it: its maps may be changed in place. */
-export function own<W>(world: W): W {
-  if (typeof world === "object" && world !== null) {
-    for (const value of Object.values(world)) if (value instanceof Map) owned.add(value);
-  }
-  return world;
-}
-
-/**
- * The map a rule body writes. A rule is atomic and the process commits once, so a map the caller
- * handed over (`own`) is the draft itself; any other caller keeps its world and the draft is a copy.
- */
-export function draft<K, V>(map: ReadonlyMap<K, V>): Map<K, V> {
-  return owned.delete(map) ? (map as Map<K, V>) : new Map(map);
-}
-
-/** `Map(k -> v, ...)`, in ascending key order. */
-export function mapOf<K, V>(entries: Iterable<readonly [K, V]>): Map<K, V> {
-  return new Map([...entries].sort((a, b) => compare(a[0], b[0])));
-}
-
-/** `record.with(field: value)`. */
-export function update<T extends object>(record: T, patch: Partial<T>): T {
-  return Object.freeze({ ...record, ...patch });
-}
-
-/** Structural `==` on every type. */
-export function equals(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
-  if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((x, i) => equals(x, b[i]));
-  if (a instanceof Map) {
-    if (!(b instanceof Map) || a.size !== b.size) return false;
-    for (const [k, v] of a) if (!b.has(k) || !equals(v, b.get(k))) return false;
-    return true;
-  }
-  const keys = Object.keys(a);
-  if (Array.isArray(b) || b instanceof Map || Object.keys(b).length !== keys.length) return false;
-  return keys.every((k) => equals((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+/** `x in lo..=hi` and the like, as a value. */
+export function range(lo: Int, hi: Int, inclusive: boolean): Range {
+  return new Range(lo, hi, inclusive);
 }

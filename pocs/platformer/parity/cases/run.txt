@@ -1,0 +1,143 @@
+# Whole runs: every out.line of start and step, then the summary.
+
+# case: nothing held: land once and stand
+< 30 -
+$ ["run"]
+> 0 level meadow
+> 1 land
+> end 30 playing gems 0/3 lives 3 at 0,0,0
+
+# case: an empty script still starts the level
+$ ["run"]
+> 0 level meadow
+> end 0 playing gems 0/3 lives 3 at 0,0,0
+
+# case: a held jump and a landing
+< 60 R
+< 20 RJ
+< 40 R
+$ ["run"]
+> 0 level meadow
+> 1 land
+> 61 jump
+> 100 land
+> end 120 playing gems 0/3 lives 3 at 1856,0,0
+
+# case: the meadow, won with every gem
+<@ meadow-win.txt
+$ ["run"]
+> 0 level meadow
+> 1 land
+> 76 jump
+> 114 land
+> 137 jump
+> 140 gem 1
+> 167 land
+> 192 jump
+> 231 land
+> 235 jump
+> 238 gem 2
+> 279 land
+> 284 gem 3
+> 316 won
+> end 316 won gems 3/3 lives 3 at 4992,0,0
+
+# case: the meadow at level 1 given with leading zeros
+<@ meadow-win.txt
+$ ["run", "--level", "001"]
+> 0 level meadow
+> 1 land
+> 76 jump
+> 114 land
+> 137 jump
+> 140 gem 1
+> 167 land
+> 192 jump
+> 231 land
+> 235 jump
+> 238 gem 2
+> 279 land
+> 284 gem 3
+> 316 won
+> end 316 won gems 3/3 lives 3 at 4992,0,0
+
+# case: the ridge, won by riding the mover
+<@ ridge-win.txt
+$ ["run", "--level", "2"]
+> 0 level ridge
+> 1 land
+> 41 jump
+> 80 land
+> 161 jump
+> 200 land
+> 201 jump
+> 228 gem 1
+> 240 land
+> 249 jump
+> 288 land
+> 289 jump
+> 321 land
+> 329 jump
+> 367 land
+> 377 jump
+> 404 land
+> 409 jump
+> 436 gem 2
+> 448 land
+> 457 jump
+> 496 land
+> 525 gem 3
+> 529 jump
+> 549 won
+> end 549 won gems 3/3 lives 3 at 6018,698,0
+
+# case: a stomp removes the crawler and bounces
+<@ meadow-stomp.txt
+$ ["run"]
+> 0 level meadow
+> 1 land
+> 76 jump
+> 114 land
+> 137 jump
+> 140 gem 1
+> 167 land
+> 173 jump
+> 208 stomp 1
+> 229 land
+> end 232 playing gems 1/3 lives 3 at 3648,254,0
+
+# case: walking into the crawler costs a life
+<@ meadow-hit.txt
+$ ["run"]
+> 0 level meadow
+> 1 land
+> 77 jump
+> 115 land
+> 129 jump
+> 132 gem 1
+> 168 land
+> 181 jump
+> 211 land
+> 234 hit
+> 235 land
+> end 260 playing gems 1/3 lives 2 at 352,0,0
+
+# case: three falls lose the game, and input after it is ignored
+<@ meadow-falls.txt
+$ ["run"]
+> 0 level meadow
+> 1 land
+> 126 fall
+> 127 land
+> 252 fall
+> 253 land
+> 378 fall
+> 378 lost
+> end 378 lost gems 0/3 lives 0 at 0,0,0
+
+# case: the ridge, standing on the start
+< 5 -
+$ ["run", "--level", "2"]
+> 0 level ridge
+> 1 land
+> end 5 playing gems 0/3 lives 3 at 0,0,0

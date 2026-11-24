@@ -1,0 +1,105 @@
+// f32-effects-out pins the one effect the engine runs, `out.line`: each call
+// adds its text and one `\n`; lines arrive in call order across rules and
+// loops; text is written raw (quotes, braces, tabs, an empty line, a line
+// that itself holds `\n`) and other values through interpolation; a refused
+// call adds nothing; `out.text` in a test is everything since the test began.
+
+use cli;
+
+type Row(name: Text, qty: Int);
+
+state rows: List[Row];
+
+@why("a heading and one line per row, in the order they were added")
+@uses(rows.read, out.write)
+pub rule report() = {
+  out.line("== {rows.size} rows ==");
+  for r in rows { out.line("{r.name}\t{r.qty}"); }
+  if rows.size == 0 { out.line(""); }
+}
+
+@why("a row is announced when it is stored, never when it is refused")
+@uses(rows.write, out.write)
+@guard(qty >= 0 else Negative)
+pub rule add(name: Text, qty: Int) = {
+  out.line("adding {name}");
+  if rows.any(it.name == name) { fail Duplicate; }
+  rows.push(Row(name, qty: qty));
+  out.line("added {Row(name, qty: qty)}");
+}
+
+@why("text goes out exactly as it is")
+@uses(out.write)
+pub rule echo(t: Text) = {
+  out.line(t);
+}
+
+@why("a countdown: lines from a loop, then one more")
+@uses(out.write)
+pub rule countdown(n: 0..=5) -> Int = {
+  var i = n;
+  while i > 0 {
+    out.line("{i}");
+    i = i - 1;
+  }
+  out.line("go");
+  return n + 1;
+}
+
+test nothing_is_written_until_a_rule_writes = {
+  assert out.text == "";
+  assert out.text.size == 0;
+}
+
+test each_line_ends_in_one_newline = {
+  echo("a");
+  assert out.text == "a\n";
+  echo("b");
+  assert out.text == "a\nb\n";
+  assert out.text.split("\n") == ["a", "b", ""];
+}
+
+test text_is_raw = {
+  echo("");
+  echo("say \"hi\"");
+  echo("\{braces}");
+  echo("tab\there");
+  echo("two\nlines");
+  echo("é😀");
+  echo(" spaces kept ");
+  assert out.text == "\nsay \"hi\"\n\{braces}\ntab\there\ntwo\nlines\né😀\n spaces kept \n";
+  assert out.text.bytes.filter(it == 10).size == 8;
+}
+
+test lines_keep_call_order = {
+  report();
+  add("nut", qty: 2);
+  add("bolt", qty: 0);
+  report();
+  countdown(2) -> 3;
+  assert out.text == "== 0 rows ==\n\nadding nut\nadded Row(\"nut\", qty: 2)\nadding bolt\nadded Row(\"bolt\", qty: 0)\n== 2 rows ==\nnut\t2\nbolt\t0\n2\n1\ngo\n";
+}
+
+test a_refused_call_writes_no_line = {
+  add("nut", qty: -1) -> fail Negative;
+  assert out.text == "";
+  add("nut", qty: 1);
+  add("nut", qty: 5) -> fail Duplicate;
+  assert out.text == "adding nut\nadded Row(\"nut\", qty: 1)\n";
+  countdown(0) -> 1;
+  assert out.text.split("\n").last == "" and out.text.split("\n")[2] == "go";
+}
+
+test a_countdown_has_n_plus_one_lines(n: 0..=5) = {
+  countdown(n) -> n + 1;
+  let lines = out.text.split("\n");
+  assert lines.size == n + 2 and lines.last == "" and lines[n] == "go";
+  assert lines.take(n) == (1..=n).map(i => "{n + 1 - i}");
+}
+
+test echo_is_exact(t: Text) = {
+  echo(t);
+  echo(t);
+  assert out.text == "{t}\n{t}\n";
+  assert out.text.size == 2 * t.size + 2;
+}

@@ -1,0 +1,37 @@
+// f33-modules-consts pins (module lib.units): the path is the module;
+// constants of several types, a constant computed from another and from a
+// fn; `pub` types, constants and fns for other modules; a private constant
+// and a private fn that stay inside.
+
+pub const kilo: Int = 1000;
+pub const mega: Int = kilo * kilo;
+pub const giga: Int = scale(3);
+pub const letters: Map[Text, Prefix] = Map("k" -> Kilo, "M" -> Mega, "G" -> Giga);
+pub const origin: (Int, Int) = (0, 0);
+pub const banner: Text = "units v{letters.size}";
+const digits: Text = "0123456789";
+
+pub type Prefix = One | Kilo | Mega | Giga;
+
+fn scale(n: Int) -> Int = kilo ^ n;
+
+@cases(One -> 1, Kilo -> 1000, Mega -> 1000000, Giga -> 1000000000)
+pub fn factor(p: Prefix) -> Int = match p {
+  One => 1;
+  Kilo => kilo;
+  Mega => mega;
+  Giga => giga;
+}
+
+fn digit(c: Text) -> Int = digits.split(c).first.size;
+
+@cases("0" -> 0, "42" -> 42, "007" -> 7, "9007199254740993" -> 9007199254740993, "" -> 0)
+pub fn number(t: Text) -> Int = (0..<t.size).fold(0, (acc, i) => acc * 10 + digit(t.drop(i).take(1)));
+
+@why("a size as people write it: digits, then at most one prefix letter")
+@cases("5" -> 5, "3k" -> 3000, "12M" -> 12000000, "2G" -> 2000000000, "0k" -> 0)
+pub fn amount(t: Text) -> Int = {
+  let end = t.drop(t.size - 1);
+  if end in letters { return number(t.take(t.size - 1)) * factor(letters[end]); }
+  return number(t);
+}

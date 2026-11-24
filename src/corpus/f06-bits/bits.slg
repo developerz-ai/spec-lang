@@ -1,0 +1,121 @@
+// f06-bits pins: `band bor bxor shl shr` on non-negative Int, past 32 and 64
+// bits (where a language with 32-bit bit operators or a 64-bit word gives
+// another answer), shift counts of 0 and beyond the word, and that the five
+// names bind looser than `+` and tighter than comparison.
+
+const word: Int = 18446744073709551615;
+
+@cases(
+  (12, 10) -> 8,
+  (0, 255) -> 0,
+  (255, 255) -> 255,
+  (4294967295, 4294967296) -> 0,
+  (6442450944, 4294967296) -> 4294967296,
+  (18446744073709551615, 9223372036854775808) -> 9223372036854775808,
+  (36893488147419103231, 18446744073709551616) -> 18446744073709551616,
+)
+pub fn both(a: Int, b: Int) -> Int = a band b;
+
+@cases(
+  (12, 10) -> 14,
+  (0, 0) -> 0,
+  (2147483648, 1) -> 2147483649,
+  (4294967296, 1) -> 4294967297,
+  (9223372036854775808, 9223372036854775807) -> 18446744073709551615,
+  (18446744073709551616, 1) -> 18446744073709551617,
+)
+pub fn either(a: Int, b: Int) -> Int = a bor b;
+
+@cases(
+  (12, 10) -> 6,
+  (7, 7) -> 0,
+  (2147483648, 2147483647) -> 4294967295,
+  (4294967295, 1) -> 4294967294,
+  (18446744073709551615, 1) -> 18446744073709551614,
+  (18446744073709551616, 18446744073709551615) -> 36893488147419103231,
+)
+pub fn differ(a: Int, b: Int) -> Int = a bxor b;
+
+@cases(
+  (1, 0) -> 1,
+  (1, 1) -> 2,
+  (1, 31) -> 2147483648,
+  (1, 32) -> 4294967296,
+  (1, 53) -> 9007199254740992,
+  (1, 63) -> 9223372036854775808,
+  (1, 64) -> 18446744073709551616,
+  (3, 100) -> 3802951800684688204490109616128,
+  (1, 126) -> 85070591730234615865843651857942052864,
+  (0, 100) -> 0,
+  (255, 8) -> 65280,
+)
+pub fn left(a: Int, n: Int) -> Int = a shl n;
+
+@cases(
+  (1, 0) -> 1,
+  (1, 1) -> 0,
+  (255, 4) -> 15,
+  (4294967296, 32) -> 1,
+  (2147483648, 31) -> 1,
+  (9223372036854775808, 63) -> 1,
+  (18446744073709551616, 64) -> 1,
+  (18446744073709551615, 64) -> 0,
+  (18446744073709551615, 500) -> 0,
+  (3802951800684688204490109616128, 100) -> 3,
+)
+pub fn right(a: Int, n: Int) -> Int = a shr n;
+
+@why("a bit set by number: flags above bit 31 and bit 63 work like the low ones")
+@cases((0, 0) -> 1, (1, 0) -> 1, (0, 40) -> 1099511627776, (5, 70) -> 1180591620717411303429)
+pub fn set_bit(flags: Int, n: 0..=120) -> Int = flags bor (1 shl n);
+
+@cases((5, 0) -> true, (5, 1) -> false, (5, 2) -> true, (1180591620717411303429, 70) -> true, (1180591620717411303429, 69) -> false)
+pub fn has_bit(flags: Int, n: 0..=120) -> Bool = (flags shr n) band 1 == 1;
+
+@cases(0 -> 0, 1 -> 1, 255 -> 8, 18446744073709551615 -> 64, 18446744073709551616 -> 1)
+pub fn ones(n: Int) -> Int = {
+  var rest = n;
+  var count = 0;
+  while rest > 0 {
+    count = count + (rest band 1);
+    rest = rest shr 1;
+  }
+  return count;
+}
+
+test bit_names_bind_between_plus_and_compare = {
+  assert 1 + 1 shl 2 == 8;
+  assert 1 shl 2 + 1 == 8;
+  assert 6 band 3 == 2;
+  assert 1 bor 2 == 3;
+  assert (1 shl 4) bor (1 shl 2) == 20;
+}
+
+test masks_past_the_word = {
+  assert (word + 1) band word == 0;
+  assert (word shl 62) shr 62 == word;
+  assert (word shl 1) band word == word - 1;
+  assert word bxor word == 0;
+  assert (word bxor 1) bor 1 == word;
+}
+
+test shifts_are_powers_of_two(a: 0..=18446744073709551616, n: 0..=60) = {
+  assert a shl n == a * 2 ^ n;
+  assert (a shl n) shr n == a;
+  assert a shr n == (a - a mod 2 ^ n) shr n;
+  assert (a shr n) * 2 ^ n + a mod 2 ^ n == a;
+}
+
+test bit_identities(a: 0..=36893488147419103232, b: 0..=36893488147419103232) = {
+  assert (a band b) + (a bor b) == a + b;
+  assert (a bxor b) == (a bor b) - (a band b);
+  assert (a bxor b) bxor b == a;
+  assert a band a == a and a bor a == a and a bxor a == 0;
+  assert a band b <= a.min(b) and a bor b >= a.max(b);
+  assert ones(a bxor b) == ones(a bor b) - ones(a band b);
+}
+
+test set_then_has(flags: 0..=18446744073709551616, n: 0..=120) = {
+  assert has_bit(set_bit(flags, n: n), n: n);
+  assert set_bit(set_bit(flags, n: n), n: n) == set_bit(flags, n: n);
+}

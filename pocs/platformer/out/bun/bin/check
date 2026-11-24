@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Projected by hand from the gate for the bun target (docs/contract.md section 6). Stand-in for spec-lang build output; change the spec, not this file.
+# The whole gate: lint and format, types, tests, build. Tests that open a window need an X server.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bun install --frozen-lockfile
+bin/shim
+bunx biome check .
+bunx tsc --noEmit -p .
+if [ -z "${DISPLAY:-}" ] && command -v xvfb-run >/dev/null; then
+  xvfb-run -a bun test
+else
+  bun test
+fi
+bin/build

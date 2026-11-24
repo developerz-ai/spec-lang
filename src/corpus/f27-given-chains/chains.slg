@@ -1,0 +1,106 @@
+// f27-given-chains pins: `@given(state -> value)` replaces a place before the
+// steps run; `@given(other_test)` starts from that test's end world, steps
+// included, to any depth; two tests from one parent do not see each other;
+// a `@given` may name a parent and then replace places on top of it, left to
+// right; `out.text` starts empty in every test (the engine's open choice 4).
+
+use cli;
+
+type Stage = Draft | Review | Live;
+type Doc(title: Text, stage: Stage = Draft, edits: Int = 0);
+
+state docs: Map[Int, Doc];
+state next: Int = 1;
+state editor: Text = "nobody";
+
+@why("a document gets the next number")
+@uses(docs.write, next.write, out.write)
+pub rule create(title: Text) -> Int = {
+  let no = next;
+  docs[no] = Doc(title);
+  next = no + 1;
+  out.line("created {no}");
+  return no;
+}
+
+@why("an edit is counted against the document")
+@uses(docs.write, editor.read, out.write)
+@guard(no in docs else NoDoc, docs[no].stage != Live else Locked)
+pub rule edit(no: Int, title: Text) = {
+  docs[no].title = title;
+  docs[no].edits = docs[no].edits + 1;
+  out.line("{editor} edited {no}");
+}
+
+@why("a document moves one stage at a time")
+@uses(docs.write)
+@guard(no in docs else NoDoc, docs[no].stage != Live else Locked)
+pub rule promote(no: Int) -> Stage = {
+  docs[no].stage = if docs[no].stage == Draft then Review else Live;
+  return docs[no].stage;
+}
+
+test nothing_yet = {
+  assert docs == Map() and next == 1 and editor == "nobody";
+}
+
+@given(next -> 10, editor -> "ana")
+test places_are_replaced = {
+  assert next == 10 and editor == "ana" and docs == Map();
+  create("a") -> 10;
+  assert out.text == "created 10\n";
+}
+
+@given(places_are_replaced)
+test a_child_starts_where_its_parent_ended = {
+  assert next == 11 and docs[10] == Doc("a") and editor == "ana";
+  assert out.text == "";
+  edit(10, title: "b");
+  assert out.text == "ana edited 10\n";
+}
+
+@given(a_child_starts_where_its_parent_ended)
+test a_grandchild_has_both_histories = {
+  assert docs[10] == Doc("b", edits: 1);
+  promote(10) -> Review;
+  create("c") -> 11;
+}
+
+@given(a_grandchild_has_both_histories)
+test four_deep = {
+  assert docs.keys == [10, 11] and docs[10].stage == Review and next == 12;
+  promote(10) -> Live;
+  edit(10, title: "z") -> fail Locked;
+  promote(10) -> fail Locked;
+}
+
+@given(a_child_starts_where_its_parent_ended)
+test a_sibling_sees_none_of_it = {
+  assert docs.keys == [10] and docs[10].stage == Draft and next == 11;
+  edit(10, title: "other");
+  assert docs[10] == Doc("other", edits: 2);
+}
+
+@given(a_grandchild_has_both_histories, editor -> "bob", next -> 50)
+test a_parent_then_places_on_top = {
+  assert editor == "bob" and next == 50;
+  assert docs.keys == [10, 11] and docs[10].stage == Review;
+  edit(11, title: "d");
+  assert out.text == "bob edited 11\n";
+  create("e") -> 50;
+}
+
+@given(docs -> Map(3 -> Doc("x", stage: Live, edits: 9), 1 -> Doc("y")), next -> 4)
+test a_whole_map_is_given = {
+  assert docs.keys == [1, 3] and docs[3].edits == 9;
+  edit(3, title: "no") -> fail Locked;
+  edit(2, title: "no") -> fail NoDoc;
+  create("z") -> 4;
+}
+
+@given(a_whole_map_is_given)
+test a_property_starts_from_the_same_end_world_every_run(title: Text) = {
+  assert next == 5 and docs.keys == [1, 3, 4];
+  create(title) -> 5;
+  assert docs[5].title == title and docs.size == 4;
+}

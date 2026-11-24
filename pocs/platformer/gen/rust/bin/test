@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Runs every check of the program: one JSON line per check. Arguments: [--seed N] [--runs N] [--traces N] [--steps N]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+cargo build --release --quiet --bin checks >&2
+exec target/release/checks "$@"

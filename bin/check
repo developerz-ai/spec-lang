@@ -9,7 +9,7 @@ area="${1:-all}"
 
 docs() {
   step "docs: every slg fence parses"
-  bin/slg-check docs pocs README.md
+  bin/slg-check docs pocs libs README.md
   step "docs: scripts lint, types, tests"
   (cd scripts && bunx biome check . && bunx tsc -p . && bun test)
   step "docs: links, Limits, private"

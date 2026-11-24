@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+# The judge of the compiler (docs/decisions/009-one-compiler-any-language.md).
+# For every program of the corpus it asks the engine, the LIR evaluator and each
+# printer's output for the status of every check, and compares them check by check.
+#
+# Usage: [SPEC_LANG=<binary>] src/bin/corpus [name...]      (needs jq; no name: every program)
+#   a name is a directory of src/corpus/, or `todo-app` / `platformer` for the POCs.
+#
+# The contract every side meets: one JSON object per line, per check,
+#   {"check": "<name>", "status": "pass" | "fail" | "blocked"}   (other fields are ignored)
+# where <name> is the declaration's path (`todo.laws.next_only_grows`) for a test,
+# property or law, and `<path> case[<i>]` for row i (from 0, in written order) of
+# a `@cases` table: the names `spec-lang lir --eval` prints. The engine's names
+# are derived here from `kind` and `decl` of `spec-lang test --json`.
+#
+# Exit 1 when a side that is built disagrees with the engine, cannot run a
+# program, or when the engine is not green on a program. A side that does not
+# exist yet (the command or flag is unknown: exit 2) is "not built" and is skipped.
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 2
+
+targets=(rust ts ruby cpp) # one printer per name: add a target here
+
+command -v jq >/dev/null || { echo "src/bin/corpus: jq not found" >&2; exit 2; }
+# SPEC_LANG=<binary> judges that binary instead of building this checkout's.
+if [ -n "${SPEC_LANG:-}" ]; then
+  spec=$SPEC_LANG
+else
+  cargo build -q --release -p spec-lang-cli || exit 1
+  spec=$PWD/target/release/spec-lang
+fi
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+# name<TAB>path<TAB>extra engine flags, sorted by name
+programs() {
+  for d in corpus/*/; do
+    d=${d%/}
+    printf '%s\t%s\t%s\n' "${d#corpus/}" "$d" "--deny warnings"
+  done
+  for poc in todo-app platformer; do
+    [ -d "../pocs/$poc/src" ] && printf '%s\t%s\t%s\n' "$poc" "../pocs/$poc/src" ""
+  done
+}
+
+# stdin: lines of {"check","status"}; stdout: check<TAB>status
+pairs() { jq -r 'select(type == "object" and .check != null and .status != null) | [.check, .status] | @tsv' 2>/dev/null; }
+
+# One side of one program. $1 = side, $2 = its directory, $3 = exit code of the
+# command that produced $2/out. Leaves $2/checks.tsv, or $2/state = "not built" / "error".
+settle() {
+  if [ "$3" -eq 2 ]; then echo "not built" >"$2/state"; return; fi
+  pairs <"$2/out" >"$2/checks.tsv"
+  [ -s "$2/checks.tsv" ] || echo "error" >"$2/state"
+}
+
+judge_one() {
+  local name=$1 path=$2 flags=$3 dir=$work/$1 side
+  mkdir -p "$dir/engine" "$dir/lir"
+
+  # shellcheck disable=SC2086  # flags are words
+  "$spec" test "$path" --json $flags >"$dir/engine/out" 2>"$dir/engine/err"
+  echo $? >"$dir/engine/exit"
+  jq -r 'select(.stage == "test" and .decl != null) | [.kind, .decl, .status] | @tsv' <"$dir/engine/out" |
+    awk -F'\t' -v OFS='\t' '$1 == "case" { print $2 " case[" n[$2]++ "]", $3; next } { print $2, $3 }' >"$dir/engine/checks.tsv"
+
+  "$spec" lir "$path" --eval --json >"$dir/lir/out" 2>"$dir/lir/err"
+  settle lir "$dir/lir" $?
+
+  for side in "${targets[@]}"; do
+    mkdir -p "$dir/$side"
+    "$spec" build "$path" --target "$side" --tests --out "$dir/$side/gen" >"$dir/$side/build" 2>"$dir/$side/err"
+    local built=$?
+    if [ $built -ne 0 ] || [ ! -x "$dir/$side/gen/bin/test" ]; then
+      : >"$dir/$side/out"
+      [ $built -eq 0 ] && built=1
+    else
+      "$dir/$side/gen/bin/test" >"$dir/$side/out" 2>>"$dir/$side/err"
+      built=0
+    fi
+    settle "$side" "$dir/$side" $built
+  done
+}
+
+# $1 = program directory, $2 = side; prints the cell
+cell() {
+  local dir=$1 side=$2
+  if [ -f "$dir/$side/state" ]; then cat "$dir/$side/state"; return; fi
+  awk -F'\t' -v side="$side" '
+    NR == FNR { if ($1 in engine) dup = $1; engine[$1] = $2; order[n++] = $1; next }
+    { if ($1 in other) dup = $1; other[$1] = $2; if (!($1 in engine) && extra == "") extra = $1 }
+    END {
+      if (dup != "") { print "DISAGREE " dup ": named twice"; exit }
+      for (i = 0; i < n; i++) {
+        c = order[i]
+        if (!(c in other)) { print "DISAGREE " c ": engine " engine[c] ", " side " missing"; exit }
+        if (other[c] != engine[c]) { print "DISAGREE " c ": engine " engine[c] ", " side " " other[c]; exit }
+      }
+      if (extra != "") { print "DISAGREE " extra ": engine missing, " side " " other[extra]; exit }
+      print "agree"
+    }' "$dir/engine/checks.tsv" "$dir/$side/checks.tsv"
+}
+
+engine_cell() {
+  local dir=$1 pass fail blocked text
+  pass=$(grep -c $'\tpass$' "$dir/engine/checks.tsv")
+  fail=$(grep -c $'\tfail$' "$dir/engine/checks.tsv")
+  blocked=$(grep -c $'\tblocked$' "$dir/engine/checks.tsv")
+  text="$pass pass"
+  [ "$blocked" -gt 0 ] && text+=", $blocked blocked"
+  [ "$fail" -gt 0 ] && text+=", $fail FAIL"
+  if [ "$(cat "$dir/engine/exit")" -ne 0 ] && [ "$fail" -eq 0 ]; then
+    text="RED $(jq -r 'select(.status == "error") | .stage' <"$dir/engine/out" 2>/dev/null | head -1)"
+  fi
+  echo "$text"
+}
+
+list=$(programs | sort)
+if [ $# -gt 0 ]; then
+  wanted=$(printf '%s\n' "$@")
+  list=$(echo "$list" | awk -F'\t' 'NR == FNR { want[$0]; next } $1 in want' <(echo "$wanted") -)
+  [ "$(echo "$list" | grep -c .)" -eq $# ] || { echo "src/bin/corpus: unknown program among: $*" >&2; exit 2; }
+fi
+
+jobs_max=$(nproc 2>/dev/null || echo 4)
+running=0
+while IFS=$'\t' read -r name path flags; do
+  judge_one "$name" "$path" "$flags" &
+  running=$((running + 1))
+  if [ "$running" -ge "$jobs_max" ]; then wait -n; running=$((running - 1)); fi
+done <<<"$list"
+wait
+
+sides=(lir "${targets[@]}")
+rows=$work/rows.tsv
+bad=0
+{
+  printf 'program\tengine'
+  printf '\t%s' "${sides[@]}"
+  printf '\n'
+  while IFS=$'\t' read -r name path flags; do
+    printf '%s\t%s' "$name" "$(engine_cell "$work/$name")"
+    for side in "${sides[@]}"; do printf '\t%s' "$(cell "$work/$name" "$side")"; done
+    printf '\n'
+  done <<<"$list"
+} >"$rows"
+column -t -s $'\t' "$rows"
+
+echo
+total=$(($(wc -l <"$rows") - 1))
+red=$(awk -F'\t' 'NR > 1 && $2 ~ /RED|FAIL/' "$rows" | wc -l)
+echo "engine: green on $((total - red)) of $total programs"
+[ "$red" -gt 0 ] && bad=1
+col=3
+for side in "${sides[@]}"; do
+  summary=$(awk -F'\t' -v c=$col 'NR > 1 { k = $c; sub(/ .*/, "", k); if ($c == "not built") k = "not built"; n[k]++ }
+    END { if (n["not built"] == NR - 1) { print "not built"; exit }
+          printf "agree on %d", n["agree"]; if (n["DISAGREE"]) printf ", DISAGREE on %d", n["DISAGREE"]
+          if (n["error"]) printf ", error on %d", n["error"]; if (n["not built"]) printf ", not built for %d", n["not built"]; print "" }' "$rows")
+  echo "$side: $summary"
+  case "$summary" in *DISAGREE* | *error*) bad=1 ;; esac
+  col=$((col + 1))
+done
+
+if [ "$bad" -ne 0 ]; then
+  # What stopped each failing side, so one run says where to look.
+  while IFS=$'\t' read -r name path flags; do
+    for side in engine "${sides[@]}"; do
+      err=$work/$name/$side/err
+      state=$(cat "$work/$name/$side/state" 2>/dev/null || true)
+      if [ "$side" = engine ]; then [ "$(cat "$work/$name/engine/exit")" -ne 0 ] || continue; else [ "$state" = error ] || continue; fi
+      echo
+      echo "$name, $side:"
+      if [ "$side" = engine ]; then
+        "$spec" test "$path" 2>&1 | grep -v '^    pass ' | head -30
+      else
+        head -15 "$err"
+      fi
+    done
+  done <<<"$list"
+  exit 1
+fi

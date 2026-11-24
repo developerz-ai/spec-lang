@@ -1,0 +1,8 @@
+BasedOnStyle: Google
+ColumnLimit: 120
+ReflowComments: false
+DerivePointerAlignment: false
+PointerAlignment: Left
+BreakStringLiterals: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Inline

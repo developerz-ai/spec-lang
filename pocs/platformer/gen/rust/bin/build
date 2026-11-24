@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Builds the app's executable into target/release/.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+cargo build --release --quiet

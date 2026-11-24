@@ -12,7 +12,10 @@
 //!   addressed by ids ([`ids`]);
 //! * notes are interpreted: `@guard` clauses become an ordered list of
 //!   [`Guard`]s, `@cases` a list of [`Case`]s, `@given` a list of [`Given`]s,
-//!   `@target`/`@bin`/`@store` fields of [`AppDecl`];
+//!   `@target` and the notes of a library fields of [`AppDecl`];
+//! * `use <name>;` that names no module loads the library `libs/<name>/`
+//!   ([`library`]): its notes, triggers, handlers and app shape are data the
+//!   lowering checks against; the toolchain knows no library by name;
 //! * parameter, field and state types are [`Ty`]s, with claims (`T where p`)
 //!   kept as expressions over `self`.
 //!
@@ -24,16 +27,17 @@
 pub mod error;
 pub mod expr;
 pub mod ids;
+pub mod library;
 mod load;
 mod lower;
 pub mod program;
 pub mod ty;
 pub mod visit;
-pub mod vocab;
 
 pub use error::IrError;
 pub use expr::*;
 pub use ids::*;
-pub use load::{LoadFailure, load_file, load_project, load_sources};
+pub use library::*;
+pub use load::{LoadFailure, load_file, load_project, load_project_with, load_sources, load_sources_with};
 pub use program::*;
 pub use ty::{Claim, Ty};

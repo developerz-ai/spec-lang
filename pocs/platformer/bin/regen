@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Regenerate gen/<backend> from src/ with the real compiler, or check that the committed copy is current.
+# Usage: bin/regen [rust|bun|ruby|cpp]...   rewrite those gen/ folders (all four by default; build output inside is kept)
+#        bin/regen --check [backend]...     fail if a committed generated file differs from a fresh build
+set -euo pipefail
+cd "$(dirname "$0")/.."
+root="$(pwd)"
+
+check=0
+[ "${1:-}" = "--check" ] && { check=1; shift; }
+backends=("$@"); [ ${#backends[@]} -eq 0 ] && backends=(rust bun ruby cpp)
+
+(cd ../../src && cargo build --release -q -p spec-lang-cli)
+slg="$root/../../src/target/release/spec-lang"
+scratch="$(mktemp -d)"
+trap 'rm -rf "$scratch"' EXIT
+keep=(target build node_modules dist .bundle vendor)
+excludes=(); for k in "${keep[@]}"; do excludes+=(-x "$k"); done
+
+app_of() { case "$1" in rust) echo SkyhopRust ;; bun) echo SkyhopBun ;; ruby) echo SkyhopRuby ;; cpp) echo SkyhopCpp ;; *) echo "unknown backend $1" >&2; exit 2 ;; esac; }
+
+stale=0
+for b in "${backends[@]}"; do
+  "$slg" build src --app "$(app_of "$b")" --out "$scratch/$b" >/dev/null
+  if [ "$check" = 1 ]; then
+    if ! diff -rq "${excludes[@]}" -x '*.lock' "$scratch/$b" "gen/$b" >/dev/null 2>&1; then
+      echo "gen/$b is stale against src/: run pocs/platformer/bin/regen $b" >&2
+      diff -rq "${excludes[@]}" -x '*.lock' "$scratch/$b" "gen/$b" 2>&1 | head -5 >&2
+      stale=1
+    fi
+  else
+    mkdir -p "gen/$b"
+    find "gen/$b" -mindepth 1 -maxdepth 1 $(printf -- '-not -name %s ' "${keep[@]}" '*.lock') -exec rm -rf {} +
+    cp -a "$scratch/$b/." "gen/$b/"
+    echo "gen/$b regenerated"
+  fi
+done
+exit "$stale"

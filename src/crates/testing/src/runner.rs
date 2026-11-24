@@ -66,7 +66,9 @@ pub fn run_all(prog: &Program, cfg: Config) -> Report {
                     let mut check = timed(&m.name, Kind::Law, &decl, &label, Evidence::Example, || {
                         run_law(&mut ctx, l, &mut lawful)
                     });
-                    check.evidence = Evidence::Traces { traces: cfg.traces, steps: cfg.steps, lawful };
+                    if !check.blocked_by_foreign() {
+                        check.evidence = Evidence::Traces { traces: cfg.traces, steps: cfg.steps, lawful };
+                    }
                     checks.push(check);
                 }
                 _ => {}
@@ -99,7 +101,14 @@ fn timed(
     f: impl FnOnce() -> (Status, Option<Diag>),
 ) -> CheckResult {
     let start = Instant::now();
-    let (status, diag) = f();
+    let (mut status, diag) = f();
+    let mut evidence = evidence;
+    // A check that reached a foreign body is blocked, whatever stage of it
+    // reached the body (a case, a step, a trace, a generated run).
+    if let Some(d) = diag.as_ref().filter(|d| d.code == "B-FOREIGN") {
+        status = Status::Blocked;
+        evidence = Evidence::Assumed(d.found.clone().unwrap_or_else(|| "foreign".to_string()));
+    }
     CheckResult {
         module: module.to_string(),
         kind,

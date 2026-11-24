@@ -18,11 +18,11 @@ pub(crate) fn check_defaults(p: &Program) -> Vec<Diag> {
                     Diag::error("E-TYPE-MISMATCH", e.span, format!("{what} is not a {}: {reason}", show_ty(p, ty)))
                         .with_expected(show_ty(p, ty), show(p, &v)),
                 ),
-                Err(h) => Some(halt(h, e.span)),
+                Err(h) => halt(h, e.span),
             },
             // A default that reads parameters cannot be evaluated alone; the test stage checks it on use.
             Err(Halt::Fatal(_)) if mentions_local(p, e) => None,
-            Err(h) => Some(halt(h, e.span)),
+            Err(h) => halt(h, e.span),
         };
         if let Some(d) = d {
             out.push(d.with_decl(p.qualified(decl)));
@@ -58,11 +58,14 @@ pub(crate) fn check_defaults(p: &Program) -> Vec<Diag> {
     out
 }
 
-fn halt(h: Halt, span: spec_lang_syntax::Span) -> Diag {
+/// A value that could not be computed; `None` when it reaches a `foreign`
+/// body, which only a backend runs: the test stage reports each use blocked.
+fn halt(h: Halt, span: spec_lang_syntax::Span) -> Option<Diag> {
     match h {
-        Halt::Fatal(d) | Halt::Check(d) => *d,
-        Halt::Fail(f) => Diag::error("E-TYPE-MISMATCH", span, format!("evaluating it failed with {}", f.name)),
-        Halt::Blocked(h, s) => Diag::error("E-TYPE-MISMATCH", s, format!("it reaches ?{h}")),
+        Halt::Fatal(d) | Halt::Check(d) => Some(*d),
+        Halt::Fail(f) => Some(Diag::error("E-TYPE-MISMATCH", span, format!("evaluating it failed with {}", f.name))),
+        Halt::Blocked(d) if d.code == "B-FOREIGN" => None,
+        Halt::Blocked(d) => Some(Diag::error("E-TYPE-MISMATCH", d.span.unwrap_or(span), format!("it {}", d.message))),
     }
 }
 

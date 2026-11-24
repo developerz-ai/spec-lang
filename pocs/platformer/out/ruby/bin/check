@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Projected by hand from the gate of the ruby target (docs/contract.md section 6). Stand-in for spec-lang build output; change the spec, not this file.
+# The whole gate: lint, `ruby -w` on every file, build, then the tests with warnings on under a virtual X server. Any warning fails it.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+bundle config set --local path vendor/bundle >/dev/null
+bundle check >/dev/null || bundle install --quiet
+bundle exec rubocop
+
+while IFS= read -r file; do
+  if ! report=$(ruby -wc "$file" 2>&1) || [ "$report" != "Syntax OK" ]; then
+    printf '%s: %s\n' "$file" "$report" >&2
+    exit 1
+  fi
+done < <(find Gemfile exe lib test -type f | sort)
+
+bin/build
+
+# The tests that draw need a window: a virtual X server when one can be started, else they skip and say why.
+xvfb=()
+if [ -z "${DISPLAY:-}" ] && command -v xvfb-run >/dev/null; then xvfb=(xvfb-run -a); fi
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+"${xvfb[@]}" bundle exec ruby -w -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }' 2>&1 | tee "$log"
+if grep -q 'warning:' "$log"; then
+  echo "the tests ran with warnings" >&2
+  exit 1
+fi

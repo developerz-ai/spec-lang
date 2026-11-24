@@ -1,0 +1,10 @@
+// The same for types, fields and variants.
+
+pub type Error(class: Int, name: Text, hash: Int = 7);
+pub type Result = String | Array(length: Int) | Option2(default: Bool);
+
+pub fn delete(value: Result) -> Int = match value {
+  String => 1;
+  Array(length) => length;
+  Option2(default) => if default then 2 else 3;
+}

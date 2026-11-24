@@ -1,6 +1,6 @@
 [package]
 name = "spec-lang-emit-cpp"
-description = "The C++ backend: a typed C++ target tree and printer over the shared typed lowering, clang-format, runtime shims."
+description = "The C++23 printer over the LIR: source text, a small runtime prelude, the test runner, and glue for the libraries' runtimes."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,8 +9,9 @@ publish.workspace = true
 [dependencies]
 spec-lang-ir.workspace = true
 spec-lang-syntax.workspace = true
-spec-lang-diag = { path = "../diag" }
-spec-lang-emit-rust = { path = "../emit-rust" }
+spec-lang-diag.workspace = true
+spec-lang-lir.workspace = true
+
 
 [lints]
 workspace = true

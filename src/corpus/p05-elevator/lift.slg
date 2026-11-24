@@ -1,0 +1,85 @@
+// lift: port of docs/pocs/05-elevator. Pins a record state with defaults and `.with` on two
+// fields, a range type (`Floor`) monitored on arithmetic (`l.at + 1` must stay in 1..=5),
+// `if .. then .. else` as a value with a negative literal, early `return` in a fn, a set
+// state with `insert`, `remove` and `any`, and a rule that reads a state it has just written.
+// `tick(1Hz)`, the clock and `t.within` are cut: a tick is a direct call of `move`; see README.md.
+
+type Floor = 1..=5;
+type Way = Up | Down;
+type Lift(at: Floor = 1, way: Way = Up, open: Bool = false);
+
+state lift: Lift = Lift();
+state calls: Set[Floor];
+
+fn ahead(l: Lift, cs: Set[Floor]) -> Bool = match l.way {
+  Up => cs.any(it > l.at);
+  Down => cs.any(it < l.at);
+}
+
+fn turn(w: Way) -> Way = match w {
+  Up => Down;
+  Down => Up;
+}
+
+@cases(
+  (Lift(), Set()) -> Lift(),
+  (Lift(), Set(1)) -> Lift(open: true),
+  (Lift(open: true), Set()) -> Lift(),
+  (Lift(), Set(3)) -> Lift(2),
+  (Lift(5), Set(1, 2)) -> Lift(4, way: Down),
+  (Lift(1, way: Down), Set(4)) -> Lift(2, way: Up),
+  (Lift(3, way: Down), Set(1, 5)) -> Lift(2, way: Down),
+  (Lift(3, way: Up, open: true), Set(3)) -> Lift(3, way: Up, open: true),
+)
+fn step(l: Lift, cs: Set[Floor]) -> Lift = {
+  if l.at in cs { return l.with(open: true); }
+  if l.open { return l.with(open: false); }
+  if cs.size == 0 { return l; }
+  let way = if ahead(l, cs: cs) then l.way else turn(l.way);
+  return l.with(way: way, at: l.at + (if way == Up then 1 else -1));
+}
+
+rule call(f: Floor) = {
+  calls.insert(f);
+}
+
+rule move() = {
+  lift = step(lift, cs: calls);
+  if lift.open { calls.remove(lift.at); }
+}
+
+law doors_shut_while_moving(t: Trace[move]) =
+  t.steps.all(s => s.before.lift.at != s.after.lift.at implies
+    not s.before.lift.open and not s.after.lift.open);
+
+@why("an answered floor is exactly the one the car stands at with its doors open")
+law only_an_open_door_answers(t: Trace[call | move], f: Floor) =
+  t.steps.all(s => f in s.before.calls and not (f in s.after.calls) implies
+    s.after.lift.open and s.after.lift.at == f);
+
+test goes_up_and_answers = {
+  call(3);
+  move();
+  move();
+  assert lift.at == 3;
+  move();
+  assert lift.open;
+  assert calls.size == 0;
+}
+
+test does_not_starve_the_ground = {
+  for i in 1..=10 {
+    call(5);
+    call(1);
+    for n in 1..=20 { move(); }
+    assert calls.size == 0;
+  }
+}
+
+@why("what is left of every_call_is_answered without `t.within`: from the start world, 40 ticks answer two calls")
+test two_calls_are_answered_in_forty_ticks(f: Floor, g: Floor) = {
+  call(f);
+  call(g);
+  for n in 1..=40 { move(); }
+  assert calls.size == 0;
+}

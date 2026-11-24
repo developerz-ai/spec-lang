@@ -1,75 +1,79 @@
 # emit-cpp
 
-The C++ backend of `spec-lang build`. `emit(program, app)` turns one app of a resolved program into a C++23/CMake project; `emit_with(program, app, &Options)` does the same with named strategies switched off. Output for the todo POC: `pocs/todo-app/gen/cpp/`.
+> **Status `As of 2026-11-24`.** The C++23 printer of [decision 009](../../../docs/decisions/009-one-compiler-any-language.md): `spec_lang_lir::Printer` for target `cpp`. On the 40 programs of `src/bin/corpus` its printed checks report what `spec-lang test` reports; the two POCs' `gen/cpp` pass their gates and parity suites. It names no program and no library.
 
-## Pipeline
+## What it prints
 
 ```text
-ir::Program ──front::build──> typed front (shared with emit-rust: types, facts, cli table)
-            ──lower::*─────> C++ target tree (ast.rs: decls, statements, expressions)
-            ──ast printer──> plain C++ with chunk markers
-            ──clang-format─> final layout; markers removed, their lines become provenance spans
-            + runtime/ shims (verbatim) + CMakeLists.txt, bin/, provenance.json
+Lir ──decls.rs────> include/<module>.hpp + src/<module>.cpp   types, constants, fns, rules; each under `// rule a.b (file.slg:line)`
+    ──machine.rs──> program/machine    World (every state), one class per handler and its pretend, Machine::atomic
+                    program/foreign    one function per `foreign` symbol: blocked for tests, bound to lib::<library> for an app
+    ──checks.rs───> tests/checks.cpp   every check, the generators of its properties and laws
+    ──app.rs──────> program/data       every record and sum as rt::Data and back
+                    program/manifest   the app as rt::meta::App: notes, rules, parameters, triggers, states, laws of one world
+                    lib/<library>/     copied from libs/<library>/real/cpp/, each with its runtime.cmake
+    + runtime/ (verbatim), CMakeLists.txt, bin/, .clang-format; every C++ file through clang-format once
 ```
 
 | File | Does |
 |---|---|
-| `src/ast.rs` | the typed C++ tree and its printer; expressions carry precedence, so parentheses appear only where C++ needs them |
-| `src/format.rs` | one `clang-format` run per file (style `STYLE`, also written as the project's `.clang-format`); markers `// @@slg N` start a chunk span, anchors `// slg: file:line role` start a nested span and stay in the output |
-| `src/lower/model.rs` | sums as `enum class` with name tables; refined types as classes whose only way in is `make` (the claim, checked once); records as aggregates; fns `constexpr` where their body allows |
-| `src/lower/board.rs` | the world, the errors guards name, one event per rule, one source per rule (guards in written order, then the body, writing the world in place), dispatch |
-| `src/lower/cli.rs` | the value types, the derived parameter table, the help text (folded at build time), binding parsed values to events |
-| `src/lower/store.rs` | the store codec, generated from the states' types: schema-directed reader, canonical writer, invariants checked on read |
-| `src/lower/tests.rs` | every `@cases` row, every `test` by name (with parameters: a seeded property), every `law` over seeded traces |
-| `src/lower/project.rs` | module headers in dependency order, the app type the runtime driver reads, `main`, CMake, scripts, `provenance.json` |
-| `runtime/` | the shims, emitted verbatim |
+| `src/emit/` | expressions, statements, patterns, `conform`, the 93 primitives; `Fx` is one body being printed |
+| `src/facts.rs` | what an expression can do (fail, stop, read or write state), so siblings keep left-to-right order where C++ leaves it open |
+| `src/decls.rs` | a module's header in an order C++ accepts; a type that holds itself keeps that field in `rt::Box` |
+| `runtime/include/rt` | `Int`, `Text` by code point, `Option`, ordered `Set` and `Map` (`std::set`, `std::map` over `<=>`), `show`, failures, traces |
+| `runtime/tests/rt` | the test runner and the engine's generator (SplitMix64, FNV-1a seeds) |
 
-## Generated against runtime shim
+**`Int` is a checked 128-bit integer** (`__int128` with `__builtin_*_overflow`): an exact result outside -2^127 .. 2^127 - 1 stops `E-RUNTIME`, as the engine's `i128` does. It needs GCC or Clang.
 
-| Generated from the IR | Runtime shim (`runtime/`, lifted from `pocs/todo-app/out/cpp`) |
+A language failure is a C++ exception (`rt::Failure`); a rule is `ctx.atomic([&] { ... })`, which copies the world and the handlers and puts them back on any exception.
+
+## Run it
+
+```bash
+target/release/spec-lang build ../pocs/todo-app/src --target cpp --tests --out <dir> && <dir>/bin/test
+target/release/spec-lang build ../pocs/platformer/src --app SkyhopCpp --out <dir> && <dir>/bin/check
+SPEC_LANG=$PWD/target/release/spec-lang bin/corpus     # the judge
+cargo test -p spec-lang-emit-cpp                        # what is printed (needs clang-format)
+```
+
+## Measured
+
+Method: `wc -l` over the files named; build time is the wall time of `spec-lang build --app` (release binary, three runs, the middle one), which includes one `clang-format` process per C++ file. Caveat: one machine, 16 threads, other builds running.
+
+| What | Lines |
 |---|---|
-| model types and their claims, fns, rules, world, events, dispatch | `rt/unicode`, `rt/text` (Text.size, trim, building text), `rt/core` (length, get, pointers to elements) |
-| the cli value types, parameter table, help text, binding | `rt/cli.hpp` (the parsing order of contract section 2, over any table), `rt/exit_code.hpp` |
-| the store codec: one reader and writer per type in the states | `rt/json_lexer`, `rt/json_reader.hpp`, `rt/json_writer.hpp`, `rt/flat_map.hpp` |
-| `app::App`, `main` (store path from `@store`, variable `<BIN>_STORE`) | `rt/driver.hpp` (lock, read, rule, atomic replace, error table), `rt/main.hpp`, `rt/file`, `rt/lock`, `rt/fd.hpp` |
-| tests, laws, generators, literal helpers (`tests/support.hpp`) | `tests/rt/harness`, `tests/rt/random.hpp`, `tests/rt/trace.hpp` |
+| this printer, `src/` | 5,287 |
+| the todo-shaped emitter it replaces, `src/` | 5,431 |
+| runtime prelude (`runtime/include`, `runtime/src`) | 1,932 |
+| test runner (`runtime/tests`) | 621 |
+| `libs/cli/real/cpp` | 1,435, and 155 of tests |
+| `libs/game/real/cpp` | 693, and 91 of tests |
+| `libs/raylib/real/cpp` | 426, and 50 of tests |
 
-The store format mapping is fixed per backend, not per program: `version` then one key per state, states sorted by name; a record is an object with its fields in declaration order; a sum without data is its variant's name; a `Set` is an ascending array, a repeat rejected; a `Map` whose values sit under their own key field is the array of its values in key order; an `Int` is an integer from 0 to 2^53, a larger one is `full`.
+| Program | `spec-lang build --app` |
+|---|---|
+| `pocs/todo-app/src`, `TodoCpp` | 0.20 s |
+| `pocs/platformer/src`, `SkyhopCpp` | 0.85 s |
 
-## Strategies
-
-Each is licensed by a fact of the shared front, named on its span in `provenance.json`, and can be switched off (`Options::off`, names from `spec_lang_emit_rust::STRATEGIES`); off, the plain translation is emitted instead.
-
-| Strategy | Fact | Plain translation |
-|---|---|---|
-| `entry.lookup` | first guard `k in m`, the rule reaches `m` only as `m[k]` | `contains`, then `m.at(k)` at each use |
-| `entry.remove` | first guard `k in m`, the only other use is `m.remove(k)` | `contains`, then `erase` |
-| `filter-remove.retain` | `let g = m.values.filter(p); for x in g { m.remove(x.f) }`, `m` keyed by `f`, `g` used after only for its size | pointers to the matches, then one `erase` each |
-| `store.read.projection` | a read-only rule reads the keyed map's values only through some scalar fields, and so do the invariants | the full decode |
-| `sort.unstable` | the sort key ends in the field that keys the map | `std::ranges::stable_sort` |
-| `link.static` | `@why("... one static binary")` | dynamic link |
-
-Not switchable, because the contract requires it of every translation: a read-only rule takes the shared lock and never writes the store; a byte-identical store is not rewritten.
-
-## What the IR had to provide
-
-Resolved names and declaration tables (`spec-lang-ir`); everything else came from the shared front in `emit-rust`: expression types, refinement changes made explicit, the facts above, the derived cli table. Computed here because the front does not carry it: placement of fns (header `constexpr`, source, or inside the one rule that uses it), the module dependency order, the generators' value pools.
+The corpus run (`heavy bin/corpus`, all four printers and both evaluators, 40 programs) took 123.5 s on that machine; the C++ column agreed on 40 of 40.
 
 ## Open choices
 
-| Question | Chosen | Why |
+| Question | Chosen | Where |
 |---|---|---|
-| `Int` | `std::int64_t`; a `TaskNo` argument past 64 bits saturates | every stored number is at most 2^53, so a saturated one is in no world |
-| Text | `std::string`, valid UTF-8 by invariant: the cli parser and the store reader check it where bytes come in | one check per edge, not one per value |
-| Where 2^53 is enforced | the writer, as `full` | the rules stay exact; the store refuses a world it cannot carry |
-| Help text | a string literal computed by the compiler | the out/cpp projection folds it with `consteval`; same bytes, less code |
-| Law traces | 240 traces of 40 steps; one in three starts from the end world of a test used as a `@given` | the card allows any world the rules can reach |
-| Property runs | 200 per test | none stated |
+| The evaluation budget | only `while` loops count (20,000,000 turns), not every node; recursion without end overflows the stack | `runtime/src/rt/value.cpp`, `tick` |
+| A rule that stops (`E-CLAIM`, `E-RUNTIME`) in a built app | `error: <code>: <message>`, exit 1 | `libs/cli/real/cpp/run.cpp`, `libs/game/real/cpp/app.cpp` |
+| A number argument past 128 bits | not a value of its type (a usage error) | `libs/cli/real/cpp/args.cpp`, `parse_int` |
+| `start`'s parameter when its flag is absent and it has no default | the first of 1 and 0 its type admits | `libs/game/real/cpp/args.cpp`, `start_default` |
+| Which files a `DrawModelEx` model loads | one per variant of the model's sum, named by the program's public fn from that sum to Text | `libs/raylib/real/cpp/binding.cpp`, `model_names` |
+| The store's laws | a stored world must meet every law whose one parameter is the trace | `src/app.rs`, `manifest` |
 
 ## Limits
 
-- One program has been through this backend. Forms outside its subset are refused with `E-UNSUPPORTED`; a second program will find more.
-- `clang-format` runs during `emit`, so the bytes depend on its version; the generated `bin/check` runs the same check.
-- Law traces and properties are sampled, not proven.
-- Each strategy is licensed by a fact with a written reason, not by a proof; the parity suite and the generated tests are the evidence that each is equivalent to its plain translation.
-- Measurements are one machine, one synthetic store of 100 000 tasks, warm cache.
+- Agreement with the engine was judged on the corpus only; statuses agree, messages do not.
+- `Text.lower` uses tables taken from the Rust standard library of the toolchain that printed the project, so it lowers as `spec-lang test` does and no better.
+- A lambda that is kept (returned, stored) and reaches a state is printed only inside a body whose machine is named `ctx`; another shape is `E-UNSUPPORTED`.
+- A reply pattern over rules with different result types (`Ok(v)` binding `v`) is `E-UNSUPPORTED`; no corpus program writes one.
+- The printed checks run on one thread. The generated project needs CMake 3.28, GCC or Clang with C++23, and `clang-format` for its gate; the printer itself needs `clang-format` on the path and fails with a load error without it.
+- An app's parameters and results must be plain data to cross to a library (`rt::Data`); a rule taking a function is refused in an app.
+- The raylib runtime links raylib 5.5 from `RAYLIB_ROOT` (default `../../vendor/raylib` from the project); the shader's file names and the asset folder layout are the platformer's, written into the runtime because the card has no form for a resource.

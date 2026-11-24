@@ -1,0 +1,70 @@
+# Projected by hand from the gate of the Ruby backend (docs/contract.md section 6). Stand-in for spec-lang build output; change the spec, not this file.
+
+plugins:
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 4.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# Every file opens with the one-line projection header the contract fixes, and test tables hold whole lines.
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - '\A# Projected by hand from '
+  Exclude:
+    - "test/**/*"
+
+Minitest/MultipleAssertions:
+  Enabled: false
+
+# Parameters keep the spec's own names: a, b, v, t, n, c, at, lo, hi, vy, no.
+Naming/MethodParameterName:
+  Enabled: false
+
+# The raylib functions and struct fields keep raylib.h's names, so the binding reads against the header.
+Naming/MethodName:
+  Exclude:
+    - "lib/skyhop/screen/raylib.rb"
+
+# The projection header names what each file is.
+Style/Documentation:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "test/**/*"
+
+# A projected function keeps the shape of its spec function (slide_x, scene, the movement half of step), and those
+# read a dozen fields each; splitting them to fit a branch count would hide the one-to-one mapping.
+Metrics/AbcSize:
+  Max: 50
+  Exclude:
+    - "test/**/*"
+
+Metrics/CyclomaticComplexity:
+  Max: 8
+
+Metrics/ClassLength:
+  Max: 120
+  Exclude:
+    - "test/**/*"
+
+# overlaps, touches, over and stomps are the spec's names; the projection keeps them.
+Naming/PredicateMethod:
+  Enabled: false
+
+# Test names are the spec's test names, numbers included (a_held_jump_peaks_at_380).
+Naming/VariableNumber:
+  Exclude:
+    - "test/**/*"

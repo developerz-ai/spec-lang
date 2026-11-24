@@ -14,7 +14,7 @@
 | a way to implement | a strategy in a backend | keyset pagination |
 | a target | a backend | Ultimate, Rails, WGSL |
 
-Each is an ordinary declaration with a type, tests and laws ([09](09-vocabularies.md), [11](11-backends-and-parity.md)).
+Each is an ordinary declaration with a type, tests and laws ([09](09-vocabularies.md), [11](11-backends-and-parity.md)). The first three travel together as a library, `libs/<name>/`: kinds and notes in `vocab.slg`, the calls it offers in `contract.slg`, its worlds in `pretend.slg` ([card, Libraries](01-language-card.md#libraries)). The compiler loads a library and knows none by name, so a new domain is a new directory, never a compiler change.
 
 ## What people use macros for
 

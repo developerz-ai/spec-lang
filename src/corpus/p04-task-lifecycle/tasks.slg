@@ -1,0 +1,140 @@
+// tasks: port of docs/pocs/04-task-lifecycle. Pins a sum with data stored inside a record
+// inside a map, `match` that binds a variant's fields, `.is(Running(box, _))` comparing a name
+// in scope, three guard notes in order, a rule that rewrites entries while it loops over the
+// map, `x in [Done, Failed]`, a ranged counter (`tries: 0..=3`) and step and state laws.
+// The clock is a model (`state time`, moved by the rule `pass`), not the design's `now()`;
+// `Time`, `every(1s)`, `crash`, `t.within` and binding `.is` patterns are cut; see README.md.
+
+type TaskId = 1..=4;
+type BoxId = 1..=3;
+type Seconds = Int where self >= 0;
+
+type Life = Queued | Running(box: BoxId, until: Seconds) | Done | Failed;
+type Task(life: Life = Queued, tries: 0..=3 = 0);
+
+state tasks: Map[TaskId, Task];
+state time: Seconds = 0;
+const LEASE: Seconds = 300;
+
+fn busy(box: BoxId) -> Bool =
+  tasks.values.any(it.life.is(Running(box, _)));
+
+fn held(l: Life, box: BoxId, at: Seconds) -> Bool = match l {
+  Running(b, until) => b == box and at < until;
+  _ => false;
+}
+
+fn overdue(l: Life, at: Seconds) -> Bool = match l {
+  Running(_, until) => at >= until;
+  _ => false;
+}
+
+fn within_lease(l: Life, at: Seconds) -> Bool = match l {
+  Running(_, until) => until <= at + LEASE;
+  _ => true;
+}
+
+@why("the model of time passing: seconds since the world began, moved only here")
+rule pass(d: 1..=600) = {
+  time = time + d;
+}
+
+@guard(tasks[id].life == Queued else NotQueued)
+@guard(not busy(box) else Busy)
+@guard(tasks[id].tries < 3 else Spent)
+rule claim(id: TaskId, box: BoxId) = {
+  tasks[id].tries = tasks[id].tries + 1;
+  tasks[id].life = Running(box, until: time + LEASE);
+}
+
+@guard(held(tasks[id].life, box: box, at: time) else NotYours)
+rule beat(id: TaskId, box: BoxId) = {
+  tasks[id].life = Running(box, until: time + LEASE);
+}
+
+@why("work that outlived its lease may already be someone else's")
+@guard(held(tasks[id].life, box: box, at: time) else NotYours)
+rule finish(id: TaskId, box: BoxId) = {
+  tasks[id].life = Done;
+}
+
+rule expire() = {
+  for k in tasks.keys {
+    if overdue(tasks[k].life, at: time) {
+      tasks[k].life = if tasks[k].tries < 3 then Queued else Failed;
+    }
+  }
+}
+
+law one_live_task_per_box(t: Trace[claim | beat | finish | expire]) =
+  t.states.all(s => (1..=3).all(b => s.tasks.values.filter(it.life.is(Running(b, _))).size <= 1));
+
+law ended_holds_nothing(t: Trace[claim | beat | finish | expire], i: TaskId) =
+  t.steps.all(s => i in s.before.tasks and s.before.tasks[i].life in [Done, Failed] implies
+    s.after.tasks[i].life == s.before.tasks[i].life);
+
+@why("the law the design says is missing: a lease never ends more than LEASE ahead")
+law lease_is_bounded(t: Trace[claim | beat | finish | expire | pass]) =
+  t.states.all(s => s.tasks.values.all(x => within_lease(x.life, at: s.time)));
+
+@why("what is left of a_dead_worker_lets_go without `t.within`: one expire frees every overdue lease")
+law expire_frees_the_overdue(t: Trace[claim | beat | expire | pass]) =
+  t.steps.all(s => s.event.is(expire()) implies
+    s.after.tasks.values.all(x => not overdue(x.life, at: s.after.time)));
+
+const t1: TaskId = 1;
+const t2: TaskId = 2;
+const b1: BoxId = 1;
+const b2: BoxId = 2;
+
+@given(tasks -> Map(t1 -> Task(), t2 -> Task()))
+test two_waiting = {
+  claim(t1, box: b1);
+  claim(t1, box: b2) -> fail NotQueued;
+  claim(t2, box: b1) -> fail Busy;
+  assert tasks[t1] == Task(Running(b1, until: 300), tries: 1);
+}
+
+@given(two_waiting)
+test a_silent_worker_loses_it = {
+  pass(300);
+  expire();
+  finish(t1, box: b1) -> fail NotYours;
+  assert tasks[t1].life == Queued;
+  claim(t2, box: b1);
+}
+
+@given(two_waiting)
+test a_late_finish_is_refused_before_expire_runs = {
+  pass(300);
+  finish(t1, box: b1) -> fail NotYours;
+  beat(t1, box: b1) -> fail NotYours;
+}
+
+@given(two_waiting)
+test beats_keep_it = {
+  for i in 1..=3 {
+    pass(240);
+    expire();
+    beat(t1, box: b1);
+  }
+  finish(t1, box: b2) -> fail NotYours;
+  finish(t1, box: b1);
+  assert tasks[t1].life == Done;
+}
+
+@given(tasks -> Map(t1 -> Task()))
+test three_silent_workers_end_it = {
+  for i in 1..=3 {
+    claim(t1, box: b1);
+    pass(300);
+    expire();
+  }
+  assert tasks[t1].life == Failed;
+  claim(t1, box: b1) -> fail NotQueued;
+}
+
+test an_unknown_task_is_not_queued = {
+  claim(t1, box: b1) -> fail NotQueued;
+  finish(t1, box: b1) -> fail NotYours;
+}

@@ -52,7 +52,7 @@ impl Lowerer {
         Ok(Expr::new(ExprKind::Match { scrutinee, arms }, m.span))
     }
 
-    fn lower_stmt(&mut self, cx: &mut Cx, s: &ast::Stmt) -> R<Stmt> {
+    pub(crate) fn lower_stmt(&mut self, cx: &mut Cx, s: &ast::Stmt) -> R<Stmt> {
         let kind = match &s.kind {
             SK::Let { mutable, name, ty, value } => {
                 let value = self.lower_value(cx, value)?;

@@ -1,0 +1,118 @@
+// f12-list-transform pins the List names that take a function: `filter map
+// flat_map fold sum min max all any`. Order is kept; `fold` runs left to
+// right; `sum` of nothing is zero; `min` and `max` give the element, not the
+// key, and the earliest on a tie; `all` of nothing is true and `any` false.
+
+type Item(name: Text, price: Int, qty: Int = 1);
+
+const basket: List[Item] = [
+  Item("pear", price: 30, qty: 2),
+  Item("fig", price: 90),
+  Item("kiwi", price: 30, qty: 5),
+  Item("plum", price: 10, qty: 0),
+];
+
+@cases([] -> [], [1, 2, 3, 4, 5, 6] -> [2, 4, 6], [1, 3] -> [], [4, 2, 4] -> [4, 2, 4])
+pub fn evens(xs: List[Int]) -> List[Int] = xs.filter(it mod 2 == 0);
+
+@cases([] -> [], [1, 2, 3] -> [1, 4, 9], [-2] -> [4])
+pub fn squares(xs: List[Int]) -> List[Int] = xs.map(it * it);
+
+@cases([] -> [], [1, 2] -> ["<1>", "<2>"])
+pub fn labels(xs: List[Int]) -> List[Text] = xs.map(n => "<{n}>");
+
+@cases([] -> [], [3, 0, 2] -> [3, 3, 3, 2, 2], [0, 0] -> [])
+pub fn repeat_each(xs: List[Int]) -> List[Int] = xs.flat_map(n => (0..<n).map(i => n));
+
+@cases([] -> [], [[1], [], [2, 3]] -> [1, 2, 3], [[], []] -> [])
+pub fn flat(xs: List[List[Int]]) -> List[Int] = xs.flat_map(it);
+
+@cases([] -> "", ["a", "b", "c"] -> "abc")
+pub fn left_to_right(xs: List[Text]) -> Text = xs.fold("", (acc, x) => "{acc}{x}");
+
+@cases([] -> 0, [1, 2, 3] -> -6, [10] -> -10)
+pub fn subtract_all(xs: List[Int]) -> Int = xs.fold(0, (acc, x) => acc - x);
+
+@cases([] -> [], [1, 2, 3] -> [3, 2, 1])
+pub fn fold_reverse(xs: List[Int]) -> List[Int] = xs.fold([], (acc, x) => [x] + acc);
+
+@cases([1, 2, 3, 4] -> 1234, [] -> 0, [0, 7] -> 7)
+pub fn digits(xs: List[Int]) -> Int = xs.fold(0, (acc, d) => acc * 10 + d);
+
+@cases([] -> 0, [1, 2, 3] -> 6, [-1, 1] -> 0, [9223372036854775807, 9223372036854775807] -> 18446744073709551614)
+pub fn total(xs: List[Int]) -> Int = xs.sum();
+
+@cases([3, 1, 2] -> 1, [5] -> 5, [2, -7, -7] -> -7)
+pub fn least(xs: List[Int]) -> Int = xs.min();
+
+@cases([3, 1, 2] -> 3, [5] -> 5)
+pub fn most(xs: List[Int]) -> Int = xs.max();
+
+@cases(["bb", "a", "ccc", "d"] -> "a", ["xx", "yy"] -> "xx")
+pub fn shortest(xs: List[Text]) -> Text = xs.min(it.size);
+
+@cases(["bb", "a", "ccc", "ddd"] -> "ccc", ["xx", "yy"] -> "xx")
+pub fn longest(xs: List[Text]) -> Text = xs.max(it.size);
+
+@cases([] -> true, [2, 4] -> true, [2, 3] -> false)
+pub fn all_even(xs: List[Int]) -> Bool = xs.all(it mod 2 == 0);
+
+@cases([] -> false, [1, 3] -> false, [1, 2] -> true)
+pub fn any_even(xs: List[Int]) -> Bool = xs.any(it mod 2 == 0);
+
+test a_basket_adds_up = {
+  assert basket.sum(it.price * it.qty) == 300;
+  assert basket.map(it.qty).sum() == 8;
+  assert basket.filter(it.qty > 0).map(it.name) == ["pear", "fig", "kiwi"];
+  assert basket.min(it.price).name == "plum";
+  assert basket.max(it.price).name == "fig";
+  assert basket.filter(it.price == 30).min(it.price).name == "pear";
+  assert basket.filter(it.price == 30).max(it.price).name == "pear";
+  assert basket.max(it.qty).name == "kiwi";
+  assert basket.all(it.price > 0) and not basket.all(it.qty > 0);
+  assert basket.any(it.qty == 0) and not basket.any(it.price > 90);
+  assert basket.fold(0, (acc, i) => acc.max(i.price * i.qty)) == 150;
+  assert basket.flat_map(i => (0..<i.qty).map(k => i.name)).size == 8;
+}
+
+test min_and_max_of_nothing_are_missing = {
+  least([]) -> fail Missing;
+  most([]) -> fail Missing;
+  shortest([]) -> fail Missing;
+  assert ([].min() else 0) == 0;
+}
+
+test chains_run_in_written_order = {
+  let xs = [5, 3, 8, 1, 9, 2];
+  assert xs.filter(it > 2).map(it * 10) == [50, 30, 80, 90];
+  assert xs.map(it * 10).filter(it > 20) == [50, 30, 80, 90];
+  assert xs.map(it mod 3).filter(it != 0).sum() == 2 + 2 + 1 + 2;
+  assert xs.filter(it > 100).map(it * 2).sum() == 0;
+}
+
+test filter_splits_a_list(xs: List[-50..=50]) = {
+  let yes = xs.filter(it > 0);
+  let no = xs.filter(not (it > 0));
+  assert yes.size + no.size == xs.size;
+  assert yes.all(it > 0) and not no.any(it > 0);
+  assert yes.sum() + no.sum() == xs.sum();
+  assert xs.all(it > 0) == (no.size == 0);
+  assert xs.any(it > 0) == (yes.size > 0);
+}
+
+test map_keeps_size_and_order(xs: List[-50..=50]) = {
+  let ys = xs.map(it * 2 + 1);
+  assert ys.size == xs.size;
+  assert ys.sum() == 2 * xs.sum() + xs.size;
+  assert xs.size == 0 or (ys.first == xs.first * 2 + 1 and ys.last == xs.last * 2 + 1);
+  assert xs.flat_map(x => [x, x]).size == 2 * xs.size;
+  assert xs.fold(0, (acc, x) => acc + x) == xs.sum();
+  assert xs.fold([], (acc, x) => acc + [x]) == xs;
+}
+
+test min_is_below_everything(xs: List[-50..=50]) = {
+  if xs.size == 0 { return; }
+  assert xs.all(it >= xs.min()) and xs.all(it <= xs.max());
+  assert xs.min() in xs and xs.max() in xs;
+  assert xs.max(0 - it) == xs.min();
+}

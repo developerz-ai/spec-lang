@@ -1,0 +1,8 @@
+// f34-host-names pins: a module, function, field or variant may carry a name
+// that a host language, its standard library or its C library already uses.
+
+@why("a C function, a Ruby method and a Rust module are called this")
+@cases(2 -> 4)
+pub fn read(write: Int) -> Int = write + write;
+
+pub fn send(string: Text) -> Text = "{string}!";

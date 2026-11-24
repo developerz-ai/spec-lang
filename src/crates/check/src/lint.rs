@@ -14,8 +14,10 @@ pub(crate) fn lint(p: &Program) -> Vec<Diag> {
     unused_uses(p, &refs, &mut out);
     unused_decls(p, &refs, &mut out);
     tests_without_expectations(p, &mut out);
-    let (_, effects) = infer(p);
-    effects_unused(p, &effects, &mut out);
+    let (fn_effects, effects) = infer(p);
+    let fns = p.fns.iter().map(|f| (&f.info, &f.uses)).zip(&fn_effects);
+    let rules = p.rules.iter().map(|r| (&r.info, &r.uses)).zip(&effects);
+    effects_unused(p, fns.chain(rules), &mut out);
     inert_laws(p, &effects, &mut out);
     out
 }
@@ -63,18 +65,36 @@ fn unused_uses(p: &Program, refs: &[BTreeSet<DeclRef>], out: &mut Vec<Diag>) {
     }
 }
 
-/// `use cli;` is used by a `cli` trigger, `out.line`, or an app's `@bin`/`@store`.
+/// A library is used by a module when the module writes one of its triggers
+/// or app notes, has its app shape, calls or reads an operation of one of
+/// its handlers, or names one of their effects in `@uses`.
 fn vocabulary_used(p: &Program, m: ModuleId, name: &str) -> bool {
-    if name != vocab::CLI {
-        return true;
-    }
-    let rules = p.rules.iter().filter(|r| r.info.module == m);
+    let Some(lib) = p.library(name) else { return false };
+    let handlers: BTreeSet<HandlerId> = lib.handlers.iter().copied().collect();
+    let labels: BTreeSet<&String> = handlers.iter().flat_map(|h| &p.handler(*h).labels).collect();
     let mut used = false;
-    for r in rules {
-        used |= !r.triggers.is_empty();
-        walk_expr(p, &r.body, &mut |e| used |= matches!(e.kind, ExprKind::Call { callee: Callee::Effect(_), .. }));
+    for r in p.rules.iter().filter(|r| r.info.module == m) {
+        used |= r.triggers.iter().any(|t| t.library == name);
+        used |= r.uses.iter().any(|u| labels.contains(u));
+        walk_expr(p, &r.body, &mut |e| used |= calls_handler(e, &handlers));
     }
-    used || p.apps.iter().any(|a| a.info.module == m && (a.bin.is_some() || a.store.is_some()))
+    for f in p.fns.iter().filter(|f| f.info.module == m) {
+        used |= f.uses.iter().any(|u| labels.contains(u));
+        walk_expr(p, &f.body, &mut |e| used |= calls_handler(e, &handlers));
+    }
+    for t in p.tests.iter().filter(|t| t.info.module == m) {
+        let body = Expr::new(ExprKind::Block(t.body.clone()), t.body.span);
+        walk_expr(p, &body, &mut |e| used |= calls_handler(e, &handlers));
+    }
+    let apps = p.apps.iter().filter(|a| a.info.module == m);
+    used || apps.into_iter().any(|a| a.shape.as_deref() == Some(name) || a.notes.iter().any(|n| n.library == name))
+}
+
+fn calls_handler(e: &Expr, handlers: &BTreeSet<HandlerId>) -> bool {
+    match &e.kind {
+        ExprKind::Call { callee: Callee::Effect(x), .. } | ExprKind::EffectRead(x) => handlers.contains(&x.handler),
+        _ => false,
+    }
 }
 
 fn unused_decls(p: &Program, refs: &[BTreeSet<DeclRef>], out: &mut Vec<Diag>) {
@@ -126,10 +146,14 @@ fn tests_without_expectations(p: &Program, out: &mut Vec<Diag>) {
     }
 }
 
-fn effects_unused(p: &Program, effects: &[crate::effects::Effects], out: &mut Vec<Diag>) {
-    for (r, e) in p.rules.iter().zip(effects) {
-        let inferred = e.labels(p, r.info.module);
-        for u in &r.uses {
+fn effects_unused<'p>(
+    p: &'p Program,
+    decls: impl Iterator<Item = ((&'p DeclInfo, &'p Vec<String>), &'p crate::effects::Effects)>,
+    out: &mut Vec<Diag>,
+) {
+    for ((info, uses), e) in decls {
+        let inferred = e.labels(p, info.module);
+        for u in uses {
             let read = u.strip_suffix(".write").map(|s| format!("{s}.read"));
             let only_read = read.as_ref().is_some_and(|x| inferred.contains(x));
             if !inferred.contains(u) {
@@ -138,7 +162,7 @@ fn effects_unused(p: &Program, effects: &[crate::effects::Effects], out: &mut Ve
                 } else {
                     format!("`@uses` lists `{u}`, but the body never has that effect")
                 };
-                out.push(Diag::warning("W-LINT-EFFECT-UNUSED", r.info.name_span, msg).with_decl(p.qualified(&r.info)));
+                out.push(Diag::warning("W-LINT-EFFECT-UNUSED", info.name_span, msg).with_decl(p.qualified(info)));
             }
         }
     }

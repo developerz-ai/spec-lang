@@ -1,0 +1,39 @@
+// And for states, rules and tests.
+
+use time;
+use object;
+use object.Error;
+use object.Result;
+
+state process: Map[Int, Error];
+state window: Int = 0;
+
+@why("a rule named as a host keyword in three of the four")
+@uses(process.write, window.write)
+@guard(new > 0 else TypeError)
+pub rule import(new: Int) -> Int = {
+  process[new] = Error(new, name: "n{new}");
+  window = window + time.read(new);
+  return window;
+}
+
+test module_and_function_names = {
+  assert time.read(3) == 6;
+  assert time.send("hi") == "hi!";
+}
+
+test type_field_and_variant_names = {
+  let e = Error(1, name: "x");
+  assert e.class == 1 and e.name == "x" and e.hash == 7;
+  assert e.with(class: 2).class == 2;
+  assert object.delete(String) == 1;
+  assert object.delete(Array(5)) == 5;
+  assert object.delete(Option2(false)) == 3;
+}
+
+test state_and_rule_names = {
+  import(2) -> 4;
+  import(0) -> fail TypeError;
+  assert process[2].name == "n2";
+  assert window == 4;
+}

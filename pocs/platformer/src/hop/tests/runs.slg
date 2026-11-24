@@ -1,0 +1,66 @@
+// hop.tests.runs: whole levels played from a pad script, start to flag.
+// The scripts are the parity suite's inputs, line for line: ticks, then the keys held.
+
+use hop.world;
+use hop.model.Pad;
+use hop.model.Mode;
+
+type Hold(ticks: 1..=10000, keys: Text);
+
+@why("one letter per Pad field, as the game vocabulary reads a script: L R F B J, or - for none")
+@cases("-" -> Pad(), "RJ" -> Pad(right: true, jump: true), "LFB" -> Pad(left: true, forward: true, back: true))
+fn pad_of(keys: Text) -> Pad = Pad(
+  left: keys.contains("L"),
+  right: keys.contains("R"),
+  forward: keys.contains("F"),
+  back: keys.contains("B"),
+  jump: keys.contains("J"),
+);
+
+@why("run right, with four held jumps: the gap, the first gem, the step past the crawler, the gap with the second gem")
+const meadow_win: List[Hold] = [
+  Hold(75, keys: "R"), Hold(20, keys: "RJ"), Hold(41, keys: "R"), Hold(20, keys: "RJ"),
+  Hold(35, keys: "R"), Hold(20, keys: "RJ"), Hold(23, keys: "R"), Hold(20, keys: "RJ"),
+  Hold(62, keys: "R"),
+];
+
+@why("found by a search over pad scripts: wait for the mover, ride it, hop the gem, then the high ground")
+const ridge_win: List[Hold] = [
+  Hold(24, keys: "R"), Hold(8, keys: "-"), Hold(8, keys: "R"), Hold(16, keys: "RJ"),
+  Hold(16, keys: "R"), Hold(8, keys: "-"), Hold(8, keys: "L"), Hold(8, keys: "R"),
+  Hold(8, keys: "L"), Hold(8, keys: "R"), Hold(8, keys: "L"), Hold(8, keys: "R"),
+  Hold(8, keys: "L"), Hold(8, keys: "R"), Hold(8, keys: "L"), Hold(8, keys: "R"),
+  Hold(16, keys: "RJ"), Hold(24, keys: "R"), Hold(16, keys: "RJ"), Hold(8, keys: "-"),
+  Hold(8, keys: "R"), Hold(16, keys: "-"), Hold(16, keys: "J"), Hold(8, keys: "-"),
+  Hold(16, keys: "R"), Hold(8, keys: "J"), Hold(8, keys: "L"), Hold(24, keys: "R"),
+  Hold(16, keys: "RJ"), Hold(32, keys: "R"), Hold(8, keys: "RJ"), Hold(8, keys: "J"),
+  Hold(8, keys: "R"), Hold(8, keys: "-"), Hold(16, keys: "RJ"), Hold(32, keys: "R"),
+  Hold(16, keys: "RJ"), Hold(16, keys: "R"), Hold(8, keys: "-"), Hold(32, keys: "R"),
+  Hold(16, keys: "RJ"), Hold(8, keys: "R"),
+];
+
+@why("the meadow is winnable, with every gem, without losing a life")
+test the_meadow_can_be_won = {
+  world.start(1);
+  for h in meadow_win {
+    for i in 1..=h.ticks { world.step(pad_of(h.keys)); }
+  }
+  assert world.mode == Won;
+  assert world.ticks == 316;
+  assert world.taken.size == 3;
+  assert world.lives == 3;
+}
+
+@why("the ridge is winnable too")
+test the_ridge_can_be_won = {
+  world.start(2);
+  for h in ridge_win {
+    for i in 1..=h.ticks {
+      if world.mode == Playing { world.step(pad_of(h.keys)); }
+    }
+  }
+  assert world.mode == Won;
+  assert world.ticks == 549;
+  assert world.taken.size == 3;
+  assert world.lives == 3;
+}

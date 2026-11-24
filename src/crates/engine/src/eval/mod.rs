@@ -200,8 +200,8 @@ impl Interp<'_> {
                 Flow::Return(v) => Ok(v),
                 Flow::Normal => Ok(Value::Unit),
             },
-            ExprKind::OutText => Ok(Value::text(&self.out_text())),
-            ExprKind::Hole(h) => Err(Halt::Blocked(h.clone(), e.span)),
+            ExprKind::EffectRead(x) => self.run_effect(*x, Vec::new(), e.span),
+            ExprKind::Hole(h) => Err(Halt::hole(h, e.span)),
         }
     }
 

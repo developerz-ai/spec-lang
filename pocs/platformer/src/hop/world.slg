@@ -1,0 +1,223 @@
+// hop.world: the one running level, and the two rules that change it: start and step.
+
+use game;
+use hop.geom;
+use hop.geom.Vec3;
+use hop.geom.Box;
+use hop.model.Rgb;
+use hop.model.Solid;
+use hop.model.Pad;
+use hop.model.Level;
+use hop.model.Crawler;
+use hop.model.Player;
+use hop.model.Mode;
+use hop.levels;
+use hop.levels.LevelNo;
+use hop.physics;
+
+state stage: Level = levels.meadow;
+state ticks: Int = 0;
+state player: Player = Player(levels.meadow.start);
+state taken: Set[Int];
+state crawlers: Map[Int, Crawler];
+state lives: 0..=3 = 3;
+state mode: Mode = Playing;
+
+@why("every level starts the same way: three lives, nothing taken, every crawler home")
+@uses(stage.write, ticks.write, player.write, taken.write, crawlers.write, lives.write, mode.write, out.write)
+pub rule start(level: LevelNo) = {
+  let l = levels.level(level);
+  stage = l;
+  ticks = 0;
+  player = Player(l.start);
+  taken = Set();
+  crawlers = Map();
+  for c in l.crawlers { crawlers[c.no] = c; }
+  lives = 3;
+  mode = Playing;
+  out.line("0 level {l.name}");
+}
+
+@why("a hit or a fall costs a life and sends the hero back to the start; the last one ends the game")
+@guard(mode == Playing else Over)
+rule lose(why: Text) = {
+  out.line("{ticks} {why}");
+  lives = lives - 1;
+  player = Player(stage.start);
+  if lives == 0 {
+    mode = Lost;
+    out.line("{ticks} lost");
+  }
+}
+
+@why("one tick of play: carry, steer, jump, fall, then everything the hero touches")
+@on(tick(60Hz))
+@uses(stage.read, ticks.write, player.write, taken.write, crawlers.write, lives.write, mode.write, out.write)
+@guard(mode == Playing else Over)
+pub rule step(pad: Pad) = {
+  let t = ticks + 1;
+  ticks = t;
+  let was = player;
+  let tops = stage.movers.map(m => physics.Placed(m.no, box: physics.mover_box(m, t: t)));
+
+  var at = was.at;
+  if was.riding.is(Some(_)) {
+    let ridden = stage.movers.filter(m => was.riding == Some(m.no));
+    for m in ridden { at = geom.plus(at, b: physics.mover_shift(m, t: t)); }
+  }
+
+  let target = physics.walk_target(pad);
+  let accel = if was.grounded then physics.ground_accel else physics.air_accel;
+  var vy = was.vel.y;
+  var coyote = was.coyote;
+  if pad.jump and not was.jump_held and (was.grounded or was.coyote > 0) {
+    vy = physics.jump_speed;
+    coyote = 0;
+    out.line("{t} jump");
+  } else if not pad.jump and vy > physics.hop_cut {
+    vy = physics.hop_cut;
+  }
+  vy = (vy - physics.gravity).max(0 - physics.max_fall);
+
+  let sx = physics.slide_x(at, v: geom.approach(was.vel.x, target: target.x, step: accel), solids: stage.solids);
+  at = at.with(x: sx.pos);
+  let sz = physics.slide_z(at, v: geom.approach(was.vel.z, target: target.z, step: accel), solids: stage.solids);
+  at = at.with(z: sz.pos);
+  let f = physics.fall(at, v: vy, solids: stage.solids, tops: tops);
+  at = at.with(y: f.y);
+
+  if f.grounded and not was.grounded { out.line("{t} land"); }
+  player = Player(
+    at,
+    vel: Vec3(sx.vel, y: f.vel, z: sz.vel),
+    grounded: f.grounded,
+    coyote: if f.grounded then physics.coyote_ticks else (coyote - 1).max(0),
+    jump_held: pad.jump,
+    riding: f.riding,
+    yaw: physics.facing(pad, was: was.yaw),
+  );
+
+  for c in crawlers.values { crawlers[c.no] = physics.patrol(c); }
+
+  for g in stage.gems {
+    if not (g.no in taken) and geom.touches(physics.body(at), b: geom.around_centre(g.at, half: physics.gem_half)) {
+      taken.insert(g.no);
+      out.line("{t} gem {g.no}");
+    }
+  }
+
+  var alive = true;
+  for c in crawlers.values {
+    if alive and geom.touches(physics.body(at), b: physics.crawler_box(c)) {
+      if physics.stomps(at.y, vy: vy, c: c) {
+        crawlers.remove(c.no);
+        player = player.with(vel: player.vel.with(y: physics.stomp_bounce), grounded: false, riding: none);
+        out.line("{t} stomp {c.no}");
+      } else {
+        lose("hit");
+        alive = false;
+      }
+    }
+  }
+
+  if alive and at.y < physics.kill_y {
+    lose("fall");
+    alive = false;
+  }
+
+  let goal = geom.around_feet(stage.goal, half: physics.goal_half);
+  if alive and geom.touches(physics.body(at), b: goal) {
+    mode = Won;
+    out.line("{t} won");
+  }
+}
+
+fn mode_text(m: Mode) -> Text = match m {
+  Playing => "playing";
+  Won => "won";
+  Lost => "lost";
+}
+
+@why("one line that sums up a run, printed after the last tick")
+pub fn summary() -> Text =
+  "end {ticks} {mode_text(mode)} gems {taken.size}/{stage.gems.size} lives {lives} at {geom.vec_text(player.at)}";
+
+@why("everything the screen needs, read once per frame")
+pub type View(stage: Level, ticks: Int, player: Player, taken: Set[Int], crawlers: List[Crawler], lives: Int, mode: Mode);
+
+pub fn view() -> View = View(stage, ticks: ticks, player: player, taken: taken, crawlers: crawlers.values, lives: lives, mode: mode);
+
+// Named start worlds for the scenarios in hop.tests: a module sets only its own state.
+
+@why("a body just past the first ledge of the meadow, still within its coyote ticks")
+@given(stage -> levels.meadow, player -> Player(Vec3(1090, y: 0, z: 0), grounded: true, coyote: 6))
+test past_the_first_ledge = {}
+
+@why("running at the stone step of the meadow")
+@given(stage -> levels.meadow, player -> Player(Vec3(2400, y: 0, z: 0), vel: Vec3(16, y: 0, z: 0), grounded: true))
+test running_at_the_step = {}
+
+@why("a one-metre room whose ceiling is lower than a jump")
+@given(
+  stage -> Level("box",
+    start: Vec3(0, y: 0, z: 0),
+    solids: [
+      Solid(Box(Vec3(-512, y: -256, z: -512), hi: Vec3(512, y: 0, z: 512)), color: Rgb(0, g: 0, b: 0)),
+      Solid(Box(Vec3(-512, y: 400, z: -512), hi: Vec3(512, y: 600, z: 512)), color: Rgb(0, g: 0, b: 0)),
+    ],
+    goal: Vec3(100000, y: 0, z: 0)),
+  player -> Player(Vec3(0, y: 0, z: 0), grounded: true),
+)
+test under_a_low_ceiling = {}
+
+@given(stage -> levels.ridge, player -> Player(Vec3(1600, y: 0, z: 0), grounded: true, riding: Some(1)))
+test riding_the_mover = {}
+
+@given(stage -> levels.ridge, player -> Player(Vec3(1600, y: 200, z: 0)))
+test above_the_mover = {}
+
+@given(stage -> levels.meadow, player -> Player(Vec3(4608, y: 0, z: 0), grounded: true))
+test at_the_third_gem = {}
+
+@given(
+  stage -> levels.meadow,
+  crawlers -> Map(1 -> Crawler(1, at: Vec3(3072, y: 256, z: 0), lo: 2752, hi: 3392, dir: 1, speed: 2)),
+  player -> Player(Vec3(3072, y: 400, z: 0), vel: Vec3(0, y: -20, z: 0)),
+)
+test falling_on_the_crawler = {}
+
+@given(
+  stage -> levels.meadow,
+  crawlers -> Map(1 -> Crawler(1, at: Vec3(3072, y: 256, z: 0), lo: 2752, hi: 3392, dir: 1, speed: 2)),
+  player -> Player(Vec3(2900, y: 256, z: 0), vel: Vec3(16, y: 0, z: 0), grounded: true),
+)
+test running_at_the_crawler = {}
+
+@given(stage -> levels.meadow, player -> Player(Vec3(1280, y: -2040, z: 0), vel: Vec3(0, y: -48, z: 0)))
+test about_to_fall_out = {}
+
+@given(stage -> levels.meadow, lives -> 1, player -> Player(Vec3(1280, y: -2040, z: 0), vel: Vec3(0, y: -48, z: 0)))
+test about_to_fall_out_for_the_last_time = {}
+
+@given(stage -> levels.meadow, player -> Player(Vec3(5000, y: 0, z: 0), grounded: true))
+test beside_the_flag = {}
+
+@why("a gem already taken, then a fall")
+@given(stage -> levels.meadow, taken -> Set(1), player -> Player(Vec3(1280, y: -2040, z: 0), vel: Vec3(0, y: -48, z: 0)))
+test about_to_fall_out_holding_a_gem = {}
+
+@why("rising beside a crawler, feet above its middle")
+@given(
+  stage -> levels.meadow,
+  crawlers -> Map(1 -> Crawler(1, at: Vec3(3072, y: 256, z: 0), lo: 2752, hi: 3392, dir: 1, speed: 2)),
+  player -> Player(Vec3(2920, y: 330, z: 0), vel: Vec3(0, y: 20, z: 0)),
+)
+test rising_beside_the_crawler = {}
+
+@why("under the mover, inside its thickness, falling")
+@given(stage -> levels.ridge, player -> Player(Vec3(1600, y: -200, z: 0)))
+test under_the_mover = {}
+
+@why("falling as fast as anything falls, onto the first floor")
+@given(stage -> levels.meadow, player -> Player(Vec3(0, y: 400, z: 0), vel: Vec3(0, y: -48, z: 0)))
+test falling_fast_onto_the_floor = {}

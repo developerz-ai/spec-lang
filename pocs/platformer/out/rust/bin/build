@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Projected by hand from app SkyhopRust, note @bin("skyhop") (src/apps/rust.slg). Stand-in for spec-lang build output; change the spec, not this file.
+# Builds target/release/skyhop, linked to ../../vendor/raylib/lib with a run path.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+[ -f ../../vendor/raylib/lib/libraylib.so ] || ../../bin/raylib
+cargo build --release --locked

@@ -1,4 +1,5 @@
 //! Which notes exist, where each may stand, and which this toolchain implements.
+//! A library's notes come from its `vocab.slg` ([`crate::library`]).
 //!
 //! Card, Core notes: "closed set; one typed meaning; an unknown, misplaced or
 //! contradictory note is an error".
@@ -6,7 +7,6 @@
 use super::Lowerer;
 use crate::error::IrError;
 use crate::ids::ModuleId;
-use crate::vocab;
 use spec_lang_syntax::ast;
 
 /// Every core note of the card and the kinds it may stand on.
@@ -37,20 +37,20 @@ const CORE: &[(&str, &[&str])] = &[
     ("allows", &["note"]),
 ];
 
-/// Notes a vocabulary adds, with their kinds.
-const VOCAB: &[(&str, &str, &[&str])] = &[(vocab::CLI, "bin", &["app"]), (vocab::CLI, "store", &["app"])];
-
 /// Notes this toolchain gives meaning to, per kind.
 const IMPLEMENTED: &[(&str, &[&str])] = &[
     ("type", &["why"]),
     ("const", &["why"]),
     ("state", &["why"]),
-    ("fn", &["why", "cases"]),
+    ("fn", &["why", "cases", "uses"]),
     ("rule", &["why", "guard", "uses", "on"]),
     ("test", &["why", "given", "cases"]),
     ("law", &["why"]),
-    ("app", &["why", "target", "bin", "store"]),
+    ("app", &["why", "target"]),
 ];
+
+/// The kinds a library's note may stand on that this toolchain keeps as data.
+const LIBRARY_KINDS: &[&str] = &["app"];
 
 /// Notes that may be written more than once.
 const REPEATABLE: &[&str] = &["guard", "edge", "access", "retry"];
@@ -62,26 +62,30 @@ impl Lowerer {
         let mut seen: Vec<String> = Vec::new();
         for n in notes {
             let name = n.path.dotted();
-            let places = CORE.iter().find(|(c, _)| *c == name).map(|(_, k)| *k).or_else(|| {
-                VOCAB
-                    .iter()
-                    .find(|(v, c, _)| *c == name && self.prog.module(m).vocabularies.iter().any(|u| u == v))
-                    .map(|(_, _, k)| *k)
-            });
-            let Some(places) = places else {
-                let hint =
-                    VOCAB.iter().find(|(_, c, _)| *c == name).map(|(v, _, _)| format!(" (it comes from `use {v};`)"));
-                return Err(IrError::error(
-                    "E-NOTE-UNKNOWN",
-                    n.span,
-                    format!("no note `@{name}`{}", hint.unwrap_or_default()),
-                ));
+            let core = CORE.iter().find(|(c, _)| *c == name).map(|(_, k)| *k);
+            let library = match core {
+                Some(_) => None,
+                None => self.library_note(m, &name, n.span)?,
+            };
+            let places: Vec<&str> = match (core, &library) {
+                (Some(k), _) => k.to_vec(),
+                (None, Some(sig)) => sig.allows.iter().map(String::as_str).collect(),
+                (None, None) => {
+                    return Err(IrError::error(
+                        "E-NOTE-UNKNOWN",
+                        n.span,
+                        format!("no note `@{name}`{}", self.note_hint(&name)),
+                    ));
+                }
             };
             if !places.contains(&"*") && !places.contains(&kind) {
                 return Err(IrError::error("E-NOTE-PLACE", n.span, format!("`@{name}` does not belong on a `{kind}`"))
                     .with_expected(places.join(", "), kind.to_string()));
             }
-            let implemented = IMPLEMENTED.iter().any(|(k, ns)| *k == kind && ns.contains(&name.as_str()));
+            let implemented = match &library {
+                Some(_) => LIBRARY_KINDS.contains(&kind),
+                None => IMPLEMENTED.iter().any(|(k, ns)| *k == kind && ns.contains(&name.as_str())),
+            };
             if !implemented {
                 return Err(IrError::unsupported(n.span, format!("the note `@{name}` on a `{kind}`")));
             }

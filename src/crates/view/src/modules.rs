@@ -4,7 +4,7 @@
 use crate::facts::{Facts, Kind, info};
 use crate::graph::Graph;
 use crate::text::Ids;
-use spec_lang_ir::{DeclRef, Store, UseItem};
+use spec_lang_ir::{DeclRef, UseItem};
 use std::collections::BTreeMap;
 
 pub fn module_graph(f: &Facts<'_>) -> Graph {
@@ -86,13 +86,13 @@ pub fn module_graph(f: &Facts<'_>) -> Graph {
                         .clone();
                     g.node(&tid, target, "target", "", "");
                     let mut how = Vec::new();
-                    if let Some(bin) = &app.bin {
-                        how.push(format!("bin {bin}"));
-                    }
-                    match &app.store {
-                        Some(Store::File(path)) => how.push(format!("store file {path}")),
-                        None => {}
-                    }
+                    // `bin todo, store file .todo.json`: a note and its arguments as words.
+                    how.extend(app.notes.iter().map(|n| {
+                        std::iter::once(n.name.clone())
+                            .chain(n.args.iter().map(|a| words(&a.value)))
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    }));
                     g.edge(&d.id, &tid, "targets", &how.join(", "));
                 }
             }
@@ -101,4 +101,15 @@ pub fn module_graph(f: &Facts<'_>) -> Graph {
     }
     debug_assert!(f.decls.iter().all(|d| d.kind != Kind::State || g.has_node(&d.id)));
     g
+}
+
+/// A note argument as plain words: text without quotes, a variant then its arguments.
+fn words(v: &spec_lang_ir::NoteValue) -> String {
+    match v {
+        spec_lang_ir::NoteValue::Text(t) => t.clone(),
+        spec_lang_ir::NoteValue::Variant { name, args } => {
+            std::iter::once(name.clone()).chain(args.iter().map(|a| words(&a.value))).collect::<Vec<_>>().join(" ")
+        }
+        other => other.to_string(),
+    }
 }

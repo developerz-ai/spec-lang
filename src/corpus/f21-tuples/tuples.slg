@@ -1,0 +1,99 @@
+// f21-tuples pins: tuples as values, results, map keys, set elements and
+// sort keys; taking one apart with `match` (literal, binding and wildcard
+// items, nested); equality and order item by item; the unit tuple `()`.
+
+type Move = Left | Right | Stay;
+
+@cases((1, 2) -> (2, 1), (0, 0) -> (0, 0), (-1, 5) -> (5, -1))
+pub fn swap(p: (Int, Int)) -> (Int, Int) = match p {
+  (a, b) => (b, a);
+}
+
+@cases((7, 2) -> (1, 3), (-7, 2) -> (1, -4), (6, 3) -> (0, 2), (0, 5) -> (0, 0))
+pub fn mod_and_rest(a: Int, b: Int) -> (Int, Int) = {
+  let m = a mod b;
+  var q = 0;
+  var left = a - m;
+  while left > 0 { left = left - b; q = q + 1; }
+  while left < 0 { left = left + b; q = q - 1; }
+  return (m, q);
+}
+
+@cases(
+  (0, 0) -> "origin",
+  (0, 5) -> "on the y axis at 5",
+  (3, 0) -> "on the x axis at 3",
+  (3, 3) -> "diagonal 3",
+  (1, 2) -> "1,2",
+)
+pub fn where_is(p: (Int, Int)) -> Text = match p {
+  (0, 0) => "origin";
+  (0, y) => "on the y axis at {y}";
+  (x, 0) => "on the x axis at {x}";
+  (x, y) => if x == y then "diagonal {x}" else "{x},{y}";
+}
+
+@cases(((1, 2), "a") -> 4, ((0, 0), "") -> 0, ((5, -5), "abc") -> 3)
+pub fn nested(t: ((Int, Int), Text)) -> Int = match t {
+  ((a, b), s) => a + b + s.size;
+}
+
+@cases((Left, 0) -> (Stay, 0), (Left, 3) -> (Left, 2), (Right, 3) -> (Right, 4), (Stay, 3) -> (Stay, 3), (Right, 9) -> (Stay, 9))
+pub fn walk(m: Move, at: 0..=9) -> (Move, Int) = match (m, at) {
+  (Left, 0) => (Stay, 0);
+  (Right, 9) => (Stay, 9);
+  (Left, n) => (Left, n - 1);
+  (Right, n) => (Right, n + 1);
+  (Stay, n) => (Stay, n);
+}
+
+@cases([3, 1, 2] -> (1, 3, 6), [5] -> (5, 5, 5))
+pub fn min_max_sum(xs: List[Int]) -> (Int, Int, Int) = (xs.min(), xs.max(), xs.sum());
+
+@cases("a=1" -> ("a", "1"), "key" -> ("key", ""), "x=y=z" -> ("x", "y"))
+pub fn key_value(line: Text) -> (Text, Text) = {
+  let parts = line.split("=");
+  return (parts[0], parts[1] else "");
+}
+
+test tuples_are_values = {
+  let p = (1, "one", true);
+  assert p == (1, "one", true);
+  assert p != (1, "one", false) and p != (2, "one", true);
+  assert (1, (2, 3)) == (1, (2, 3)) and (1, (2, 3)) != (1, (3, 2));
+  assert [(2, "a"), (1, "z"), (1, "b")].sort() == [(1, "b"), (1, "z"), (2, "a")];
+  assert Set((1, 2), (1, 2), (2, 1)).size == 2;
+  assert () == ();
+  assert [(), ()].distinct().size == 1;
+}
+
+test tuples_are_keys = {
+  var grid: Map[(Int, Int), Text] = Map();
+  grid[(1, 1)] = "centre";
+  grid[(0, 2)] = "corner";
+  grid[(1, 0)] = "edge";
+  assert grid.keys == [(0, 2), (1, 0), (1, 1)];
+  assert grid[(1, 0)] == "edge" and not ((2, 2) in grid);
+  assert grid.keys.map(k => swap(k)).sort().first == (0, 1);
+}
+
+test zip_makes_tuples = {
+  let ps = ["a", "b"].zip([1, 2]);
+  assert ps == [("a", 1), ("b", 2)];
+  assert ps.map(p => "{p}").join(" ") == "(\"a\", 1) (\"b\", 2)";
+}
+
+test swap_twice_is_nothing(a: Int, b: Int) = {
+  assert swap(swap((a, b))) == (a, b);
+  assert (swap((a, b)) == (a, b)) == (a == b);
+  assert ([(a, b), (b, a)].sort().first == (a, b)) == (a <= b);
+}
+
+test mod_and_rest_rebuild_the_number(a: -1000..=1000, b: 1..=50) = {
+  let r = mod_and_rest(a, b: b);
+  assert match_back(r, b: b) == a;
+}
+
+fn match_back(r: (Int, Int), b: Int) -> Int = match r {
+  (m, q) => q * b + m;
+}

@@ -1,0 +1,2 @@
+// game in tests: nothing to pretend. `screen.write` and `keys.read` are performed only by foreign declarations, and a
+// check that reaches one is blocked, never run. `out` is cli's handler, with cli's pretend.

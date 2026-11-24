@@ -26,7 +26,7 @@ use crate::sequence::{test_sequence, test_sequences};
 use crate::state::{FlowEdge, state_machines};
 use crate::text::{Ids, html as h};
 use crate::{File, MERMAID_SRC};
-use spec_lang_ir::{DeclRef, Given, Store, Trigger};
+use spec_lang_ir::{DeclRef, Given};
 use std::fmt::Write as _;
 
 #[derive(Clone, Debug)]
@@ -207,11 +207,7 @@ impl Site<'_, '_> {
             DeclRef::Rule(id) => {
                 let r = p.rule(id);
                 for t in &r.triggers {
-                    match t {
-                        Trigger::Cli { command } => {
-                            rows.push(("@on".to_string(), code(&format!("cli(\"{command}\")"))))
-                        }
-                    }
+                    rows.push(("@on".to_string(), code(&t.to_string())));
                 }
                 if !r.uses.is_empty() {
                     rows.push(("@uses".to_string(), code(&r.uses.join(", "))));
@@ -252,12 +248,17 @@ impl Site<'_, '_> {
                 if let Some(t) = &a.target {
                     rows.push(("@target".to_string(), code(t)));
                 }
-                if let Some(b) = &a.bin {
-                    rows.push(("@bin".to_string(), code(b)));
-                }
-                match &a.store {
-                    Some(Store::File(path)) => rows.push(("@store".to_string(), code(&format!("file(\"{path}\")")))),
-                    None => {}
+                for n in &a.notes {
+                    // A text argument as it reads (`todo`); anything else as source (`file(".todo.json")`).
+                    let args: Vec<String> = n
+                        .args
+                        .iter()
+                        .map(|x| match &x.value {
+                            spec_lang_ir::NoteValue::Text(t) => t.clone(),
+                            v => v.to_string(),
+                        })
+                        .collect();
+                    rows.push((format!("@{}", n.name), code(&args.join(", "))));
                 }
             }
             DeclRef::Type(_) | DeclRef::Const(_) | DeclRef::State(_) | DeclRef::Law(_) => {}

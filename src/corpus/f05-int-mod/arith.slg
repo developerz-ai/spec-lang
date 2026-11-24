@@ -1,0 +1,81 @@
+// f05-int-mod pins: `mod` is floored (the result takes the sign of the
+// divisor; with a positive divisor it is in 0..<b also for a negative left
+// side), `mod 0` fails `DivByZero`, `mod` on values past a 64-bit word, and
+// the Int methods `abs min max clamp`.
+
+@cases(
+  (7, 3) -> 1,
+  (-7, 3) -> 2,
+  (7, -3) -> -2,
+  (-7, -3) -> -1,
+  (6, 3) -> 0,
+  (-6, 3) -> 0,
+  (6, -3) -> 0,
+  (0, 5) -> 0,
+  (0, -5) -> 0,
+  (-1, 5) -> 4,
+  (1, -5) -> -4,
+  (5, 1) -> 0,
+  (-5, -1) -> 0,
+  (3, 7) -> 3,
+  (-3, 7) -> 4,
+  (3, -7) -> -4,
+  (-9223372036854775809, 10) -> 1,
+  (18446744073709551617, 18446744073709551616) -> 1,
+  (-1, 18446744073709551616) -> 18446744073709551615,
+  (170141183460469231731687303715884105727, 1000000007) -> 639816141,
+  (-170141183460469231731687303715884105727, 1000000007) -> 360183866,
+)
+pub fn modulo(a: Int, b: Int) -> Int = a mod b;
+
+@cases((7, 0) -> -1, (0, 0) -> -1, (-7, 0) -> -1, (7, 2) -> 1)
+pub fn safe_mod(a: Int, b: Int) -> Int = a mod b else -1;
+
+@cases(0 -> 0, 5 -> 5, -5 -> 5, -9223372036854775808 -> 9223372036854775808)
+pub fn magnitude(n: Int) -> Int = n.abs();
+
+@cases((1, 2) -> 1, (2, 1) -> 1, (-1, -2) -> -2, (3, 3) -> 3, (18446744073709551616, 18446744073709551615) -> 18446744073709551615)
+pub fn smaller(a: Int, b: Int) -> Int = a.min(b);
+
+@cases((1, 2) -> 2, (2, 1) -> 2, (-1, -2) -> -1, (3, 3) -> 3)
+pub fn larger(a: Int, b: Int) -> Int = a.max(b);
+
+@cases((5, 1, 3) -> 3, (0, 1, 3) -> 1, (2, 1, 3) -> 2, (1, 1, 3) -> 1, (3, 1, 3) -> 3, (9, 4, 4) -> 4, (-9, -3, -1) -> -3)
+pub fn clamped(n: Int, lo: Int, hi: Int) -> Int = n.clamp(lo, hi);
+
+@why("wraps a clock hand: the day before Monday is Sunday")
+@cases((0, -1) -> 6, (6, 1) -> 0, (3, -10) -> 0, (3, 700) -> 3, (0, -700) -> 0)
+pub fn weekday(day: 0..=6, shift: Int) -> 0..=6 = (day + shift) mod 7;
+
+test a_zero_divisor_is_a_refusal = {
+  modulo(1, b: 0) -> fail DivByZero;
+  modulo(0, b: 0) -> fail DivByZero;
+  modulo(1, b: 1) -> 0;
+}
+
+test mod_binds_like_times = {
+  assert 1 + 7 mod 3 == 2;
+  assert 2 * 7 mod 3 == 2;
+  assert 7 mod 3 * 2 == 2;
+  assert -7 mod 3 == 2;
+  assert 0 - 7 mod 3 == -1;
+}
+
+test floored_mod_is_in_the_divisor_range(a: Int, b: 1..=1000000) = {
+  let r = a mod b;
+  assert 0 <= r < b;
+  assert (a - r) mod b == 0;
+  assert (a + b) mod b == r;
+  let s = a mod (0 - b);
+  assert 0 - b < s <= 0;
+  assert s == 0 or s == r - b;
+}
+
+test min_max_clamp_agree(a: Int, b: Int, c: Int) = {
+  let lo = a.min(b);
+  let hi = a.max(b);
+  assert lo <= hi and lo + hi == a + b;
+  assert c.clamp(lo, hi) == c.max(lo).min(hi);
+  assert lo <= c.clamp(lo, hi) <= hi;
+  assert (a - b).abs() == hi - lo;
+}

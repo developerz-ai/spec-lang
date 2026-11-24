@@ -1,0 +1,2 @@
+// game implements no foreign call: the window loop is its runtime's (real/). Drawing and the keyboard are a
+// library's calls, `raylib` among them, each stating `screen.write` or `keys.read`.

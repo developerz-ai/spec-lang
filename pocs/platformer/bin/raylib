@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Build the pinned raylib into vendor/raylib (shared library, headers). Every backend links this one copy.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+VERSION=5.5
+SHA256=aea98ecf5bc5c5e0b789a76de0083a21a70457050ea4cc2aec7566935f5e258e
+PREFIX="$PWD/vendor/raylib"
+
+if [[ -f "$PREFIX/lib/libraylib.so.$VERSION.0" && -f "$PREFIX/include/raylib.h" ]]; then
+  echo "raylib $VERSION: present in vendor/raylib"
+  exit 0
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+curl -fsSL -o "$work/raylib.tar.gz" "https://github.com/raysan5/raylib/archive/refs/tags/$VERSION.tar.gz"
+echo "$SHA256  $work/raylib.tar.gz" | sha256sum -c --quiet
+tar -xzf "$work/raylib.tar.gz" -C "$work"
+cmake -S "$work/raylib-$VERSION" -B "$work/build" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+  -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib >/dev/null
+cmake --build "$work/build" -j"$(nproc)" >/dev/null
+cmake --install "$work/build" >/dev/null
+echo "raylib $VERSION: built into vendor/raylib"

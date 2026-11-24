@@ -58,13 +58,41 @@ fn call(ctx: &Ctx<'_>, it: &mut Interp<'_>, e: &Event) -> Result<Value, Diag> {
 }
 
 /// The rules whose calls may build a start world: every rule of the modules
-/// that own the traced rules.
+/// that own the traced rules, except one that can reach a `foreign` body
+/// (only a backend runs it; a traced rule that reaches one still blocks).
 pub(crate) fn prefix_rules(prog: &Program, traced: &[RuleId]) -> Vec<RuleId> {
     let modules: Vec<ModuleId> = traced.iter().map(|r| prog.rule(*r).info.module).collect();
     (0..prog.rules.len())
         .map(|i| RuleId(u32::try_from(i).unwrap_or(0)))
-        .filter(|r| modules.contains(&prog.rule(*r).info.module))
+        .filter(|r| modules.contains(&prog.rule(*r).info.module) && !reaches_foreign(prog, *r))
         .collect()
+}
+
+/// Whether a call of `r` can reach a `foreign` fn or rule through its guards
+/// and body.
+fn reaches_foreign(prog: &Program, r: RuleId) -> bool {
+    let mut seen = vec![Callee::Rule(r)];
+    let mut todo = vec![Callee::Rule(r)];
+    while let Some(c) = todo.pop() {
+        let exprs: Vec<&Expr> = match c {
+            Callee::Fn(f) if prog.func(f).foreign.is_some() => return true,
+            Callee::Rule(x) if prog.rule(x).foreign.is_some() => return true,
+            Callee::Fn(f) => vec![&prog.func(f).body],
+            Callee::Rule(x) => prog.rule(x).guards.iter().map(|g| &g.cond).chain([&prog.rule(x).body]).collect(),
+            _ => continue,
+        };
+        for e in exprs {
+            spec_lang_ir::visit::walk_expr(prog, e, &mut |x| {
+                if let ExprKind::Call { callee: c @ (Callee::Fn(_) | Callee::Rule(_)), .. } = &x.kind
+                    && !seen.contains(c)
+                {
+                    seen.push(*c);
+                    todo.push(*c);
+                }
+            });
+        }
+    }
+    false
 }
 
 fn random_event(ctx: &Ctx<'_>, it: &mut Interp<'_>, rng: &mut Rng, rules: &[RuleId]) -> Result<Rc<Event>, Diag> {

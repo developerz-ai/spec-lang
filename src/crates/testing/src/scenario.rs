@@ -93,6 +93,20 @@ impl<'p> Ctx<'p> {
                     let name = self.prog.qualified(&self.prog.test(*test).info);
                     match parent {
                         Run::Pass(w) => it.world = w,
+                        Run::Blocked(pd) if pd.code == "B-FOREIGN" => {
+                            let mut d = Diag::new(
+                                Severity::Blocked,
+                                "B-FOREIGN",
+                                format!("blocked by {name}, which reached a foreign body"),
+                            )
+                            .with_span(*span)
+                            .with_decl(decl)
+                            .with_at(at)
+                            .with_note(pd.message.clone());
+                            d.expected = pd.expected.clone();
+                            d.found = pd.found.clone();
+                            return Err(Run::Blocked(d));
+                        }
                         Run::Fail(_) | Run::Blocked(_) => {
                             return Err(Run::Blocked(
                                 Diag::new(Severity::Failure, "F-BLOCKED", format!("blocked by {name}"))
@@ -134,14 +148,7 @@ impl<'p> Ctx<'p> {
                         )
                         .with_span(s.span)
                         .with_note("write `-> fail Name;` if the refusal is expected"),
-                        Halt::Blocked(h, span) => {
-                            return Run::Blocked(
-                                Diag::new(Severity::Failure, "F-BLOCKED", format!("reached ?{h}"))
-                                    .with_span(span)
-                                    .with_decl(decl)
-                                    .with_at(at),
-                            );
-                        }
+                        Halt::Blocked(d) => return Run::Blocked(d.in_decl(&decl).with_at(at)),
                         other => halt_diag(self.prog, other, Some(s.span)),
                     };
                     return Run::Fail(d.in_decl(&decl).with_at(at));
@@ -159,7 +166,7 @@ pub(crate) fn halt_diag(prog: &Program, h: Halt, span: Option<spec_lang_syntax::
         Halt::Fail(f) => {
             Diag::new(Severity::Failure, "F-TEST", format!("failed with {}", show(prog, &Value::Failure(f))))
         }
-        Halt::Blocked(h, s) => Diag::new(Severity::Failure, "F-BLOCKED", format!("reached ?{h}")).with_span(s),
+        Halt::Blocked(d) => *d,
     };
     match (d.span, span) {
         (None, Some(s)) => d.with_span(s),

@@ -1,0 +1,130 @@
+// f15-map pins: a Map iterates in ascending key order whatever the order it
+// was written or filled in; `size keys values get [k] in`, a missing key
+// fails `Missing` (handled by `else`, never a default), `m[k] = v` adds or
+// replaces, `m[k].f = v` changes one field and fails `Missing` on an absent
+// key, `remove` (absent: no change), keys that are text, records and tuples,
+// maps inside maps, equality by content.
+
+type Cell(row: Int, col: Int);
+type Stock(qty: Int = 0, note: Text = "");
+
+@cases(Map() -> [], Map(3 -> "c", 1 -> "a", 2 -> "b") -> [1, 2, 3], Map(-1 -> "", 10 -> "", 9 -> "") -> [-1, 9, 10])
+pub fn key_list(m: Map[Int, Text]) -> List[Int] = m.keys;
+
+@cases(Map() -> [], Map(3 -> "c", 1 -> "a", 2 -> "b") -> ["a", "b", "c"], Map(2 -> "x", 1 -> "x") -> ["x", "x"])
+pub fn value_list(m: Map[Int, Text]) -> List[Text] = m.values;
+
+@cases((Map(1 -> "a"), 1) -> Some("a"), (Map(1 -> "a"), 2) -> none, (Map(), 0) -> none)
+pub fn look(m: Map[Int, Text], k: Int) -> Option[Text] = m.get(k);
+
+@cases((Map(1 -> "a"), 1) -> "a", (Map(1 -> "a"), 2) -> "?", (Map(), 0) -> "?")
+pub fn or_default(m: Map[Int, Text], k: Int) -> Text = m[k] else "?";
+
+@cases(["b", "a", "b", "c", "b", "a"] -> Map("a" -> 2, "b" -> 3, "c" -> 1), [] -> Map())
+pub fn tally(words: List[Text]) -> Map[Text, Int] = {
+  var m: Map[Text, Int] = Map();
+  for w in words { m[w] = (m[w] else 0) + 1; }
+  return m;
+}
+
+@cases(Map("a" -> 2, "b" -> 3) -> Map(2 -> "a", 3 -> "b"), Map("b" -> 1, "a" -> 1) -> Map(1 -> "b"))
+pub fn inverted(m: Map[Text, Int]) -> Map[Int, Text] = {
+  var out: Map[Int, Text] = Map();
+  for k in m.keys { out[m[k]] = k; }
+  return out;
+}
+
+fn fetch(m: Map[Int, Text], k: Int) -> Text = m[k];
+
+test a_missing_key_fails = {
+  fetch(Map(1 -> "a"), k: 1) -> "a";
+  fetch(Map(1 -> "a"), k: 2) -> fail Missing;
+  fetch(Map(), k: 0) -> fail Missing;
+}
+
+test a_map_is_its_content = {
+  assert Map(1 -> "a", 2 -> "b") == Map(2 -> "b", 1 -> "a");
+  assert Map(1 -> "a") != Map(1 -> "b") and Map(1 -> "a") != Map(2 -> "a") and Map() != Map(1 -> "a");
+  assert Map(1 -> "a", 1 -> "b") == Map(1 -> "b");
+  assert Map(1 -> "a").size == 1 and Map().size == 0;
+}
+
+test assignment_adds_or_replaces = {
+  var m: Map[Text, Int] = Map();
+  let before = m;
+  m["b"] = 2;
+  m["a"] = 1;
+  m["c"] = 3;
+  assert m.keys == ["a", "b", "c"] and m.values == [1, 2, 3];
+  m["b"] = 20;
+  assert m.size == 3 and m["b"] == 20;
+  m.remove("a");
+  m.remove("a");
+  m.remove("zzz");
+  assert m == Map("b" -> 20, "c" -> 3);
+  assert "b" in m and not ("a" in m);
+  assert before == Map();
+}
+
+test one_field_of_an_entry = {
+  var shelf = Map("nut" -> Stock(5), "bolt" -> Stock());
+  shelf["nut"].qty = shelf["nut"].qty - 2;
+  shelf["bolt"].note = "ordered";
+  assert shelf["nut"] == Stock(3) and shelf["bolt"] == Stock(0, note: "ordered");
+  assert (shelf["cog"].qty else -1) == -1;
+  assert shelf.values.map(it.qty).sum() == 3;
+}
+
+test keys_can_be_records_and_tuples = {
+  var board = Map(Cell(1, col: 2) -> "x", Cell(0, col: 5) -> "o", Cell(1, col: 0) -> "x");
+  assert board.keys == [Cell(0, col: 5), Cell(1, col: 0), Cell(1, col: 2)];
+  assert board.values == ["o", "x", "x"];
+  assert board[Cell(0, col: 5)] == "o" and not (Cell(5, col: 0) in board);
+  board[Cell(0, col: 0)] = "o";
+  assert board.keys.first == Cell(0, col: 0);
+  let pairs = Map((2, "a") -> 1, (1, "b") -> 2, (1, "a") -> 3);
+  assert pairs.keys == [(1, "a"), (1, "b"), (2, "a")] and pairs.values == [3, 2, 1];
+  assert pairs[(1, "b")] == 2;
+}
+
+test maps_inside_maps = {
+  var m = Map("x" -> Map(1 -> [1]), "y" -> Map());
+  m["x"][2] = [2, 2];
+  m["x"][1].push(11);
+  m["y"][0] = [];
+  assert m == Map("x" -> Map(1 -> [1, 11], 2 -> [2, 2]), "y" -> Map(0 -> []));
+  assert m["x"].keys == [1, 2] and m["y"][0].size == 0;
+}
+
+test a_stored_none_is_not_a_missing_key = {
+  let m = Map(1 -> none, 2 -> Some(5));
+  assert 1 in m and m.get(1) == Some(none) and m.get(3) == none;
+  assert m[1] == none and m[2] == Some(5);
+}
+
+test loops_follow_the_keys = {
+  let m = Map(30 -> "c", 10 -> "a", 20 -> "b");
+  var line = "";
+  for k in m.keys { line = "{line}{k}={m[k]};"; }
+  assert line == "10=a;20=b;30=c;";
+  assert m.values.join("") == "abc";
+  assert m.keys.zip(m.values) == [(10, "a"), (20, "b"), (30, "c")];
+}
+
+test tally_counts_every_word(xs: List[-4..=4]) = {
+  var m: Map[Int, Int] = Map();
+  for x in xs { m[x] = (m[x] else 0) + 1; }
+  assert m.values.sum() == xs.size;
+  assert m.keys == xs.distinct().sort();
+  assert m.keys.all(k => m[k] == xs.filter(it == k).size);
+  assert m.size == m.keys.size and m.size == m.values.size;
+  for k in m.keys { m.remove(k); }
+  assert m == Map();
+}
+
+test get_and_index_agree(m: Map[-4..=4, Int], k: -4..=4) = {
+  assert (k in m) == (m.get(k) != none);
+  assert (k in m) == (k in m.keys);
+  if k in m { assert m.get(k) == Some(m[k]); }
+  assert (m[k] else 77) == (m.get(k) else 77);
+}

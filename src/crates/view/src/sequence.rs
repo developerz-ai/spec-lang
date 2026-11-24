@@ -206,8 +206,9 @@ impl Builder {
                     self.participant(f.short(i), Role::State);
                 }
             }
-            ExprKind::OutText => {
-                self.participant("out", Role::Outside);
+            ExprKind::EffectRead(e) => {
+                let name = f.p.handler(e.handler).name.clone();
+                self.participant(&name, Role::Outside);
             }
             _ => {}
         });

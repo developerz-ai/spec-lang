@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# The assets gate: lint and types, recipes rebuild to the committed bytes, and the shader and
+# models load and render in raylib with a stable frame hash.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+step() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+step "assets: lint, types"
+bun install --frozen-lockfile >/dev/null
+bunx biome check .
+bunx tsc -p .
+
+step "assets: recipes rebuild to the committed GLBs"
+bun scripts/build.ts "$work/out"
+for glb in "$work"/out/*.glb out/*.glb; do
+  name="$(basename "$glb")"
+  cmp "$work/out/$name" "out/$name" || { echo "out/$name is stale or unbuilt: run bin/build" >&2; exit 1; }
+done
+
+step "assets: load and render in raylib, twice"
+bin/view "$work/a.png" 320 180 side | tee "$work/a.txt"
+bin/view "$work/b.png" 320 180 side >"$work/b.txt"
+first="$(grep '^hash ' "$work/a.txt")"
+second="$(grep '^hash ' "$work/b.txt")"
+if [[ "$first" != "$second" ]]; then
+  echo "frame hash is not stable: $first then $second" >&2
+  exit 1
+fi
+echo "stable over two runs: $first"

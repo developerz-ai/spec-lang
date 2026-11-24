@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Projected by hand from app SkyhopCpp, @bin("skyhop") (src/apps/cpp.slg): builds build/skyhop. Stand-in for spec-lang build output; change the spec, not this file.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+[ -f ../../vendor/raylib/lib/libraylib.so ] || ../../bin/raylib
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel

@@ -185,32 +185,6 @@ impl Lowerer {
         }
     }
 
-    fn app_signature(&mut self, a: AppId, m: ModuleId, decl: &ast::Decl) -> R<()> {
-        let cx = Cx::new(m, Body::Value);
-        let mut rules = Vec::new();
-        for p in decl.params.iter().flatten() {
-            if p.name.name != "rules" {
-                return Err(IrError::unsupported(p.span, format!("the app parameter `{}`", p.name.name)));
-            }
-            let Some(AK::List(items)) = p.ty.as_ref().map(|t| &t.kind) else {
-                return Err(IrError::error(
-                    "E-TYPE-MISMATCH",
-                    p.span,
-                    "`rules:` takes a list of rules: `rules: [a.b, c]`",
-                ));
-            };
-            for it in items {
-                match self.binding_of(&cx, &it.value) {
-                    Some(Ok(Binding::Decl(DeclRef::Rule(r)))) => rules.push(r),
-                    Some(Err(d)) => return Err(d),
-                    _ => return Err(IrError::error("E-NAME-KIND", it.span, "not a rule")),
-                }
-            }
-        }
-        self.prog.apps[a.index()].rules = rules;
-        Ok(())
-    }
-
     /// Pass 6: notes and bodies.
     pub(super) fn lower_decl_body(&mut self, d: DeclRef, decl: &ast::Decl) {
         let r = self.decl_body(d, decl);
@@ -238,16 +212,24 @@ impl Lowerer {
                 Ok(())
             }
             DeclRef::Fn(f) => {
-                let mut cx = self.params_cx(m, Body::Fn, &decl.params);
-                let v = body_value(decl).ok_or_else(|| {
-                    IrError::unsupported(decl.span, "a `fn` without a define body (declared, machine or foreign)")
-                })?;
-                let body = self.lower_value(&mut cx, v)?;
+                let uses = self.uses_of(m, decl)?;
+                let (body, foreign) = match &decl.tail {
+                    Tail::Body(ast::Body::Foreign { lang, symbol }) => foreign_body(self.foreign(lang, symbol)?),
+                    _ => {
+                        let mut cx = self.params_cx(m, Body::Fn, &decl.params);
+                        let v = body_value(decl).ok_or_else(|| {
+                            IrError::unsupported(decl.span, "a `fn` without a define body (declared or machine)")
+                        })?;
+                        (self.lower_value(&mut cx, v)?, None)
+                    }
+                };
                 let sig = self.sigs.get(&Callee::Fn(f)).cloned().unwrap_or_default();
                 let cases = self.lower_cases(m, &sig, decl)?;
                 let x = &mut self.prog.fns[f.index()];
                 x.body = body;
                 x.cases = cases;
+                x.uses = uses;
+                x.foreign = foreign;
                 Ok(())
             }
             DeclRef::Rule(r) => self.rule_body(r, m, decl),
@@ -291,50 +273,24 @@ impl Lowerer {
                 guards.push(Guard { cond, error: error.to_string(), span: a.span });
             }
         }
-        let mut uses = Vec::new();
-        for (_, args) in note_args(&decl.notes, "uses") {
-            uses.extend(args.iter().map(|a| self.prog.snippet(a.value.span).to_string()));
-        }
-        let mut triggers = Vec::new();
-        for (n, args) in note_args(&decl.notes, "on") {
-            match args {
-                [a] => match &a.value.kind {
-                    AK::Call(c, cargs)
-                        if c.as_name() == Some(crate::vocab::CLI)
-                            && self.prog.module(m).vocabularies.iter().any(|v| v == crate::vocab::CLI) =>
-                    {
-                        match cargs.as_slice() {
-                            [ast::Arg { name: None, value: ast::Expr { kind: AK::Text(t), .. }, .. }]
-                                if t.prefix.is_none() =>
-                            {
-                                triggers.push(Trigger::Cli { command: t.raw.clone() });
-                            }
-                            _ => {
-                                return Err(IrError::error(
-                                    "E-NOTE-ARG",
-                                    a.span,
-                                    "`cli(...)` takes the command name as text",
-                                ));
-                            }
-                        }
-                    }
-                    _ => {
-                        return Err(IrError::unsupported(
-                            a.span,
-                            format!("the trigger `{}`", self.prog.snippet(a.span)),
-                        ));
-                    }
-                },
-                _ => return Err(IrError::error("E-NOTE-ARG", n.span, "`@on` takes one trigger")),
+        let uses = self.uses_of(m, decl)?;
+        let triggers = self.triggers_of(m, decl)?;
+        let (body, foreign) = match &decl.tail {
+            Tail::Body(ast::Body::Foreign { lang, symbol }) => foreign_body(self.foreign(lang, symbol)?),
+            _ => {
+                let v = body_value(decl)
+                    .ok_or_else(|| IrError::unsupported(decl.span, "a `rule` without a define body"))?;
+                let body =
+                    self.lower_value(&mut cx, v).map_err(|e| if e.at.is_none() { e } else { prefix_at(e, "body") })?;
+                (body, None)
             }
-        }
-        let v = body_value(decl).ok_or_else(|| IrError::unsupported(decl.span, "a `rule` without a define body"))?;
-        let body = self.lower_value(&mut cx, v).map_err(|e| if e.at.is_none() { e } else { prefix_at(e, "body") })?;
+        };
         let x = &mut self.prog.rules[r.index()];
         x.guards = guards;
         x.uses = uses;
         x.triggers = triggers;
         x.body = body;
+        x.foreign = foreign;
         Ok(())
     }
 
@@ -422,45 +378,12 @@ impl Lowerer {
         }
         Ok(out)
     }
+}
 
-    fn app_notes(&mut self, a: AppId, decl: &ast::Decl) -> R<()> {
-        let text_arg = |args: &[ast::Arg]| match args {
-            [ast::Arg { name: None, value: ast::Expr { kind: AK::Text(t), .. }, .. }] if t.prefix.is_none() => {
-                Some(t.raw.clone())
-            }
-            _ => None,
-        };
-        for n in &decl.notes {
-            let args = n.args.as_deref().unwrap_or(&[]);
-            match n.path.dotted().as_str() {
-                "target" => match args {
-                    [x] if x.value.as_name().is_some() => {
-                        self.prog.apps[a.index()].target = x.value.as_name().map(str::to_string);
-                    }
-                    _ => return Err(IrError::error("E-NOTE-ARG", n.span, "`@target(name)` takes one backend name")),
-                },
-                "bin" => {
-                    let v = text_arg(args)
-                        .ok_or_else(|| IrError::error("E-NOTE-ARG", n.span, "`@bin(\"name\")` takes text"))?;
-                    self.prog.apps[a.index()].bin = Some(v);
-                }
-                "store" => {
-                    let file = match args {
-                        [x] => match &x.value.kind {
-                            AK::Call(c, cargs) if c.as_name() == Some("file") => text_arg(cargs),
-                            _ => None,
-                        },
-                        _ => None,
-                    };
-                    let f = file
-                        .ok_or_else(|| IrError::error("E-NOTE-ARG", n.span, "`@store(file(\"path\"))` takes a file"))?;
-                    self.prog.apps[a.index()].store = Some(Store::File(f));
-                }
-                _ => {}
-            }
-        }
-        Ok(())
-    }
+/// A foreign declaration's body: the hole `?foreign`, so a reader that does
+/// not know [`Foreign`] meets a hole, never a wrong value.
+pub(super) fn foreign_body(f: Foreign) -> (Expr, Option<Foreign>) {
+    (Expr::new(ExprKind::Hole("foreign".to_string()), f.span), Some(f))
 }
 
 fn body_value(decl: &ast::Decl) -> Option<&ast::Value> {

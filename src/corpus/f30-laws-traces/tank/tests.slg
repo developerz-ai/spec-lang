@@ -1,0 +1,21 @@
+// f30-laws-traces pins (module tank.tests): the scenarios the laws stand
+// beside, so a law mistake and a rule mistake show up in different checks.
+
+use tank.valves;
+
+test fill_then_drain = {
+  valves.fill(40) -> 40;
+  valves.fill(40) -> 80;
+  valves.fill(21) -> fail Overflow;
+  valves.fill(20) -> 100;
+  valves.drain(1) -> 99;
+  valves.read() -> 99;
+  assert valves.history == [40, 40, 20, -1] and valves.moves == 4;
+}
+
+test an_empty_tank_gives_nothing = {
+  valves.drain(1) -> fail Empty;
+  valves.flush();
+  valves.read() -> 0;
+  assert valves.history == [] and valves.moves == 0;
+}

@@ -17,6 +17,7 @@ spec-lang-engine.workspace = true
 spec-lang-testing.workspace = true
 spec-lang-check.workspace = true
 spec-lang-diag.workspace = true
+spec-lang-lir.workspace = true
 view = { path = "../view" }
 spec-lang-emit-rust = { path = "../emit-rust" }
 spec-lang-emit-cpp = { path = "../emit-cpp" }

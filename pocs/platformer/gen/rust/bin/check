@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# The gate of this printed app: clippy with warnings denied, the runtimes' own tests, the program's checks, the release
+# build. The printer lays the
+# code out with prettyplease, not rustfmt, so `cargo fmt --check` is not part of it.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+cargo clippy --release --all-targets --quiet -- -D warnings
+cargo test --release --quiet
+bin/test >/dev/null
+cargo build --release --quiet
