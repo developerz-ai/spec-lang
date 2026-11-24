@@ -1,6 +1,6 @@
 <h1 align="center">spec-lang</h1>
 
-<p align="center"><strong>Executable pseudocode for AIs.</strong></p>
+<p align="center"><strong>Executable pseudocode for AIs: testable at once, compilable into real software.</strong></p>
 
 <p align="center">The AI writes logic and tests. The interpreter runs them at once. The compiler generates the software.</p>
 
