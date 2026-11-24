@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Projected by hand from the gate of the ruby target (docs/contract.md section 4). Stand-in for spec-lang build output; change the spec, not this file.
+# The whole gate: lint, `ruby -w` on every file, the tests with warnings on, build. Any warning fails it.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+bundle check >/dev/null || bundle install
+bundle exec rubocop
+
+while IFS= read -r file; do
+  if ! report=$(ruby -wc "$file" 2>&1) || [ "$report" != "Syntax OK" ]; then
+    printf '%s: %s\n' "$file" "$report" >&2
+    exit 1
+  fi
+done < <(find Gemfile exe lib test -type f | sort)
+
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+bundle exec ruby -w -Ilib -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }' 2>&1 | tee "$log"
+if grep -q 'warning:' "$log"; then
+  echo "the tests ran with warnings" >&2
+  exit 1
+fi
+
+bin/build

@@ -1,0 +1,27 @@
+// todo.model: what a task is. Data and the claims on it; no state, no effects.
+
+@why("a title fits on one line of a terminal list")
+@cases("milk" -> true, "" -> false, "   " -> false, "a\tb" -> false, "\u{3000}" -> false, "a\u{2028}b" -> false, "a\u{0085}b" -> false)
+pub fn is_title(t: Text) -> Bool =
+  t.trim().size >= 1 and t.size <= 200 and t.bytes.all(it >= 32 and it != 127)
+  and not t.contains("\u{0085}") and not t.contains("\u{2028}") and not t.contains("\u{2029}");
+
+@why("a tag is typed in a shell without quotes, and never reads as a flag")
+@cases("home" -> true, "deep-work" -> true, "Home" -> false, "" -> false, "a b" -> false, "-x" -> false, "--all" -> false)
+pub fn is_tag(t: Text) -> Bool =
+  1 <= t.size <= 32 and t.bytes.all(97 <= it <= 122 or 48 <= it <= 57 or it == 45) and not t.starts_with("-");
+
+pub type Title = Text where is_title(self);
+pub type Tag = Text where is_tag(self);
+pub type TaskNo = Int where self >= 1;
+
+pub type Status = Open | Done;
+pub type Priority = Low | Normal | High;
+
+pub type Task(
+  no: TaskNo,
+  title: Title,
+  status: Status = Open,
+  priority: Priority = Normal,
+  tags: Set[Tag] = Set(),
+);

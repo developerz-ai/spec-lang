@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Projected by hand from app TodoRust (src/apps/rust.slg). Stand-in for spec-lang build output; change the spec, not this file.
+# The gate: format, lints, tests, then the release build.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+bin/build

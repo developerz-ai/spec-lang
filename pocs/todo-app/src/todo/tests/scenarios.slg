@@ -1,0 +1,70 @@
+// todo.tests.scenarios: examples, refusals and one property. No mocks: rules are called directly.
+
+use todo.board;
+use todo.model.Task;
+use todo.model.TaskNo;
+use todo.model.Priority;
+
+test numbers_start_at_one = {
+  board.add("milk") -> 1;
+  board.add("bread", tags: Set("shop", "home")) -> 2;
+  assert out.text == "added 1\nadded 2\n";
+}
+
+test numbers_are_never_reused = {
+  board.add("a") -> 1;
+  board.add("b") -> 2;
+  board.remove(2);
+  board.add("c") -> 3;
+}
+
+test empty_board_says_so = {
+  board.list();
+  board.stats();
+  assert out.text == "nothing to do\n0 open, 0 done\n";
+}
+
+@given(board.three_open_one_done)
+test list_ranks_urgent_first = {
+  board.list();
+  assert out.text == "3 [ ] urgent !high #work\n2 [ ] plain\n1 [ ] low one !low\n";
+}
+
+@given(board.three_open_one_done)
+test list_all_and_by_tag = {
+  board.list(all: true, tag: Some("work"));
+  assert out.text == "3 [ ] urgent !high #work\n4 [x] finished #home #work\n";
+}
+
+@given(board.three_open_one_done)
+test done_and_reopen_move_once = {
+  board.done(2);
+  board.done(2) -> fail AlreadyDone;
+  board.reopen(2);
+  board.reopen(2) -> fail NotDone;
+  assert out.text == "2 [x] plain\n2 [ ] plain\n";
+}
+
+@given(board.three_open_one_done)
+test rename_keeps_the_rest = {
+  board.rename(3, title: "urgent, really");
+  assert board.tasks[3] == Task(3, title: "urgent, really", priority: High, tags: Set("work"));
+}
+
+@given(board.three_open_one_done)
+test clear_removes_only_done = {
+  board.clear() -> 1;
+  board.stats();
+  assert out.text == "cleared 1\n3 open, 0 done\n";
+  assert not (4 in board.tasks);
+}
+
+@given(board.three_open_one_done)
+test unknown_numbers_are_refused(no: TaskNo) = {
+  if no <= 4 { return; }
+  board.done(no) -> fail NoTask;
+  board.reopen(no) -> fail NoTask;
+  board.rename(no, title: "x") -> fail NoTask;
+  board.remove(no) -> fail NoTask;
+  assert out.text == "";
+}

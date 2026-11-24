@@ -1,0 +1,10 @@
+[package]
+name = "spec-lang-syntax"
+description = "Lexer, parser and typed AST for spec-lang: exactly the language of docs/idea/25-grammar.md."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

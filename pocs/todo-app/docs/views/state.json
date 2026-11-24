@@ -1,0 +1,59 @@
+{
+  "view": "state",
+  "counts": {"machines": 1, "nodes": 3, "edges": 5},
+  "machines": [
+    {
+      "machine": "todo.model.Task.status",
+      "type": "Status",
+      "counts": {"nodes": 3, "edges": 5},
+      "nodes": ["Open", "Done"],
+      "edges": [
+        {
+          "from": "[*]",
+          "to": "Open",
+          "kind": "rule",
+          "rule": "todo.board.add",
+          "guards": [],
+          "effects": ["out.line"],
+          "label": "add / out.line"
+        },
+        {
+          "from": "Open",
+          "to": "Done",
+          "kind": "rule",
+          "rule": "todo.board.done",
+          "guards": ["no in tasks"],
+          "effects": ["out.line"],
+          "label": "done [no in tasks] / out.line"
+        },
+        {
+          "from": "Done",
+          "to": "Open",
+          "kind": "rule",
+          "rule": "todo.board.reopen",
+          "guards": ["no in tasks"],
+          "effects": ["out.line"],
+          "label": "reopen [no in tasks] / out.line"
+        },
+        {
+          "from": "(any)",
+          "to": "[*]",
+          "kind": "rule",
+          "rule": "todo.board.remove",
+          "guards": ["no in tasks"],
+          "effects": ["out.line"],
+          "label": "remove [no in tasks] / out.line"
+        },
+        {
+          "from": "(any)",
+          "to": "[*]",
+          "kind": "rule",
+          "rule": "todo.board.clear",
+          "guards": [],
+          "effects": ["out.line"],
+          "label": "clear / out.line"
+        }
+      ]
+    }
+  ]
+}

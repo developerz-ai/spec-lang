@@ -1,0 +1,10 @@
+{
+  "rust": { "run": ["out/rust/target/release/todo"] },
+  "bun": { "run": ["out/bun/dist/todo"] },
+  "ruby": { "run": ["out/ruby/exe/todo"] },
+  "cpp": { "run": ["out/cpp/build/todo"] },
+  "gen-rust": { "run": ["gen/rust/target/release/todo"] },
+  "gen-bun": { "run": ["gen/bun/dist/todo"] },
+  "gen-ruby": { "run": ["gen/ruby/exe/todo"] },
+  "gen-cpp": { "run": ["gen/cpp/build/todo"] }
+}

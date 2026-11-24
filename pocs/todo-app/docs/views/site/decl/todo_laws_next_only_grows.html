@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.laws.next_only_grows - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_laws.html"><code>todo.laws</code></a></p>
+<h1><span class="kind">law</span> <code>next_only_grows</code></h1>
+<p class="dim"><code>todo/laws.slg:13</code></p>
+<p class="why">only add moves the counter, and only up</p>
+<h2>Source</h2>
+<pre>@why(&quot;only add moves the counter, and only up&quot;)
+law next_only_grows(t: Trace[board.add]) =
+  t.steps.all(it.after.next_no &gt;= it.before.next_no);</pre>
+<h2>Diagrams</h2>
+<h3>Calls, reads and writes: 2 nodes, 1 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_add([&quot;add&quot;])
+  end
+  subgraph g_todo_laws[&quot;todo.laws&quot;]
+    todo_laws_next_only_grows[\&quot;next_only_grows&quot;\]
+  end
+  todo_laws_next_only_grows --&gt;|&quot;traces&quot;| todo_board_add
+  classDef law stroke:#059669,stroke-width:2px
+  class todo_laws_next_only_grows law
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_add rule
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_laws_next_only_grows hot
+</pre>
+<h2>Names</h2>
+<table>
+<tr><th>traces</th><td><a href="../decl/todo_board_add.html"><code>todo.board.add</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><span class="dim">none</span></td></tr>
+<tr><th>tests</th><td><span class="dim">none</span></td></tr>
+<tr><th>laws</th><td><span class="dim">none</span></td></tr>
+<tr><th>rules</th><td><span class="dim">none</span></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><span class="dim">none</span></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

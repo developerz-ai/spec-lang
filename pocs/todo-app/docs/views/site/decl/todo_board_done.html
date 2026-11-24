@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.board.done - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_board.html"><code>todo.board</code></a></p>
+<h1><span class="kind">rule</span> <code>done</code></h1>
+<p class="dim"><code>todo/board.slg:44</code> · pub</p>
+<p class="why">finishing is one step, and only open work can finish</p>
+<h2>Source</h2>
+<pre>@why(&quot;finishing is one step, and only open work can finish&quot;)
+@on(cli(&quot;done&quot;))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask, tasks[no].status == Open else AlreadyDone)
+pub rule done(no: TaskNo) = {
+  tasks[no].status = Done;
+  out.line(line(tasks[no]));
+}</pre>
+<h2>Notes</h2>
+<table>
+<tr><th><code>@on</code></th><td><code>cli(&quot;done&quot;)</code></td></tr>
+<tr><th><code>@uses</code></th><td><code>tasks.write, out.write</code></td></tr>
+<tr><th><code>@guard</code></th><td><code>no in tasks</code> else <code>NoTask</code></td></tr>
+<tr><th><code>@guard</code></th><td><code>tasks[no].status == Open</code> else <code>AlreadyDone</code></td></tr>
+</table>
+<h2>Pseudocode</h2>
+<pre>rule done(no: TaskNo)
+  because: finishing is one step, and only open work can finish
+  on command &quot;done&quot;
+  uses tasks.write, out.write
+  require no in tasks else fail NoTask
+  require tasks[no].status = Open else fail AlreadyDone
+  tasks[no].status ← Done
+  emit out.line(line(tasks[no]))
+end
+</pre>
+<h2>Diagrams</h2>
+<h3>State machine <code>todo.model.Task.status</code>: 3 nodes, 5 edges</h3>
+<pre class="mermaid">
+stateDiagram-v2
+  state &quot;todo.model.Task.status #58; Status&quot; as machine {
+    state &quot;Open&quot; as Open
+    state &quot;Done&quot; as Done
+    [*] --&gt; Open : add / out.line
+    Open --&gt; Done : done [no in tasks] / out.line
+    Done --&gt; Open : reopen [no in tasks] / out.line
+  }
+  machine --&gt; [*] : remove [no in tasks] / out.line
+  machine --&gt; [*] : clear / out.line
+</pre>
+<h3>Calls, reads and writes: 13 nodes, 13 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_tasks[(&quot;tasks&quot;)]
+    todo_board_done([&quot;done&quot;])
+  end
+  subgraph g_todo_laws[&quot;todo.laws&quot;]
+    todo_laws_Change{{&quot;Change&quot;}}
+    todo_laws_numbers_below_next[\&quot;numbers_below_next&quot;\]
+    todo_laws_others_untouched[\&quot;others_untouched&quot;\]
+    todo_laws_clear_keeps_every_open_task[\&quot;clear_keeps_every_open_task&quot;\]
+    todo_laws_refusal_changes_nothing[\&quot;refusal_changes_nothing&quot;\]
+    todo_laws_stored_under_its_number[\&quot;stored_under_its_number&quot;\]
+  end
+  subgraph g_todo_model[&quot;todo.model&quot;]
+    todo_model_Status{{&quot;Status&quot;}}
+  end
+  subgraph g_todo_render[&quot;todo.render&quot;]
+    todo_render_line[&quot;line&quot;]
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_done_and_reopen_move_once[/&quot;done_and_reopen_move_once&quot;/]
+    todo_tests_scenarios_unknown_numbers_are_refused[/&quot;unknown_numbers_are_refused&quot;/]
+  end
+  fx_out&gt;&quot;out&quot;]
+  todo_board_done -.-&gt;|&quot;reads&quot;| todo_board_tasks
+  todo_board_done --o|&quot;constructs&quot;| todo_model_Status
+  todo_board_done ==&gt;|&quot;writes&quot;| todo_board_tasks
+  todo_board_done --&gt;|&quot;emits&quot;| fx_out
+  todo_board_done --&gt;|&quot;calls&quot;| todo_render_line
+  todo_laws_Change --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_numbers_below_next --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_clear_keeps_every_open_task --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_refusal_changes_nothing --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_stored_under_its_number --&gt;|&quot;traces&quot;| todo_board_done
+  todo_tests_scenarios_done_and_reopen_move_once --&gt;|&quot;calls&quot;| todo_board_done
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_done
+  classDef effect stroke:#6b7280,stroke-width:1px,stroke-dasharray:4 3
+  class fx_out effect
+  classDef law stroke:#059669,stroke-width:2px
+  class todo_laws_numbers_below_next,todo_laws_others_untouched,todo_laws_clear_keeps_every_open_task,todo_laws_refusal_changes_nothing,todo_laws_stored_under_its_number law
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_done rule
+  classDef state stroke:#d97706,stroke-width:2px
+  class todo_board_tasks state
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_tests_scenarios_done_and_reopen_move_once,todo_tests_scenarios_unknown_numbers_are_refused test
+  classDef type stroke:#7c3aed,stroke-width:1px
+  class todo_laws_Change,todo_model_Status type
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_board_done hot
+</pre>
+<h3>Impact: 13 nodes, 12 edges</h3>
+<p class="dim">An arrow points at what is depended on.</p>
+<pre class="mermaid">
+flowchart RL
+  subgraph g_apps_bun[&quot;apps.bun&quot;]
+    apps_bun_TodoBun[[&quot;TodoBun&quot;]]
+  end
+  subgraph g_apps_cpp[&quot;apps.cpp&quot;]
+    apps_cpp_TodoCpp[[&quot;TodoCpp&quot;]]
+  end
+  subgraph g_apps_ruby[&quot;apps.ruby&quot;]
+    apps_ruby_TodoRuby[[&quot;TodoRuby&quot;]]
+  end
+  subgraph g_apps_rust[&quot;apps.rust&quot;]
+    apps_rust_TodoRust[[&quot;TodoRust&quot;]]
+  end
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_done([&quot;done&quot;])
+  end
+  subgraph g_todo_laws[&quot;todo.laws&quot;]
+    todo_laws_Change{{&quot;Change&quot;}}
+    todo_laws_numbers_below_next[\&quot;numbers_below_next&quot;\]
+    todo_laws_others_untouched[\&quot;others_untouched&quot;\]
+    todo_laws_clear_keeps_every_open_task[\&quot;clear_keeps_every_open_task&quot;\]
+    todo_laws_refusal_changes_nothing[\&quot;refusal_changes_nothing&quot;\]
+    todo_laws_stored_under_its_number[\&quot;stored_under_its_number&quot;\]
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_done_and_reopen_move_once[/&quot;done_and_reopen_move_once&quot;/]
+    todo_tests_scenarios_unknown_numbers_are_refused[/&quot;unknown_numbers_are_refused&quot;/]
+  end
+  apps_bun_TodoBun --&gt;|&quot;exposes&quot;| todo_board_done
+  apps_cpp_TodoCpp --&gt;|&quot;exposes&quot;| todo_board_done
+  apps_ruby_TodoRuby --&gt;|&quot;exposes&quot;| todo_board_done
+  apps_rust_TodoRust --&gt;|&quot;exposes&quot;| todo_board_done
+  todo_laws_Change --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_numbers_below_next --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_others_untouched --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_clear_keeps_every_open_task --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_refusal_changes_nothing --&gt;|&quot;traces&quot;| todo_board_done
+  todo_laws_stored_under_its_number --&gt;|&quot;traces&quot;| todo_board_done
+  todo_tests_scenarios_done_and_reopen_move_once --&gt;|&quot;calls&quot;| todo_board_done
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_done
+  classDef app stroke:#db2777,stroke-width:2px
+  class apps_bun_TodoBun,apps_cpp_TodoCpp,apps_ruby_TodoRuby,apps_rust_TodoRust app
+  classDef law stroke:#059669,stroke-width:2px
+  class todo_laws_numbers_below_next,todo_laws_others_untouched,todo_laws_clear_keeps_every_open_task,todo_laws_refusal_changes_nothing,todo_laws_stored_under_its_number law
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_done rule
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_tests_scenarios_done_and_reopen_move_once,todo_tests_scenarios_unknown_numbers_are_refused test
+  classDef type stroke:#7c3aed,stroke-width:1px
+  class todo_laws_Change type
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_board_done hot
+</pre>
+<h2>Effects</h2>
+<table>
+<tr><th>reads</th><td><a href="../decl/todo_board_tasks.html"><code>todo.board.tasks</code></a></td></tr>
+<tr><th>writes</th><td><a href="../decl/todo_board_tasks.html"><code>todo.board.tasks</code></a></td></tr>
+<tr><th>outside</th><td><code>out.line</code></td></tr>
+<tr><th>order matters with</th><td><a href="../decl/todo_board_add.html"><code>todo.board.add</code></a>, <a href="../decl/todo_board_list.html"><code>todo.board.list</code></a>, <a href="../decl/todo_board_done.html"><code>todo.board.done</code></a>, <a href="../decl/todo_board_reopen.html"><code>todo.board.reopen</code></a>, <a href="../decl/todo_board_rename.html"><code>todo.board.rename</code></a>, <a href="../decl/todo_board_remove.html"><code>todo.board.remove</code></a>, <a href="../decl/todo_board_clear.html"><code>todo.board.clear</code></a>, <a href="../decl/todo_board_stats.html"><code>todo.board.stats</code></a></td></tr>
+</table>
+<h2>Names</h2>
+<table>
+<tr><th>calls</th><td><a href="../decl/todo_render_line.html"><code>todo.render.line</code></a></td></tr>
+<tr><th>reads</th><td><a href="../decl/todo_board_tasks.html"><code>todo.board.tasks</code></a></td></tr>
+<tr><th>writes</th><td><a href="../decl/todo_board_tasks.html"><code>todo.board.tasks</code></a></td></tr>
+<tr><th>constructs</th><td><a href="../decl/todo_model_Status.html"><code>todo.model.Status</code></a></td></tr>
+<tr><th>emits</th><td><code>out</code></td></tr>
+<tr><th>uses</th><td><a href="../decl/todo_model_TaskNo.html"><code>todo.model.TaskNo</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><a href="../decl/apps_bun_TodoBun.html"><code>apps.bun.TodoBun</code></a>, <a href="../decl/apps_cpp_TodoCpp.html"><code>apps.cpp.TodoCpp</code></a>, <a href="../decl/apps_ruby_TodoRuby.html"><code>apps.ruby.TodoRuby</code></a>, <a href="../decl/apps_rust_TodoRust.html"><code>apps.rust.TodoRust</code></a>, <a href="../decl/todo_laws_Change.html"><code>todo.laws.Change</code></a>, <a href="../decl/todo_laws_numbers_below_next.html"><code>todo.laws.numbers_below_next</code></a>, <a href="../decl/todo_laws_others_untouched.html"><code>todo.laws.others_untouched</code></a>, <a href="../decl/todo_laws_clear_keeps_every_open_task.html"><code>todo.laws.clear_keeps_every_open_task</code></a>, <a href="../decl/todo_laws_refusal_changes_nothing.html"><code>todo.laws.refusal_changes_nothing</code></a>, <a href="../decl/todo_laws_stored_under_its_number.html"><code>todo.laws.stored_under_its_number</code></a>, <a href="../decl/todo_tests_scenarios_done_and_reopen_move_once.html"><code>todo.tests.scenarios.done_and_reopen_move_once</code></a>, <a href="../decl/todo_tests_scenarios_unknown_numbers_are_refused.html"><code>todo.tests.scenarios.unknown_numbers_are_refused</code></a></td></tr>
+<tr><th>tests</th><td><a href="../decl/todo_tests_scenarios_done_and_reopen_move_once.html"><code>todo.tests.scenarios.done_and_reopen_move_once</code></a>, <a href="../decl/todo_tests_scenarios_unknown_numbers_are_refused.html"><code>todo.tests.scenarios.unknown_numbers_are_refused</code></a></td></tr>
+<tr><th>laws</th><td><a href="../decl/todo_laws_numbers_below_next.html"><code>todo.laws.numbers_below_next</code></a>, <a href="../decl/todo_laws_others_untouched.html"><code>todo.laws.others_untouched</code></a>, <a href="../decl/todo_laws_clear_keeps_every_open_task.html"><code>todo.laws.clear_keeps_every_open_task</code></a>, <a href="../decl/todo_laws_refusal_changes_nothing.html"><code>todo.laws.refusal_changes_nothing</code></a>, <a href="../decl/todo_laws_stored_under_its_number.html"><code>todo.laws.stored_under_its_number</code></a></td></tr>
+<tr><th>rules</th><td><span class="dim">none</span></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><a href="../decl/apps_bun_TodoBun.html"><code>apps.bun.TodoBun</code></a>, <a href="../decl/apps_cpp_TodoCpp.html"><code>apps.cpp.TodoCpp</code></a>, <a href="../decl/apps_ruby_TodoRuby.html"><code>apps.ruby.TodoRuby</code></a>, <a href="../decl/apps_rust_TodoRust.html"><code>apps.rust.TodoRust</code></a></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

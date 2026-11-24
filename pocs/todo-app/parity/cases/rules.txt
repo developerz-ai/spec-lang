@@ -1,0 +1,110 @@
+# The rules of todo.board, end to end.
+
+# case: empty board
+$ ["list"]
+> nothing to do
+$ ["list", "--all"]
+> nothing to do
+$ ["stats"]
+> 0 open, 0 done
+= absent
+
+# case: add numbers from one and writes the canonical store
+$ ["add", "milk"]
+> added 1
+$ ["add", "bread", "--tags", "shop", "--tags", "home", "--priority", "high"]
+> added 2
+$ ["list"]
+> 2 [ ] bread !high #home #shop
+> 1 [ ] milk
+= {"version":1,"next_no":3,"tasks":[{"no":1,"title":"milk","status":"Open","priority":"Normal","tags":[]},{"no":2,"title":"bread","status":"Open","priority":"High","tags":["home","shop"]}]}
+
+# case: numbers are never reused
+$ ["add", "a"]
+> added 1
+$ ["add", "b"]
+> added 2
+$ ["remove", "2"]
+> removed 2
+$ ["add", "c"]
+> added 3
+
+# case: done and reopen move once
+$ ["add", "a"]
+> added 1
+$ ["done", "1"]
+> 1 [x] a
+$ ["done", "1"]
+! error: AlreadyDone
+? 1
+$ ["reopen", "1"]
+> 1 [ ] a
+$ ["reopen", "1"]
+! error: NotDone
+? 1
+
+# case: every rule that names a task refuses an unknown one
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["done", "9"]
+! error: NoTask
+? 1
+$ ["reopen", "9"]
+! error: NoTask
+? 1
+$ ["rename", "9", "x"]
+! error: NoTask
+? 1
+$ ["remove", "9"]
+! error: NoTask
+? 1
+= {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+
+# case: list ranks urgent first, then oldest
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["list"]
+> 3 [ ] urgent !high #work
+> 2 [ ] plain
+> 1 [ ] low one !low
+
+# case: list all and by tag
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["list", "--all", "--tag", "work"]
+> 3 [ ] urgent !high #work
+> 4 [x] finished #home #work
+$ ["list", "--tag", "home"]
+> nothing to do
+$ ["list", "--tag", "home", "--all"]
+> 4 [x] finished #home #work
+
+# case: rename keeps the rest
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["rename", "3", "urgent, really"]
+> 3 [ ] urgent, really !high #work
+
+# case: clear removes only done work, then stats
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["clear"]
+> cleared 1
+$ ["stats"]
+> 3 open, 0 done
+$ ["clear"]
+> cleared 0
+$ ["add", "next"]
+> added 5
+
+# case: a refusal leaves the store byte for byte
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["done", "4"]
+! error: AlreadyDone
+? 1
+$ ["reopen", "1"]
+! error: NotDone
+? 1
+= {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+
+# case: done on a ranked board
+< {"version":1,"next_no":5,"tasks":[{"no":1,"title":"low one","status":"Open","priority":"Low","tags":[]},{"no":2,"title":"plain","status":"Open","priority":"Normal","tags":[]},{"no":3,"title":"urgent","status":"Open","priority":"High","tags":["work"]},{"no":4,"title":"finished","status":"Done","priority":"Normal","tags":["home","work"]}]}
+$ ["done", "3"]
+> 3 [x] urgent !high #work
+$ ["stats"]
+> 2 open, 2 done

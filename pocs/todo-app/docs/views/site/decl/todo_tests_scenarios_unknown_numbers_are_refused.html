@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.tests.scenarios.unknown_numbers_are_refused - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_tests_scenarios.html"><code>todo.tests.scenarios</code></a></p>
+<h1><span class="kind">test</span> <code>unknown_numbers_are_refused</code></h1>
+<p class="dim"><code>todo/tests/scenarios.slg:62</code></p>
+<h2>Source</h2>
+<pre>@given(board.three_open_one_done)
+test unknown_numbers_are_refused(no: TaskNo) = {
+  if no &lt;= 4 { return; }
+  board.done(no) -&gt; fail NoTask;
+  board.reopen(no) -&gt; fail NoTask;
+  board.rename(no, title: &quot;x&quot;) -&gt; fail NoTask;
+  board.remove(no) -&gt; fail NoTask;
+  assert out.text == &quot;&quot;;
+}</pre>
+<h2>Notes</h2>
+<table>
+<tr><th><code>@given</code></th><td><a href="../decl/todo_board_three_open_one_done.html"><code>todo.board.three_open_one_done</code></a></td></tr>
+</table>
+<h2>Diagrams</h2>
+<h3>Sequence: 5 participants, 12 messages</h3>
+<pre class="mermaid">
+sequenceDiagram
+  actor caller as unknown_numbers_are_refused
+  participant m_todo_board as todo.board
+  participant s_tasks as tasks
+  participant s_next_no as next_no
+  participant x_out as out
+  Note over caller: for any no: TaskNo
+  Note over s_tasks,s_next_no: given three_open_one_done
+  opt no #lt;= 4
+    Note over caller: return
+  end
+  caller-&gt;&gt;m_todo_board: board.done(no)
+  m_todo_board-&gt;&gt;s_tasks: read
+  m_todo_board--xcaller: fail NoTask
+  caller-&gt;&gt;m_todo_board: board.reopen(no)
+  m_todo_board-&gt;&gt;s_tasks: read
+  m_todo_board--xcaller: fail NoTask
+  caller-&gt;&gt;m_todo_board: board.rename(no, title: #quot;x#quot;)
+  m_todo_board-&gt;&gt;s_tasks: read
+  m_todo_board--xcaller: fail NoTask
+  caller-&gt;&gt;m_todo_board: board.remove(no)
+  m_todo_board-&gt;&gt;s_tasks: read
+  m_todo_board--xcaller: fail NoTask
+  Note over caller: assert out.text == #quot;#quot;
+</pre>
+<h3>Calls, reads and writes: 7 nodes, 6 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_done([&quot;done&quot;])
+    todo_board_reopen([&quot;reopen&quot;])
+    todo_board_rename([&quot;rename&quot;])
+    todo_board_remove([&quot;remove&quot;])
+    todo_board_three_open_one_done[/&quot;three_open_one_done&quot;/]
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_unknown_numbers_are_refused[/&quot;unknown_numbers_are_refused&quot;/]
+  end
+  fx_out&gt;&quot;out&quot;]
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;given&quot;| todo_board_three_open_one_done
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_done
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_reopen
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_rename
+  todo_tests_scenarios_unknown_numbers_are_refused --&gt;|&quot;calls&quot;| todo_board_remove
+  todo_tests_scenarios_unknown_numbers_are_refused -.-&gt;|&quot;reads&quot;| fx_out
+  classDef effect stroke:#6b7280,stroke-width:1px,stroke-dasharray:4 3
+  class fx_out effect
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_done,todo_board_reopen,todo_board_rename,todo_board_remove rule
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_board_three_open_one_done,todo_tests_scenarios_unknown_numbers_are_refused test
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_tests_scenarios_unknown_numbers_are_refused hot
+</pre>
+<h2>Names</h2>
+<table>
+<tr><th>calls</th><td><a href="../decl/todo_board_done.html"><code>todo.board.done</code></a>, <a href="../decl/todo_board_reopen.html"><code>todo.board.reopen</code></a>, <a href="../decl/todo_board_rename.html"><code>todo.board.rename</code></a>, <a href="../decl/todo_board_remove.html"><code>todo.board.remove</code></a></td></tr>
+<tr><th>reads</th><td><code>out</code></td></tr>
+<tr><th>uses</th><td><a href="../decl/todo_model_TaskNo.html"><code>todo.model.TaskNo</code></a></td></tr>
+<tr><th>given</th><td><a href="../decl/todo_board_three_open_one_done.html"><code>todo.board.three_open_one_done</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><span class="dim">none</span></td></tr>
+<tr><th>tests</th><td><span class="dim">none</span></td></tr>
+<tr><th>laws</th><td><span class="dim">none</span></td></tr>
+<tr><th>rules</th><td><span class="dim">none</span></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><span class="dim">none</span></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

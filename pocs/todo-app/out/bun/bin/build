@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Projected by hand from app TodoBun with @target(bun), @bin("todo") (src/apps/bun.slg). Stand-in for spec-lang build output; change the spec, not this file.
+# Builds the standalone executable dist/todo.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+bun build --compile --minify --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig src/main.ts --outfile dist/todo

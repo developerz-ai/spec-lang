@@ -1,0 +1,190 @@
+@startuml
+title todo.board.three_open_one_done
+actor "three_open_one_done" as caller
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+note over s_tasks : given Map( 1 -> Task(1, title: <U+0022>low one<U+0022>, priority: Low), 2 -> Task(2, title: <U+0022>plain<U+0022>), 3 -> Ta…
+note over s_next_no : given 5
+@enduml
+
+@startuml
+title todo.tests.scenarios.numbers_start_at_one
+actor "numbers_start_at_one" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+caller -> m_todo_board : board.add(<U+0022>milk<U+0022>)
+m_todo_board -> s_tasks : write
+m_todo_board -> s_next_no : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 1
+caller -> m_todo_board : board.add(<U+0022>bread<U+0022>, tags: Set(<U+0022>shop<U+0022>, <U+0022>home<U+0022>))
+m_todo_board -> s_tasks : write
+m_todo_board -> s_next_no : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 2
+note over caller : assert out.text == <U+0022>added 1<U+005C>nadded 2<U+005C>n<U+0022>
+@enduml
+
+@startuml
+title todo.tests.scenarios.numbers_are_never_reused
+actor "numbers_are_never_reused" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+caller -> m_todo_board : board.add(<U+0022>a<U+0022>)
+m_todo_board -> s_tasks : write
+m_todo_board -> s_next_no : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 1
+caller -> m_todo_board : board.add(<U+0022>b<U+0022>)
+m_todo_board -> s_tasks : write
+m_todo_board -> s_next_no : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 2
+caller -> m_todo_board : board.remove(2)
+m_todo_board -> s_tasks : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+caller -> m_todo_board : board.add(<U+0022>c<U+0022>)
+m_todo_board -> s_tasks : write
+m_todo_board -> s_next_no : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 3
+@enduml
+
+@startuml
+title todo.tests.scenarios.empty_board_says_so
+actor "empty_board_says_so" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+boundary "out" as x_out
+caller -> m_todo_board : board.list()
+m_todo_board -> s_tasks : read
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+caller -> m_todo_board : board.stats()
+m_todo_board -> s_tasks : read
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+note over caller : assert out.text == <U+0022>nothing to do<U+005C>n0 open, 0 done<U+005C>n<U+0022>
+@enduml
+
+@startuml
+title todo.tests.scenarios.list_ranks_urgent_first
+actor "list_ranks_urgent_first" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over s_tasks, s_next_no : given three_open_one_done
+caller -> m_todo_board : board.list()
+m_todo_board -> s_tasks : read
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+note over caller : assert out.text == <U+0022>3 [ ] urgent !high #work<U+005C>n2 [ ] plain<U+005C>n1 [ ] low one !low<U+005C>n<U+0022>
+@enduml
+
+@startuml
+title todo.tests.scenarios.list_all_and_by_tag
+actor "list_all_and_by_tag" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over s_tasks, s_next_no : given three_open_one_done
+caller -> m_todo_board : board.list(all: true, tag: Some(<U+0022>work<U+0022>))
+m_todo_board -> s_tasks : read
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+note over caller : assert out.text == <U+0022>3 [ ] urgent !high #work<U+005C>n4 [x] finished #home #work<U+005C>n<U+0022>
+@enduml
+
+@startuml
+title todo.tests.scenarios.done_and_reopen_move_once
+actor "done_and_reopen_move_once" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over s_tasks, s_next_no : given three_open_one_done
+caller -> m_todo_board : board.done(2)
+m_todo_board -> s_tasks : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+caller -> m_todo_board : board.done(2)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail AlreadyDone
+caller -> m_todo_board : board.reopen(2)
+m_todo_board -> s_tasks : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+caller -> m_todo_board : board.reopen(2)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail NotDone
+note over caller : assert out.text == <U+0022>2 [x] plain<U+005C>n2 [ ] plain<U+005C>n<U+0022>
+@enduml
+
+@startuml
+title todo.tests.scenarios.rename_keeps_the_rest
+actor "rename_keeps_the_rest" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over s_tasks, s_next_no : given three_open_one_done
+caller -> m_todo_board : board.rename(3, title: <U+0022>urgent, really<U+0022>)
+m_todo_board -> s_tasks : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+note over caller : assert board.tasks[3] == Task(3, title: <U+0022>urgent, really<U+0022>, priority: High, tags: Set(<U+0022>work<U+0022>))
+@enduml
+
+@startuml
+title todo.tests.scenarios.clear_removes_only_done
+actor "clear_removes_only_done" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over s_tasks, s_next_no : given three_open_one_done
+caller -> m_todo_board : board.clear()
+m_todo_board -> s_tasks : read, write
+m_todo_board -> x_out : line
+m_todo_board --> caller : 1
+caller -> m_todo_board : board.stats()
+m_todo_board -> s_tasks : read
+m_todo_board -> x_out : line
+m_todo_board --> caller : ok
+note over caller : assert out.text == <U+0022>cleared 1<U+005C>n3 open, 0 done<U+005C>n<U+0022>
+note over caller : assert not (4 in board.tasks)
+@enduml
+
+@startuml
+title todo.tests.scenarios.unknown_numbers_are_refused
+actor "unknown_numbers_are_refused" as caller
+participant "todo.board" as m_todo_board
+database "tasks" as s_tasks
+database "next_no" as s_next_no
+boundary "out" as x_out
+note over caller : for any no: TaskNo
+note over s_tasks, s_next_no : given three_open_one_done
+opt no <= 4
+note over caller : return
+end
+caller -> m_todo_board : board.done(no)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail NoTask
+caller -> m_todo_board : board.reopen(no)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail NoTask
+caller -> m_todo_board : board.rename(no, title: <U+0022>x<U+0022>)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail NoTask
+caller -> m_todo_board : board.remove(no)
+m_todo_board -> s_tasks : read
+m_todo_board --x caller : fail NoTask
+note over caller : assert out.text == <U+0022><U+0022>
+@enduml

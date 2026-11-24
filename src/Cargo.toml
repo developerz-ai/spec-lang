@@ -1,0 +1,36 @@
+# The spec-lang toolchain. One workspace; each crate owns one stage of the pipeline.
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+publish = false
+
+[workspace.dependencies]
+spec-lang-syntax = { path = "crates/syntax" }
+spec-lang-diag = { path = "crates/diag" }
+spec-lang-ir = { path = "crates/ir" }
+spec-lang-engine = { path = "crates/engine" }
+spec-lang-testing = { path = "crates/testing" }
+spec-lang-check = { path = "crates/check" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+dbg_macro = "deny"
+# Diagnostics are large (spans, notes, edits) and travel only on the failure
+# path; boxing every Result<_, Diag> would cost more reading than it saves.
+result_large_err = "allow"
+large_enum_variant = "allow"
+
+[profile.release]
+debug = 1

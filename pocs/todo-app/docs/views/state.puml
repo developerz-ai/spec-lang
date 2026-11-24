@@ -1,0 +1,11 @@
+@startuml
+state "todo.model.Task.status : Status" as machine {
+  state "Open" as Open
+  state "Done" as Done
+  [*] --> Open : add / out.line
+  Open --> Done : done [no in tasks] / out.line
+  Done --> Open : reopen [no in tasks] / out.line
+}
+machine --> [*] : remove [no in tasks] / out.line
+machine --> [*] : clear / out.line
+@enduml

@@ -1,0 +1,19 @@
+[package]
+name = "spec-lang-emit-rust"
+description = "The Rust backend: typed lowering of the IR, Rust target trees printed with prettyplease, runtime shims."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-ir.workspace = true
+spec-lang-syntax.workspace = true
+spec-lang-diag = { path = "../diag" }
+proc-macro2 = { version = "1", default-features = false }
+quote = { version = "1", default-features = false }
+syn = { version = "2", default-features = false, features = ["full", "parsing", "printing"] }
+prettyplease = { version = "0.2", features = ["verbatim"] }
+
+[lints]
+workspace = true

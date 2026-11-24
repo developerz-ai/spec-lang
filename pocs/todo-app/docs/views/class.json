@@ -1,0 +1,86 @@
+{
+  "view": "class",
+  "counts": {"nodes": 8, "edges": 6},
+  "nodes": [
+    {
+      "id": "todo_laws_Change",
+      "kind": "rule set",
+      "label": "Change",
+      "decl": "todo.laws.Change",
+      "attributes": ["add", "done", "reopen", "rename", "remove", "clear"],
+      "operations": [],
+      "constraints": []
+    },
+    {
+      "id": "todo_model_Title",
+      "kind": "type",
+      "label": "Title",
+      "decl": "todo.model.Title",
+      "attributes": ["Text"],
+      "operations": [],
+      "constraints": ["is_title(self)"]
+    },
+    {
+      "id": "todo_model_Tag",
+      "kind": "type",
+      "label": "Tag",
+      "decl": "todo.model.Tag",
+      "attributes": ["Text"],
+      "operations": [],
+      "constraints": ["is_tag(self)"]
+    },
+    {
+      "id": "todo_model_TaskNo",
+      "kind": "type",
+      "label": "TaskNo",
+      "decl": "todo.model.TaskNo",
+      "attributes": ["Int"],
+      "operations": [],
+      "constraints": ["self >= 1"]
+    },
+    {
+      "id": "todo_model_Status",
+      "kind": "enumeration",
+      "label": "Status",
+      "decl": "todo.model.Status",
+      "attributes": ["Open", "Done"],
+      "operations": [],
+      "constraints": []
+    },
+    {
+      "id": "todo_model_Priority",
+      "kind": "enumeration",
+      "label": "Priority",
+      "decl": "todo.model.Priority",
+      "attributes": ["Low", "Normal", "High"],
+      "operations": [],
+      "constraints": []
+    },
+    {
+      "id": "todo_model_Task",
+      "kind": "record",
+      "label": "Task",
+      "decl": "todo.model.Task",
+      "attributes": ["no: TaskNo", "title: Title", "status: Status = Open", "priority: Priority = Normal", "tags: Set[Tag] = Set()"],
+      "operations": [],
+      "constraints": []
+    },
+    {
+      "id": "todo_board",
+      "kind": "module",
+      "label": "todo.board",
+      "decl": "todo.board",
+      "attributes": ["next_no: TaskNo = 1"],
+      "operations": ["+add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) TaskNo", "+list(all: Bool = false, tag: Option[Tag] = none)", "+done(no: TaskNo)", "+reopen(no: TaskNo)", "+rename(no: TaskNo, title: Title)", "+remove(no: TaskNo)", "+clear() Int", "+stats()"],
+      "constraints": []
+    }
+  ],
+  "edges": [
+    {"from": "todo_model_Task", "to": "todo_model_TaskNo", "kind": "composition", "label": "no", "multiplicity": "1"},
+    {"from": "todo_model_Task", "to": "todo_model_Title", "kind": "composition", "label": "title", "multiplicity": "1"},
+    {"from": "todo_model_Task", "to": "todo_model_Status", "kind": "composition", "label": "status", "multiplicity": "1"},
+    {"from": "todo_model_Task", "to": "todo_model_Priority", "kind": "composition", "label": "priority", "multiplicity": "1"},
+    {"from": "todo_model_Task", "to": "todo_model_Tag", "kind": "composition", "label": "tags", "multiplicity": "0..*"},
+    {"from": "todo_board", "to": "todo_model_Task", "kind": "aggregation", "label": "tasks [TaskNo]", "multiplicity": "0..*"}
+  ]
+}

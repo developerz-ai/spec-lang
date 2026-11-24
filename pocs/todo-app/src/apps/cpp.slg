@@ -1,0 +1,8 @@
+use cli;
+use todo.board;
+
+@why("the board as one static binary")
+@target(cpp)
+@bin("todo")
+@store(file(".todo.json"))
+app TodoCpp(rules: [board.add, board.list, board.done, board.reopen, board.rename, board.remove, board.clear, board.stats]);

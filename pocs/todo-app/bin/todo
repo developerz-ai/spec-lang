@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Run one backend's built binary: bin/todo rust add "buy milk"
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+backend="${1:?usage: bin/todo <rust|bun|ruby|cpp> <command> [args]}"; shift
+exe=$(bun -e "console.log(require('$root/parity/backends.json')['$backend']?.run[0] ?? '')")
+[ -n "$exe" ] || { echo "unknown backend $backend" >&2; exit 2; }
+exec "$root/$exe" "$@"

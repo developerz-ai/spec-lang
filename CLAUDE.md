@@ -2,7 +2,7 @@
 
 A programming language for AI authors. **The AI writes logic and tests, the interpreter runs them at once, the compiler generates the software.** Existing languages and frameworks are the compiler's intermediate representation.
 
-**Status `As of 2026-11-24`:** design. Only the grammar runs. Never describe anything else as existing.
+**Status `As of 2026-11-24`:** design, plus a first toolchain in `src/`: `spec-lang test` parses, checks, lints and tests the todo POC; emitters for Rust, TypeScript, Ruby and C++ are in progress. Describe nothing beyond what `src/bin/check` and `pocs/*/bin/check` show running.
 
 ## Response rules
 Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End summary: 2 sentences at most.
@@ -26,7 +26,18 @@ Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End s
 | `docs/idea/` | the design; index in `docs/idea/README.md` |
 | `docs/decisions/` | one record per one-way door |
 | `docs/pocs/` | proofs of concept, one folder each, written for an agent with no other context |
+| `src/` | the toolchain, Rust: parser, engine, then emitters slg → Rust, TypeScript, Ruby, C++; own `CLAUDE.md` |
+| `pocs/` | runnable proofs: spec-lang source, hand-projected backends, their gate; each has its own `CLAUDE.md` |
 
-Markdown only: no code, no build, no CI. Check links and `slg` blocks before committing.
+Markdown only, except `src/`, `pocs/` and the repo tooling in `bin/` and `scripts/`: each code area has its own `bin/check` and CI workflow.
+
+## Commands
+```bash
+bin/setup                 # toolchains, script deps, every code area
+bin/check                 # the gate: docs, src, pocs; `bin/check docs` for prose only. CI runs the same
+bin/slg-check <path>      # parse .slg files and slg fences
+bun scripts/help.ts       # every script
+```
+Skill `slg` · commands `/decision`, `/poc`, `/fix-ci` · agent `doc-reviewer`. Run `bin/check` before every commit.
 
 Conventions: the `gold-standards-in-ai` repo.

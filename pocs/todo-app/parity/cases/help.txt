@@ -1,0 +1,33 @@
+# Help and command names. `@help` stands for the help text in contract.md.
+
+# case: no arguments prints help to stderr
+$ []
+! @help
+? 2
+= absent
+
+# case: --help prints help to stdout
+$ ["--help"]
+> @help
+
+# case: -h after a command still wins
+$ ["add", "-h"]
+> @help
+= absent
+
+# case: --help after -- is a title
+$ ["add", "--", "--help"]
+> added 1
+$ ["list"]
+> 1 [ ] --help
+
+# case: unknown command
+$ ["frobnicate"]
+! error: unknown command "frobnicate"
+? 2
+= absent
+
+# case: command names are exact
+$ ["Add", "x"]
+! error: unknown command "Add"
+? 2

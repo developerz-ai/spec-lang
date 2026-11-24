@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.laws - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>todo.laws</code></h1>
+<p class="dim"><code>todo/laws.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">type</span> <a href="../decl/todo_laws_Change.html"><code>Change</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_numbers_below_next.html"><code>numbers_below_next</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_next_only_grows.html"><code>next_only_grows</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_others_untouched.html"><code>others_untouched</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_clear_keeps_every_open_task.html"><code>clear_keeps_every_open_task</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_reads_change_nothing.html"><code>reads_change_nothing</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_refusal_changes_nothing.html"><code>refusal_changes_nothing</code></a></li>
+<li><span class="kind">law</span> <a href="../decl/todo_laws_stored_under_its_number.html"><code>stored_under_its_number</code></a></li>
+</ul>
+<h2>Source</h2>
+<pre>// todo.laws: what must hold after any sequence of commands, in any order.
+
+use todo.board;
+use todo.model.TaskNo;
+use todo.model.Status;
+
+type Change = board.add | board.done | board.reopen | board.rename | board.remove | board.clear;
+
+@why(&quot;a number is never reused&quot;)
+law numbers_below_next(t: Trace[Change]) =
+  t.states.all(w =&gt; w.tasks.keys.all(it &lt; w.next_no));
+
+@why(&quot;only add moves the counter, and only up&quot;)
+law next_only_grows(t: Trace[board.add]) =
+  t.steps.all(it.after.next_no &gt;= it.before.next_no);
+
+@why(&quot;a command that names a task touches no other task&quot;)
+law others_untouched(t: Trace[board.done | board.reopen | board.rename | board.remove], k: TaskNo) =
+  t.steps.all(s =&gt; s.event.no != k implies s.after.tasks.get(k) == s.before.tasks.get(k));
+
+law clear_keeps_every_open_task(t: Trace[Change]) =
+  t.steps.all(s =&gt; s.event.is(board.clear()) implies
+    s.after.tasks.values.all(it.status == Open)
+    and s.after.tasks.size == s.before.tasks.values.filter(it.status == Open).size);
+
+law reads_change_nothing(t: Trace[board.list | board.stats]) =
+  t.steps.all(it.after == it.before);
+
+@why(&quot;a refused command leaves the board as it was&quot;)
+law refusal_changes_nothing(t: Trace[Change]) =
+  t.steps.all(s =&gt; s.reply.is(Err(_)) implies s.after == s.before);
+
+@why(&quot;a task is stored under its own number&quot;)
+law stored_under_its_number(t: Trace[Change]) =
+  t.states.all(w =&gt; w.tasks.keys.all(k =&gt; w.tasks[k].no == k));
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

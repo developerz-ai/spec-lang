@@ -1,0 +1,82 @@
+//! One run of the binary: arguments in, bytes on the two streams, the exit out
+//! (docs/contract.md section 2, the error table).
+
+use std::ffi::OsString;
+use std::fmt;
+use std::io::Write;
+
+use super::exit::Exit;
+use super::params::{CommandSpec, ValueType};
+use super::parse::{Invocation, parse};
+use crate::out::Out;
+use crate::store::{Store, StoreError};
+
+/// Why a command printed nothing: a rule refused, or the store failed.
+#[derive(Debug)]
+pub enum Failure<R> {
+    Refused(R),
+    Store(StoreError),
+}
+
+impl<R> From<StoreError> for Failure<R> {
+    fn from(error: StoreError) -> Self {
+        Self::Store(error)
+    }
+}
+
+/// Standard output is written only on success, and only after the store holds the new world.
+pub fn run<T: ValueType, C, R: fmt::Display>(
+    arguments: Vec<OsString>,
+    commands: &[CommandSpec<T, C>],
+    help: &str,
+    store: &Store,
+    execute: impl FnOnce(&Store, C) -> Result<Out, Failure<R>>,
+    stdout: &mut dyn Write,
+    stderr: &mut dyn Write,
+) -> Exit {
+    let command = match parse(arguments, commands) {
+        Ok(Invocation::Run(command)) => command,
+        Ok(Invocation::Help) => {
+            emit(stdout, help);
+            return Exit::Success;
+        }
+        Ok(Invocation::NoArguments) => {
+            emit(stderr, help);
+            return Exit::Usage;
+        }
+        Err(usage) => {
+            emit(stderr, &format!("error: {usage}\n"));
+            return Exit::Usage;
+        }
+    };
+    match execute(store, command) {
+        Ok(out) => {
+            emit(stdout, out.text());
+            Exit::Success
+        }
+        Err(failure) => {
+            let (message, exit) = report(&failure, store);
+            emit(stderr, &message);
+            exit
+        }
+    }
+}
+
+/// The contract's error table.
+fn report<R: fmt::Display>(failure: &Failure<R>, store: &Store) -> (String, Exit) {
+    let path = store.path().display();
+    match failure {
+        Failure::Refused(refusal) => (format!("error: {refusal}\n"), Exit::Refused),
+        Failure::Store(StoreError::Contended) => ("error: Contended\n".to_owned(), Exit::Refused),
+        Failure::Store(error) => (format!("error: store {path}: {error}\n"), Exit::Store),
+    }
+}
+
+/// The whole text in one write. A stream that cannot take it (a closed pipe)
+/// has no one left to tell: the world is already committed and the exit code
+/// already decided, so the write's failure changes neither.
+fn emit(stream: &mut dyn Write, text: &str) {
+    let _ = stream
+        .write_all(text.as_bytes())
+        .and_then(|()| stream.flush());
+}

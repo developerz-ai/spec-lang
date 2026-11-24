@@ -1,0 +1,27 @@
+[package]
+name = "spec-lang-cli"
+description = "The `spec-lang` binary: `parse` and `test`."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "spec-lang"
+path = "src/main.rs"
+
+[dependencies]
+spec-lang-syntax.workspace = true
+spec-lang-ir.workspace = true
+spec-lang-engine.workspace = true
+spec-lang-testing.workspace = true
+spec-lang-check.workspace = true
+spec-lang-diag.workspace = true
+view = { path = "../view" }
+spec-lang-emit-rust = { path = "../emit-rust" }
+spec-lang-emit-cpp = { path = "../emit-cpp" }
+emit-ts = { path = "../emit-ts" }
+emit-ruby = { path = "../emit-ruby" }
+
+[lints]
+workspace = true

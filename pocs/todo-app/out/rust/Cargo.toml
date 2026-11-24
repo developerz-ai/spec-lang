@@ -1,0 +1,33 @@
+# Projected by hand from app TodoRust (src/apps/rust.slg). Stand-in for spec-lang build output; change the spec, not this file.
+[package]
+name = "todo"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+description = "The todo board as one static binary"
+publish = false
+
+[lib]
+name = "todo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "todo"
+path = "src/main.rs"
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

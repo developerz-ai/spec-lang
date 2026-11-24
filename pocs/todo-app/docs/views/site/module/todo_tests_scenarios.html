@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.tests.scenarios - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>todo.tests.scenarios</code></h1>
+<p class="dim"><code>todo/tests/scenarios.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_numbers_start_at_one.html"><code>numbers_start_at_one</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_numbers_are_never_reused.html"><code>numbers_are_never_reused</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_empty_board_says_so.html"><code>empty_board_says_so</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_list_ranks_urgent_first.html"><code>list_ranks_urgent_first</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_list_all_and_by_tag.html"><code>list_all_and_by_tag</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_done_and_reopen_move_once.html"><code>done_and_reopen_move_once</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_rename_keeps_the_rest.html"><code>rename_keeps_the_rest</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_clear_removes_only_done.html"><code>clear_removes_only_done</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_tests_scenarios_unknown_numbers_are_refused.html"><code>unknown_numbers_are_refused</code></a></li>
+</ul>
+<h2>Source</h2>
+<pre>// todo.tests.scenarios: examples, refusals and one property. No mocks: rules are called directly.
+
+use todo.board;
+use todo.model.Task;
+use todo.model.TaskNo;
+use todo.model.Priority;
+
+test numbers_start_at_one = {
+  board.add(&quot;milk&quot;) -&gt; 1;
+  board.add(&quot;bread&quot;, tags: Set(&quot;shop&quot;, &quot;home&quot;)) -&gt; 2;
+  assert out.text == &quot;added 1\nadded 2\n&quot;;
+}
+
+test numbers_are_never_reused = {
+  board.add(&quot;a&quot;) -&gt; 1;
+  board.add(&quot;b&quot;) -&gt; 2;
+  board.remove(2);
+  board.add(&quot;c&quot;) -&gt; 3;
+}
+
+test empty_board_says_so = {
+  board.list();
+  board.stats();
+  assert out.text == &quot;nothing to do\n0 open, 0 done\n&quot;;
+}
+
+@given(board.three_open_one_done)
+test list_ranks_urgent_first = {
+  board.list();
+  assert out.text == &quot;3 [ ] urgent !high #work\n2 [ ] plain\n1 [ ] low one !low\n&quot;;
+}
+
+@given(board.three_open_one_done)
+test list_all_and_by_tag = {
+  board.list(all: true, tag: Some(&quot;work&quot;));
+  assert out.text == &quot;3 [ ] urgent !high #work\n4 [x] finished #home #work\n&quot;;
+}
+
+@given(board.three_open_one_done)
+test done_and_reopen_move_once = {
+  board.done(2);
+  board.done(2) -&gt; fail AlreadyDone;
+  board.reopen(2);
+  board.reopen(2) -&gt; fail NotDone;
+  assert out.text == &quot;2 [x] plain\n2 [ ] plain\n&quot;;
+}
+
+@given(board.three_open_one_done)
+test rename_keeps_the_rest = {
+  board.rename(3, title: &quot;urgent, really&quot;);
+  assert board.tasks[3] == Task(3, title: &quot;urgent, really&quot;, priority: High, tags: Set(&quot;work&quot;));
+}
+
+@given(board.three_open_one_done)
+test clear_removes_only_done = {
+  board.clear() -&gt; 1;
+  board.stats();
+  assert out.text == &quot;cleared 1\n3 open, 0 done\n&quot;;
+  assert not (4 in board.tasks);
+}
+
+@given(board.three_open_one_done)
+test unknown_numbers_are_refused(no: TaskNo) = {
+  if no &lt;= 4 { return; }
+  board.done(no) -&gt; fail NoTask;
+  board.reopen(no) -&gt; fail NoTask;
+  board.rename(no, title: &quot;x&quot;) -&gt; fail NoTask;
+  board.remove(no) -&gt; fail NoTask;
+  assert out.text == &quot;&quot;;
+}
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

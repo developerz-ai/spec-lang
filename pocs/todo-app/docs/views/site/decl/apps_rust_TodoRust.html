@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apps.rust.TodoRust - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/apps_rust.html"><code>apps.rust</code></a></p>
+<h1><span class="kind">app</span> <code>TodoRust</code></h1>
+<p class="dim"><code>apps/rust.slg:4</code></p>
+<p class="why">the board as one static binary</p>
+<h2>Source</h2>
+<pre>@why(&quot;the board as one static binary&quot;)
+@target(rust)
+@bin(&quot;todo&quot;)
+@store(file(&quot;.todo.json&quot;))
+app TodoRust(rules: [board.add, board.list, board.done, board.reopen, board.rename, board.remove, board.clear, board.stats]);</pre>
+<h2>Notes</h2>
+<table>
+<tr><th><code>@target</code></th><td><code>rust</code></td></tr>
+<tr><th><code>@bin</code></th><td><code>todo</code></td></tr>
+<tr><th><code>@store</code></th><td><code>file(&quot;.todo.json&quot;)</code></td></tr>
+</table>
+<h2>Names</h2>
+<table>
+<tr><th>exposes</th><td><a href="../decl/todo_board_add.html"><code>todo.board.add</code></a>, <a href="../decl/todo_board_list.html"><code>todo.board.list</code></a>, <a href="../decl/todo_board_done.html"><code>todo.board.done</code></a>, <a href="../decl/todo_board_reopen.html"><code>todo.board.reopen</code></a>, <a href="../decl/todo_board_rename.html"><code>todo.board.rename</code></a>, <a href="../decl/todo_board_remove.html"><code>todo.board.remove</code></a>, <a href="../decl/todo_board_clear.html"><code>todo.board.clear</code></a>, <a href="../decl/todo_board_stats.html"><code>todo.board.stats</code></a></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><span class="dim">none</span></td></tr>
+<tr><th>tests</th><td><span class="dim">none</span></td></tr>
+<tr><th>laws</th><td><span class="dim">none</span></td></tr>
+<tr><th>rules</th><td><span class="dim">none</span></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><span class="dim">none</span></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

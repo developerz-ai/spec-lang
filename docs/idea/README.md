@@ -43,6 +43,7 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | [`34-hygiene.md`](34-hygiene.md) | RAII and the other habits of healthy programs: impossible to break, checked, derived, or still yours. |
 | [`35-packages.md`](35-packages.md) | Sharing ideas: source with laws, over git, and adding one runs none of its code. |
 | [`36-extending.md`](36-extending.md) | Words, policies, worlds and targets can be added; grammar cannot. What replaces macros and code generators. |
+| [`37-optimizer.md`](37-optimizer.md) | How generated code beats hand-written code: strategies borrowed from gcc, LLVM, the JVM, JITs and databases, each licensed by a fact the source states. |
 
 ## Reading paths
 
@@ -52,7 +53,7 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | A model about to write it | `01`, [24](24-examples.md), `28`, `26` |
 | Here for the dev cycle | `06`, `22`, `32` |
 | Building the interpreter | `01`, `25`, `30`, `28`, `06` |
-| Building a backend | `11`, `10`, `29`, `32` |
+| Building a backend | `11`, `10`, `37`, `29`, `32` |
 | Using it in an Ultimate app | `12`, `26`, `31`, `22` |
 | Here for security | `27`, `05`, `08` |
 | Here for games | `13`, `33`, `31` |

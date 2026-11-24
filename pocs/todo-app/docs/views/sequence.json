@@ -1,0 +1,313 @@
+{
+  "view": "sequence",
+  "counts": {"sequences": 10, "nodes": 47, "edges": 83},
+  "sequences": [
+    {
+      "sequence": "todo.board.three_open_one_done",
+      "counts": {"nodes": 3, "edges": 0},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "three_open_one_done"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks"],
+          "text": "given Map( 1 -> Task(1, title: \"low one\", priority: Low), 2 -> Task(2, title: \"plain\"), 3 -> Ta…"
+        },
+        {
+          "step": "note",
+          "over": ["s_next_no"],
+          "text": "given 5"
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.numbers_start_at_one",
+      "counts": {"nodes": 5, "edges": 10},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "numbers_start_at_one"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.add(\"milk\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "write"},
+        {"step": "message", "from": "m_todo_board", "to": "s_next_no", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "1"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.add(\"bread\", tags: Set(\"shop\", \"home\"))"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "write"},
+        {"step": "message", "from": "m_todo_board", "to": "s_next_no", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "2"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"added 1\\nadded 2\\n\""
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.numbers_are_never_reused",
+      "counts": {"nodes": 5, "edges": 19},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "numbers_are_never_reused"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.add(\"a\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "write"},
+        {"step": "message", "from": "m_todo_board", "to": "s_next_no", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "1"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.add(\"b\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "write"},
+        {"step": "message", "from": "m_todo_board", "to": "s_next_no", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "2"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.remove(2)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.add(\"c\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "write"},
+        {"step": "message", "from": "m_todo_board", "to": "s_next_no", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "3"}
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.empty_board_says_so",
+      "counts": {"nodes": 4, "edges": 8},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "empty_board_says_so"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.list()"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.stats()"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"nothing to do\\n0 open, 0 done\\n\""
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.list_ranks_urgent_first",
+      "counts": {"nodes": 5, "edges": 4},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "list_ranks_urgent_first"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.list()"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"3 [ ] urgent !high #work\\n2 [ ] plain\\n1 [ ] low one !low\\n\""
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.list_all_and_by_tag",
+      "counts": {"nodes": 5, "edges": 4},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "list_all_and_by_tag"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.list(all: true, tag: Some(\"work\"))"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"3 [ ] urgent !high #work\\n4 [x] finished #home #work\\n\""
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.done_and_reopen_move_once",
+      "counts": {"nodes": 5, "edges": 14},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "done_and_reopen_move_once"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.done(2)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.done(2)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail AlreadyDone"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.reopen(2)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.reopen(2)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail NotDone"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"2 [x] plain\\n2 [ ] plain\\n\""
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.rename_keeps_the_rest",
+      "counts": {"nodes": 5, "edges": 4},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "rename_keeps_the_rest"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.rename(3, title: \"urgent, really\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert board.tasks[3] == Task(3, title: \"urgent, really\", priority: High, tags: Set(\"work\"))"
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.clear_removes_only_done",
+      "counts": {"nodes": 5, "edges": 8},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "clear_removes_only_done"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.clear()"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read, write"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "1"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.stats()"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "x_out", "kind": "call", "text": "line"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "reply", "text": "ok"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"cleared 1\\n3 open, 0 done\\n\""
+        },
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert not (4 in board.tasks)"
+        }
+      ]
+    },
+    {
+      "sequence": "todo.tests.scenarios.unknown_numbers_are_refused",
+      "counts": {"nodes": 5, "edges": 12},
+      "nodes": [
+        {"id": "caller", "kind": "actor", "label": "unknown_numbers_are_refused"},
+        {"id": "m_todo_board", "kind": "rules", "label": "todo.board"},
+        {"id": "s_tasks", "kind": "state", "label": "tasks"},
+        {"id": "s_next_no", "kind": "state", "label": "next_no"},
+        {"id": "x_out", "kind": "outside", "label": "out"}
+      ],
+      "steps": [
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "for any no: TaskNo"
+        },
+        {
+          "step": "note",
+          "over": ["s_tasks", "s_next_no"],
+          "text": "given three_open_one_done"
+        },
+        {"step": "open", "kind": "opt", "text": "no <= 4"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "return"
+        },
+        {"step": "close"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.done(no)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail NoTask"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.reopen(no)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail NoTask"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.rename(no, title: \"x\")"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail NoTask"},
+        {"step": "message", "from": "caller", "to": "m_todo_board", "kind": "call", "text": "board.remove(no)"},
+        {"step": "message", "from": "m_todo_board", "to": "s_tasks", "kind": "call", "text": "read"},
+        {"step": "message", "from": "m_todo_board", "to": "caller", "kind": "refusal", "text": "fail NoTask"},
+        {
+          "step": "note",
+          "over": ["caller"],
+          "text": "assert out.text == \"\""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+# Argument parsing: positionals, flags, and which error wins.
+
+# case: missing positionals
+$ ["add"]
+! error: missing <title>
+? 2
+$ ["done"]
+! error: missing <no>
+? 2
+$ ["rename", "1"]
+! error: missing <title>
+? 2
+
+# case: one parameter takes one argument
+$ ["add", "buy", "milk"]
+! error: unexpected argument "milk"
+? 2
+$ ["clear", "now"]
+! error: unexpected argument "now"
+? 2
+= absent
+
+# case: numbers are digits only
+$ ["done", "0"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "-1"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "+1"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "1.5"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "abc"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", ""]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", " 1"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "١"]
+! error: <no>: not a TaskNo
+? 2
+
+# case: leading zeros are the same number
+$ ["add", "a"]
+> added 1
+$ ["done", "001"]
+> 1 [x] a
+
+# case: a number past every machine word is still a TaskNo
+$ ["add", "a"]
+> added 1
+$ ["done", "99999999999999999999999999999999"]
+! error: NoTask
+? 1
+$ ["remove", "18446744073709551617"]
+! error: NoTask
+? 1
+
+# case: unknown flags, including the = spelling
+$ ["add", "x", "--force"]
+! error: unknown flag --force
+? 2
+$ ["add", "x", "--priority=high"]
+! error: unknown flag --priority=high
+? 2
+$ ["done", "1", "--all"]
+! error: unknown flag --all
+? 2
+= absent
+
+# case: flag values
+$ ["add", "x", "--priority"]
+! error: --priority needs a value
+? 2
+$ ["add", "x", "--priority", "High"]
+! error: --priority: not a Priority
+? 2
+$ ["add", "x", "--priority", "--tags"]
+! error: --priority: not a Priority
+? 2
+$ ["add", "x", "--tags", "Home"]
+! error: --tags: not a Tag
+? 2
+$ ["add", "x", "--tags", ""]
+! error: --tags: not a Tag
+? 2
+$ ["add", "x", "--tags", "abcdefghijklmnopqrstuvwxyz1234567"]
+! error: --tags: not a Tag
+? 2
+= absent
+
+# case: switches and options at most once
+$ ["list", "--all", "--all"]
+! error: --all given twice
+? 2
+$ ["list", "--tag", "a", "--tag", "b"]
+! error: --tag given twice
+? 2
+
+# case: the first problem from the left wins
+$ ["done", "abc", "--force"]
+! error: <no>: not a TaskNo
+? 2
+$ ["done", "--force", "abc"]
+! error: unknown flag --force
+? 2
+$ ["add", "x", "y", "--priority", "nope"]
+! error: unexpected argument "y"
+? 2
+$ ["add", "--priority", "nope"]
+! error: --priority: not a Priority
+? 2
+$ ["rename", "x"]
+! error: <no>: not a TaskNo
+? 2
+
+# case: flags may come before positionals, and -- ends flags
+$ ["add", "--priority", "high", "ship it", "--tags", "work"]
+> added 1
+$ ["add", "--", "--all"]
+> added 2
+$ ["add", "-x"]
+> added 3
+$ ["add", "-"]
+> added 4
+$ ["list"]
+> 1 [ ] ship it !high #work
+> 2 [ ] --all
+> 3 [ ] -x
+> 4 [ ] -
+
+# case: repeated tags collapse and sort
+$ ["add", "x", "--tags", "b", "--tags", "a", "--tags", "b"]
+> added 1
+= {"version":1,"next_no":2,"tasks":[{"no":1,"title":"x","status":"Open","priority":"Normal","tags":["a","b"]}]}
+
+# case: a value flag with a plain default is also at most once
+$ ["add", "x", "--priority", "high", "--priority", "low"]
+! error: --priority given twice
+? 2
+= absent
+
+# case: -h as a flag value still asks for help
+$ ["add", "x", "--priority", "-h"]
+> @help
+
+# case: the first argument is always the command
+$ ["--", "add", "x"]
+! error: unknown command "--"
+? 2
+$ ["--all"]
+! error: unknown command "--all"
+? 2
+
+# case: a missing value is reported before a repeat
+$ ["list", "--tag", "a", "--tag"]
+! error: --tag needs a value
+? 2
+
+# case: a tag never reads as a flag
+$ ["add", "x", "--tags", "-x"]
+! error: --tags: not a Tag
+? 2
+$ ["add", "x", "--tags", "--all"]
+! error: --tags: not a Tag
+? 2
+$ ["list", "--tag", "--all"]
+! error: --tag: not a Tag
+? 2

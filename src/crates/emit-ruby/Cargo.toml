@@ -1,0 +1,20 @@
+[package]
+name = "emit-ruby"
+description = "The Ruby backend of spec-lang build: IR to a typed Ruby tree to a Ruby project."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-syntax.workspace = true
+spec-lang-ir.workspace = true
+spec-lang-diag.workspace = true
+emit-ts = { path = "../emit-ts" }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "emit-ruby"
+path = "src/bin/emit-ruby.rs"

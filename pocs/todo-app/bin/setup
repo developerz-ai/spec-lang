@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Fresh clone to four built backends. Run once; safe to rerun.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+ok() { printf '\033[0;32m✔\033[0m  %s\n' "$*"; }
+need() { command -v "$1" >/dev/null || { echo "✗ $1 not found: $2"; exit 1; }; }
+
+need bun   "https://bun.sh"
+need uv    "https://docs.astral.sh/uv/ (runs the grammar check)"
+need cargo "https://rustup.rs"
+need ruby  "Ruby 4.0"
+need cmake "CMake 3.28+"
+need c++   "g++ 14+ or clang 18+"
+ok "toolchains: bun $(bun --version), $(cargo --version | cut -d' ' -f1-2), $(ruby -e 'print RUBY_VERSION'), cmake $(cmake --version | head -1 | cut -d' ' -f3)"
+
+(cd scripts && bun install --frozen-lockfile >/dev/null) && ok "scripts deps"
+bin/build && ok "setup complete. Next: bin/check"

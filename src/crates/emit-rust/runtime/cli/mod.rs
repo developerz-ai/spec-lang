@@ -1,0 +1,15 @@
+//! The `cli` vocabulary (docs/cli-vocabulary.md): `table` (the derived
+//! parameter table and help) is generated; everything else here is the runtime shim.
+
+mod exit;
+mod params;
+mod parse;
+mod run;
+pub mod table;
+mod usage;
+
+pub use exit::Exit;
+pub use params::{CommandSpec, Flag, FlagKind, Parsed, Positional, ValueType, int, required};
+pub use parse::{Invocation, parse};
+pub use run::{Failure, run};
+pub use usage::UsageError;

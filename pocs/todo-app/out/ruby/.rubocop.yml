@@ -1,0 +1,69 @@
+# Projected by hand from the gate of the Ruby backend (docs/contract.md section 4). Stand-in for spec-lang build output; change the spec, not this file.
+
+plugins:
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 4.0
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# Every file opens with the one-line projection header the contract fixes, and test tables hold whole store lines.
+Layout/LineLength:
+  Max: 120
+  AllowedPatterns:
+    - '\A# Projected by hand from '
+  Exclude:
+    - "test/**/*"
+
+Minitest/MultipleAssertions:
+  Enabled: false
+
+# `no` is the spec's own name for a task number.
+Naming/MethodParameterName:
+  AllowedNames:
+    - "no"
+
+Naming/VariableNumber:
+  Exclude:
+    - "test/**/*"
+
+# `|it|` marks the spec's formula, transcribed word for word.
+Style/ItAssignment:
+  Exclude:
+    - "test/support/spec_oracle.rb"
+
+# `has_tag` is the spec's own name.
+Naming/PredicatePrefix:
+  AllowedMethods:
+    - has_tag?
+
+# The projection header names what each file is; a module reopened once per rule has no single home for more.
+Style/Documentation:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - "test/**/*"
+
+Metrics/AbcSize:
+  Max: 20
+  Exclude:
+    - "test/**/*"
+
+Metrics/CyclomaticComplexity:
+  Max: 8
+
+Metrics/ClassLength:
+  Max: 120
+  Exclude:
+    - "test/**/*"

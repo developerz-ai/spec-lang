@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Projected by hand from app TodoRust (src/apps/rust.slg). Stand-in for spec-lang build output; change the spec, not this file.
+# Builds target/release/todo.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+cargo build --release --locked

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.tests.scenarios.numbers_start_at_one - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<p><a href="../module/todo_tests_scenarios.html"><code>todo.tests.scenarios</code></a></p>
+<h1><span class="kind">test</span> <code>numbers_start_at_one</code></h1>
+<p class="dim"><code>todo/tests/scenarios.slg:8</code></p>
+<h2>Source</h2>
+<pre>test numbers_start_at_one = {
+  board.add(&quot;milk&quot;) -&gt; 1;
+  board.add(&quot;bread&quot;, tags: Set(&quot;shop&quot;, &quot;home&quot;)) -&gt; 2;
+  assert out.text == &quot;added 1\nadded 2\n&quot;;
+}</pre>
+<h2>Diagrams</h2>
+<h3>Sequence: 5 participants, 10 messages</h3>
+<pre class="mermaid">
+sequenceDiagram
+  actor caller as numbers_start_at_one
+  participant m_todo_board as todo.board
+  participant s_tasks as tasks
+  participant s_next_no as next_no
+  participant x_out as out
+  caller-&gt;&gt;m_todo_board: board.add(#quot;milk#quot;)
+  m_todo_board-&gt;&gt;s_tasks: write
+  m_todo_board-&gt;&gt;s_next_no: read, write
+  m_todo_board-&gt;&gt;x_out: line
+  m_todo_board--&gt;&gt;caller: 1
+  caller-&gt;&gt;m_todo_board: board.add(#quot;bread#quot;, tags: Set(#quot;shop#quot;, #quot;home#quot;))
+  m_todo_board-&gt;&gt;s_tasks: write
+  m_todo_board-&gt;&gt;s_next_no: read, write
+  m_todo_board-&gt;&gt;x_out: line
+  m_todo_board--&gt;&gt;caller: 2
+  Note over caller: assert out.text == #quot;added 1#92;nadded 2#92;n#quot;
+</pre>
+<h3>Calls, reads and writes: 3 nodes, 2 edges</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph g_todo_board[&quot;todo.board&quot;]
+    todo_board_add([&quot;add&quot;])
+  end
+  subgraph g_todo_tests_scenarios[&quot;todo.tests.scenarios&quot;]
+    todo_tests_scenarios_numbers_start_at_one[/&quot;numbers_start_at_one&quot;/]
+  end
+  fx_out&gt;&quot;out&quot;]
+  todo_tests_scenarios_numbers_start_at_one --&gt;|&quot;calls&quot;| todo_board_add
+  todo_tests_scenarios_numbers_start_at_one -.-&gt;|&quot;reads&quot;| fx_out
+  classDef effect stroke:#6b7280,stroke-width:1px,stroke-dasharray:4 3
+  class fx_out effect
+  classDef rule stroke:#2563eb,stroke-width:2px
+  class todo_board_add rule
+  classDef test stroke:#059669,stroke-width:1px
+  class todo_tests_scenarios_numbers_start_at_one test
+  classDef hot stroke:#dc2626,stroke-width:4px
+  class todo_tests_scenarios_numbers_start_at_one hot
+</pre>
+<h2>Names</h2>
+<table>
+<tr><th>calls</th><td><a href="../decl/todo_board_add.html"><code>todo.board.add</code></a></td></tr>
+<tr><th>reads</th><td><code>out</code></td></tr>
+</table>
+<h2>Depends on it</h2>
+<table>
+<tr><th>directly</th><td><span class="dim">none</span></td></tr>
+<tr><th>tests</th><td><span class="dim">none</span></td></tr>
+<tr><th>laws</th><td><span class="dim">none</span></td></tr>
+<tr><th>rules</th><td><span class="dim">none</span></td></tr>
+<tr><th>functions</th><td><span class="dim">none</span></td></tr>
+<tr><th>apps</th><td><span class="dim">none</span></td></tr>
+<tr><th><code>@cases</code> of</th><td><span class="dim">none</span></td></tr>
+</table>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

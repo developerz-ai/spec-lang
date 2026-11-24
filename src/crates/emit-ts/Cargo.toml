@@ -1,0 +1,26 @@
+[package]
+name = "emit-ts"
+description = "The TypeScript-on-Bun backend of spec-lang build: IR to swc trees to a Bun project."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-syntax.workspace = true
+spec-lang-ir.workspace = true
+spec-lang-diag.workspace = true
+swc_atoms = "=11.0.0"
+swc_common = "=28.0.0"
+swc_ecma_ast = "=31.0.0"
+swc_ecma_codegen = "=34.0.1"
+
+[dev-dependencies]
+swc_ecma_parser = "=48.1.0"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "emit-ts"
+path = "src/bin/emit-ts.rs"

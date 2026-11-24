@@ -1,0 +1,16 @@
+[package]
+name = "spec-lang-testing"
+description = "The spec-lang test engine: @cases, scenarios, properties and laws over random traces."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-syntax.workspace = true
+spec-lang-ir.workspace = true
+spec-lang-engine.workspace = true
+spec-lang-diag.workspace = true
+
+[lints]
+workspace = true

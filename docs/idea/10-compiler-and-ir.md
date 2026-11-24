@@ -121,12 +121,19 @@ Humans read projections; only source is edited. A projection is a pure query ove
 | `expanded` | SIR-D after expansion |
 | `guarantees`, and the guarantee diff between two commits | ledger rows |
 | `explain` | SIR-D node, its `@why`, the vocabulary's `@explain` text |
-| `diagram` | entity graph, `flow` edges, placements, effect rows |
+| `diagram --kind class` | types, records, sums, claims as constraints, `Map`/`Set` state as associations |
+| `diagram --kind state` | `flow` edges, and transitions read off rules that assign a sum-typed field, labelled with the rule and its guards |
+| `diagram --kind sequence` | a `test`, or a law's counterexample trace: caller, rules, state, effects, in order |
+| `diagram --kind modules` | the `use` graph, state ownership, events, and which `app` places what on which target |
+| `diagram --kind effects` | each rule's read and write sets and outside effects; where they overlap, the rules that can race |
+| `diagram --kind calls` | the declaration graph: who calls, reads, writes and constructs what, across modules |
+| `diagram --kind impact` | for one declaration or a change: the tests, laws and generated files that depend on it |
+| `site` | every view above as one static, linked page per project: click a declaration to see its source, diagrams, tests and emitted code |
 | `policy` | every default in force and where it came from |
 | `plan` | `spec-lang.lock` plus provenance: what was generated where and why |
 | `ts`, `rust`, `pseudo` | SIR-F through a backend's printer, without planning |
 
-Prose is assembled from templates, so it is deterministic. With dense source, the guarantee diff is the main surface a human approves ([08](08-approval-and-anti-cheating.md)).
+Diagrams print as Mermaid, which renders where Markdown does, and as PlantUML. Like prose, they are assembled deterministically: same source, same bytes, so a diagram can be committed and checked for staleness. Prose is assembled from templates, so it is deterministic. With dense source, the guarantee diff is the main surface a human approves ([08](08-approval-and-anti-cheating.md)).
 
 ## Implementation
 

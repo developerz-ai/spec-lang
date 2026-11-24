@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>todo.board - todo-app</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header><strong><a href="../index.html">todo-app</a></strong><a href="../diagrams/class.html">class</a><a href="../diagrams/state.html">state</a><a href="../diagrams/sequence.html">sequence</a><a href="../diagrams/modules.html">modules</a><a href="../diagrams/effects.html">effects</a><a href="../diagrams/calls.html">calls</a><a href="../pseudo.html">pseudocode</a></header>
+<main>
+<h1><span class="kind">module</span> <code>todo.board</code></h1>
+<p class="dim"><code>todo/board.slg</code></p>
+<h2>Declarations</h2>
+<ul class="plain cols">
+<li><span class="kind">state</span> <a href="../decl/todo_board_tasks.html"><code>tasks</code></a></li>
+<li><span class="kind">state</span> <a href="../decl/todo_board_next_no.html"><code>next_no</code></a></li>
+<li><span class="kind">fn</span> <a href="../decl/todo_board_has_tag.html"><code>has_tag</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_add.html"><code>add</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_list.html"><code>list</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_done.html"><code>done</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_reopen.html"><code>reopen</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_rename.html"><code>rename</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_remove.html"><code>remove</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_clear.html"><code>clear</code></a></li>
+<li><span class="kind">rule</span> <a href="../decl/todo_board_stats.html"><code>stats</code></a></li>
+<li><span class="kind">test</span> <a href="../decl/todo_board_three_open_one_done.html"><code>three_open_one_done</code></a></li>
+</ul>
+<h2>Pseudocode</h2>
+<pre>module todo.board
+
+state tasks: Map[TaskNo, Task], initially empty
+
+state next_no: TaskNo, initially 1
+
+function has_tag(t: Task, tag: Option[Tag]) → Bool
+  match tag
+    case none: return true
+    case Some(x): return x in t.tags
+  end
+end
+
+rule add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) → TaskNo
+  because: a number is never reused, so an old note that says 'task 3' never names a new task
+  on command &quot;add&quot;
+  uses tasks.write, next_no.write, out.write
+  let no ← next_no
+  tasks[no] ← Task(no, title, priority: priority, tags: tags)
+  next_no ← no + 1
+  emit out.line(&quot;added {no}&quot;)
+  return no
+end
+
+rule list(all: Bool = false, tag: Option[Tag] = none)
+  because: open work first; finished work only when asked for
+  on command &quot;list&quot;
+  uses tasks.read, out.write
+  let shown ← tasks.values.filter(t ↦ (all or t.status = Open) and has_tag(t, tag)).sort(t ↦ rank(t))
+  if shown.size = 0 then
+    emit out.line(&quot;nothing to do&quot;)
+    return
+  end
+  for each t in shown do
+    emit out.line(line(t))
+  end
+end
+
+rule done(no: TaskNo)
+  because: finishing is one step, and only open work can finish
+  on command &quot;done&quot;
+  uses tasks.write, out.write
+  require no in tasks else fail NoTask
+  require tasks[no].status = Open else fail AlreadyDone
+  tasks[no].status ← Done
+  emit out.line(line(tasks[no]))
+end
+
+rule reopen(no: TaskNo)
+  because: a mistaken done is undone, not re-added under a new number
+  on command &quot;reopen&quot;
+  uses tasks.write, out.write
+  require no in tasks else fail NoTask
+  require tasks[no].status = Done else fail NotDone
+  tasks[no].status ← Open
+  emit out.line(line(tasks[no]))
+end
+
+rule rename(no: TaskNo, title: Title)
+  because: a title changes without losing its number, status or tags
+  on command &quot;rename&quot;
+  uses tasks.write, out.write
+  require no in tasks else fail NoTask
+  tasks[no].title ← title
+  emit out.line(line(tasks[no]))
+end
+
+rule remove(no: TaskNo)
+  because: removing frees nothing: the number stays used
+  on command &quot;remove&quot;
+  uses tasks.write, out.write
+  require no in tasks else fail NoTask
+  remove no from tasks
+  emit out.line(&quot;removed {no}&quot;)
+end
+
+rule clear() → Int
+  because: finished work leaves the list in one step
+  on command &quot;clear&quot;
+  uses tasks.write, out.write
+  let gone ← tasks.values.filter(it ↦ it.status = Done)
+  for each t in gone do
+    remove t.no from tasks
+  end
+  emit out.line(&quot;cleared {gone.size}&quot;)
+  return gone.size
+end
+
+rule stats()
+  because: a count at a glance, without listing
+  on command &quot;stats&quot;
+  uses tasks.read, out.write
+  let open ← tasks.values.filter(it ↦ it.status = Open).size
+  emit out.line(&quot;{open} open, {tasks.size - open} done&quot;)
+end
+</pre>
+<h2>Source</h2>
+<pre>// todo.board: the one place tasks live, and every rule that changes them.
+
+use cli;
+use todo.model.Task;
+use todo.model.TaskNo;
+use todo.model.Title;
+use todo.model.Tag;
+use todo.model.Priority;
+use todo.model.Status;
+use todo.render.line;
+use todo.render.rank;
+
+state tasks: Map[TaskNo, Task];
+state next_no: TaskNo = 1;
+
+fn has_tag(t: Task, tag: Option[Tag]) -&gt; Bool = match tag {
+  none =&gt; true;
+  Some(x) =&gt; x in t.tags;
+}
+
+@why(&quot;a number is never reused, so an old note that says 'task 3' never names a new task&quot;)
+@on(cli(&quot;add&quot;))
+@uses(tasks.write, next_no.write, out.write)
+pub rule add(title: Title, priority: Priority = Normal, tags: Set[Tag] = Set()) -&gt; TaskNo = {
+  let no = next_no;
+  tasks[no] = Task(no, title: title, priority: priority, tags: tags);
+  next_no = no + 1;
+  out.line(&quot;added {no}&quot;);
+  return no;
+}
+
+@why(&quot;open work first; finished work only when asked for&quot;)
+@on(cli(&quot;list&quot;))
+@uses(tasks.read, out.write)
+pub rule list(all: Bool = false, tag: Option[Tag] = none) = {
+  let shown = tasks.values.filter(t =&gt; (all or t.status == Open) and has_tag(t, tag: tag)).sort(t =&gt; rank(t));
+  if shown.size == 0 {
+    out.line(&quot;nothing to do&quot;);
+    return;
+  }
+  for t in shown { out.line(line(t)); }
+}
+
+@why(&quot;finishing is one step, and only open work can finish&quot;)
+@on(cli(&quot;done&quot;))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask, tasks[no].status == Open else AlreadyDone)
+pub rule done(no: TaskNo) = {
+  tasks[no].status = Done;
+  out.line(line(tasks[no]));
+}
+
+@why(&quot;a mistaken done is undone, not re-added under a new number&quot;)
+@on(cli(&quot;reopen&quot;))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask, tasks[no].status == Done else NotDone)
+pub rule reopen(no: TaskNo) = {
+  tasks[no].status = Open;
+  out.line(line(tasks[no]));
+}
+
+@why(&quot;a title changes without losing its number, status or tags&quot;)
+@on(cli(&quot;rename&quot;))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask)
+pub rule rename(no: TaskNo, title: Title) = {
+  tasks[no].title = title;
+  out.line(line(tasks[no]));
+}
+
+@why(&quot;removing frees nothing: the number stays used&quot;)
+@on(cli(&quot;remove&quot;))
+@uses(tasks.write, out.write)
+@guard(no in tasks else NoTask)
+pub rule remove(no: TaskNo) = {
+  tasks.remove(no);
+  out.line(&quot;removed {no}&quot;);
+}
+
+@why(&quot;finished work leaves the list in one step&quot;)
+@on(cli(&quot;clear&quot;))
+@uses(tasks.write, out.write)
+pub rule clear() -&gt; Int = {
+  let gone = tasks.values.filter(it.status == Done);
+  for t in gone { tasks.remove(t.no); }
+  out.line(&quot;cleared {gone.size}&quot;);
+  return gone.size;
+}
+
+@why(&quot;a count at a glance, without listing&quot;)
+@on(cli(&quot;stats&quot;))
+@uses(tasks.read, out.write)
+pub rule stats() = {
+  let open = tasks.values.filter(it.status == Open).size;
+  out.line(&quot;{open} open, {tasks.size - open} done&quot;);
+}
+
+@why(&quot;a named start world for tests in other modules: three open tasks, one done&quot;)
+@given(
+  tasks -&gt; Map(
+    1 -&gt; Task(1, title: &quot;low one&quot;, priority: Low),
+    2 -&gt; Task(2, title: &quot;plain&quot;),
+    3 -&gt; Task(3, title: &quot;urgent&quot;, priority: High, tags: Set(&quot;work&quot;)),
+    4 -&gt; Task(4, title: &quot;finished&quot;, status: Done, tags: Set(&quot;work&quot;, &quot;home&quot;)),
+  ),
+  next_no -&gt; 5,
+)
+test three_open_one_done = {}
+</pre>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js"></script>
+<script>if (window.mermaid) { mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" }); }</script>
+</body>
+</html>

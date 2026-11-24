@@ -1,0 +1,13 @@
+[package]
+name = "spec-lang-diag"
+description = "One diagnostic shape for every stage: code, span, declaration path, expected/found, edits; human and JSON renderings."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spec-lang-syntax.workspace = true
+
+[lints]
+workspace = true
