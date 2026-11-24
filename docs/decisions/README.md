@@ -8,3 +8,4 @@ One record per one-way door: what was chosen, what was rejected, when to reopen.
 - [004 ASCII is canonical, maths symbols are accepted](004-ascii-canonical-unicode-accepted.md)
 - [005 Names](005-names.md)
 - [006 Interpreter first, in Rust](006-interpreter-first-in-rust.md)
+- [007 Packages over git](007-packages-over-git.md)
