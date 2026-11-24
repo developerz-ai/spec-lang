@@ -6,10 +6,13 @@
 
 use spec_lang_ir::*;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-/// A fresh library root holding the given `<lib>/<file>` texts.
+/// A fresh library root holding the given `<lib>/<file>` texts, one per call: tests run in parallel.
 fn root(name: &str, files: &[(&str, &str)]) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("slg-libs-{name}-{}", std::process::id()));
+    static CALLS: AtomicUsize = AtomicUsize::new(0);
+    let call = CALLS.fetch_add(1, Ordering::Relaxed);
+    let dir = std::env::temp_dir().join(format!("slg-libs-{name}-{}-{call}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     for (path, text) in files {
         let p = dir.join(path);
