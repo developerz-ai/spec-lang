@@ -26,7 +26,8 @@ impl Fx<'_, '_> {
             closures.push(closure);
         }
         let (pre, items) = self.args(items, false);
-        let args = items.into_iter().zip(tys).zip(closures).map(|((code, ty), closure)| Arg { code, ty, closure }).collect();
+        let args =
+            items.into_iter().zip(tys).zip(closures).map(|((code, ty), closure)| Arg { code, ty, closure }).collect();
         let mut c = self.apply(op, args);
         let mut all = pre;
         all.append(&mut c.pre);
@@ -46,7 +47,11 @@ impl Fx<'_, '_> {
             let a = &args[i];
             if a.code.place && !a.code.copy { format!("{}.clone()", a.code.operand()) } else { a.code.text.clone() }
         };
-        let r = |i: usize| args[i].code.reference();
+        // A list literal read as a slice needs no `Vec`.
+        let r = |i: usize| match args[i].code.text.strip_prefix("vec![") {
+            Some(items) if !args[i].code.place && one_literal(items) => format!("&[{items}"),
+            _ => args[i].code.reference(),
+        };
         let v = |i: usize| args[i].code.operand();
         // A text literal compared as `&str`: `t == "milk"`, no `String` made for it.
         let cmp = |i: usize| str_literal(&args[i].code.text).map_or_else(|| v(i), str::to_string);
@@ -55,7 +60,12 @@ impl Fx<'_, '_> {
             match &a.ty {
                 LTy::Func(ps, _) if !a.closure => {
                     let names: Vec<String> = (0..ps.len()).map(|k| format!("a{k}")).collect();
-                    format!("|{}| {}.call(m, {})", names.join(", "), a.code.operand(), crate::expr::tuple_text(names.clone()))
+                    format!(
+                        "|{}| {}.call(m, {})",
+                        names.join(", "),
+                        a.code.operand(),
+                        crate::expr::tuple_text(names.clone())
+                    )
                 }
                 _ => a.code.text.clone(),
             }
@@ -67,7 +77,13 @@ impl Fx<'_, '_> {
         let c = match op {
             Prim::Eq | Prim::Ne => {
                 let (a, b) = (cmp(0), cmp(1));
-                let empty = if b == "\"\"" { Some(v(0)) } else if a == "\"\"" { Some(v(1)) } else { None };
+                let empty = if b == "\"\"" {
+                    Some(v(0))
+                } else if a == "\"\"" {
+                    Some(v(1))
+                } else {
+                    None
+                };
                 match (empty, op == Prim::Eq) {
                     (Some(x), true) => pure(format!("{x}.is_empty()")),
                     (Some(x), false) => bin(format!("!{x}.is_empty()")),
@@ -153,7 +169,12 @@ impl Fx<'_, '_> {
             Prim::MapRemove => pure(format!("rt::list::map_remove({}, {})", r(0), r(1))),
             Prim::RangeList => call(format!("{}.list()?", v(0))),
             Prim::RangeHas => pure(format!("{}.has({})", v(0), o(1))),
-            Prim::TraceSteps | Prim::TraceStates | Prim::StepEvent | Prim::StepReply | Prim::StepBefore | Prim::StepAfter => {
+            Prim::TraceSteps
+            | Prim::TraceStates
+            | Prim::StepEvent
+            | Prim::StepReply
+            | Prim::StepBefore
+            | Prim::StepAfter => {
                 let field = match op {
                     Prim::TraceSteps => "steps",
                     Prim::TraceStates => "states",
@@ -163,7 +184,13 @@ impl Fx<'_, '_> {
                     _ => "after",
                 };
                 let a = &args[0].code;
-                Code { text: format!("{}.{field}", a.operand()), atomic: true, place: a.place, simple: a.simple, ..Code::default() }
+                Code {
+                    text: format!("{}.{field}", a.operand()),
+                    atomic: true,
+                    place: a.place,
+                    simple: a.simple,
+                    ..Code::default()
+                }
             }
         };
         let mut c = c.m(m || fun_m);
@@ -185,4 +212,26 @@ fn str_literal(text: &str) -> Option<&str> {
         }
     }
     Some(inner)
+}
+
+/// Whether `items]` closes the bracket of its `vec![` only at its end.
+fn one_literal(items: &str) -> bool {
+    let mut depth = 1i32;
+    let (mut quoted, mut escaped) = (false, false);
+    for (i, c) in items.char_indices() {
+        match c {
+            _ if escaped => escaped = false,
+            '\\' if quoted => escaped = true,
+            '"' => quoted = !quoted,
+            '[' if !quoted => depth += 1,
+            ']' if !quoted => {
+                depth -= 1;
+                if depth == 0 {
+                    return i + 1 == items.len();
+                }
+            }
+            _ => {}
+        }
+    }
+    false
 }

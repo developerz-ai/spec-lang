@@ -49,11 +49,13 @@ export function run<W extends rt.Machine, V>(
   env: Readonly<Record<string, string | undefined>>,
 ): Output {
   const bin = text(app as rt.App<unknown>, "bin") ?? app.name;
-  const cmds = commands(app.rules);
+  const cmds = commands(app);
   const help = helpText(bin, cmds);
   const parsed = parse(cmds, argv);
   if (parsed.kind === "help") {
-    return parsed.stream === "stdout" ? { stdout: help, stderr: "", code: EXIT.ok } : { stdout: "", stderr: help, code: EXIT.usage };
+    return parsed.stream === "stdout"
+      ? { stdout: help, stderr: "", code: EXIT.ok }
+      : { stdout: "", stderr: help, code: EXIT.usage };
   }
   if (parsed.kind === "usage") return failure(parsed.message, EXIT.usage);
 
@@ -63,7 +65,7 @@ export function run<W extends rt.Machine, V>(
   const configured = env[`${bin.toUpperCase()}_STORE`];
   const file = storeFile(app as rt.App<unknown>);
   const invoke = (): { readonly commit: boolean; readonly value: rt.Reply } => {
-    const reply = rt.reply(() => rule.call(w, parsed.values));
+    const reply = rt.reply(rule, w, parsed.values);
     return { commit: reply.kind === "Ok" && !rule.reads, value: reply };
   };
   let reply: rt.Reply;
@@ -87,7 +89,11 @@ function writeAll(fd: number, text: string): void {
 }
 
 /** The process: argv and the environment in, standard output and error and an exit code out. */
-export function main<W extends rt.Machine, V>(app: rt.App<W>, program: rt.Program<W, V>, libraries: readonly rt.Library[]): void {
+export function main<W extends rt.Machine, V>(
+  app: rt.App<W>,
+  program: rt.Program<W, V>,
+  libraries: readonly rt.Library[],
+): void {
   const out = run(app, program, libraries, process.argv.slice(2), process.env);
   writeAll(1, out.stdout);
   writeAll(2, out.stderr);

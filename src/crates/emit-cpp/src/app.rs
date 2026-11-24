@@ -40,7 +40,8 @@ fn data(g: &Gen<'_>) -> Vec<Unit> {
             let d = lir.ty(t);
             let name = ident(&d.info.name);
             let by = if g.is_enum(t) { name.clone() } else { format!("const {name}&") };
-            let _ = writeln!(decl, "rt::Data to_data({by} value);\nvoid from_data(const rt::Data& data, {name}& value);");
+            let _ =
+                writeln!(decl, "rt::Data to_data({by} value);\nvoid from_data(const rt::Data& data, {name}& value);");
             let fields_to = |fields: &[spec_lang_lir::Field], from: &str| {
                 fields.iter().map(|f| format!("to_data({from}{})", ident(&f.name))).collect::<Vec<_>>().join(", ")
             };
@@ -53,25 +54,51 @@ fn data(g: &Gen<'_>) -> Vec<Unit> {
             };
             match &d.def {
                 TypeDef::Record { fields } => {
-                    let _ = writeln!(c, "rt::Data to_data(const {name}& value) {{\nusing rt::to_data;\nreturn rt::Data::fields(0, {{{}}});\n}}\n", fields_to(fields, "value."));
-                    let _ = writeln!(c, "void from_data(const rt::Data& data, {name}& value) {{\nusing rt::from_data;\n{}}}\n", fields_from(fields, "value."));
+                    let _ = writeln!(
+                        c,
+                        "rt::Data to_data(const {name}& value) {{\nusing rt::to_data;\nreturn rt::Data::fields(0, {{{}}});\n}}\n",
+                        fields_to(fields, "value.")
+                    );
+                    let _ = writeln!(
+                        c,
+                        "void from_data(const rt::Data& data, {name}& value) {{\nusing rt::from_data;\n{}}}\n",
+                        fields_from(fields, "value.")
+                    );
                 }
                 TypeDef::Sum { .. } if g.is_enum(t) => {
-                    let _ = writeln!(c, "rt::Data to_data({name} value) {{\nreturn rt::Data::fields(static_cast<std::size_t>(value), {{}});\n}}\n");
-                    let _ = writeln!(c, "void from_data(const rt::Data& data, {name}& value) {{\nvalue = static_cast<{name}>(data.variant());\n}}\n");
+                    let _ = writeln!(
+                        c,
+                        "rt::Data to_data({name} value) {{\nreturn rt::Data::fields(static_cast<std::size_t>(value), {{}});\n}}\n"
+                    );
+                    let _ = writeln!(
+                        c,
+                        "void from_data(const rt::Data& data, {name}& value) {{\nvalue = static_cast<{name}>(data.variant());\n}}\n"
+                    );
                 }
                 TypeDef::Sum { variants } => {
                     let _ = writeln!(c, "rt::Data to_data(const {name}& value) {{\nusing rt::to_data;");
                     for (i, v) in variants.iter().enumerate() {
                         let unused = if v.fields.is_empty() { "[[maybe_unused]] " } else { "" };
-                        let _ = writeln!(c, "if ({unused}const auto* v = std::get_if<{name}::{}>(&value.alt)) {{\nreturn rt::Data::fields({i}, {{{}}});\n}}", ident(&v.name), fields_to(&v.fields, "v->"));
+                        let _ = writeln!(
+                            c,
+                            "if ({unused}const auto* v = std::get_if<{name}::{}>(&value.alt)) {{\nreturn rt::Data::fields({i}, {{{}}});\n}}",
+                            ident(&v.name),
+                            fields_to(&v.fields, "v->")
+                        );
                     }
                     c.push_str("rt::stop(\"E-RUNTIME\", \"a sum without a variant\");\n}\n\n");
-                    let _ = writeln!(c, "void from_data(const rt::Data& data, {name}& value) {{\nusing rt::from_data;\nswitch (data.variant()) {{");
+                    let _ = writeln!(
+                        c,
+                        "void from_data(const rt::Data& data, {name}& value) {{\nusing rt::from_data;\nswitch (data.variant()) {{"
+                    );
                     for (i, v) in variants.iter().enumerate() {
                         let label = if i + 1 == variants.len() { "default".to_string() } else { format!("case {i}") };
-                        let unused = if v.fields.is_empty() { "" } else { "" };
-                        let _ = writeln!(c, "{label}: {{\n{unused}{name}::{} v;\n{}value.alt = std::move(v);\nbreak;\n}}", ident(&v.name), fields_from(&v.fields, "v."));
+                        let _ = writeln!(
+                            c,
+                            "{label}: {{\n{name}::{} v;\n{}value.alt = std::move(v);\nbreak;\n}}",
+                            ident(&v.name),
+                            fields_from(&v.fields, "v.")
+                        );
                     }
                     c.push_str("}\n}\n\n");
                 }
@@ -81,7 +108,10 @@ fn data(g: &Gen<'_>) -> Vec<Unit> {
         let _ = writeln!(h, "{decl}}}  // namespace {ns}");
         let _ = writeln!(c, "}}  // namespace {ns}\n");
     }
-    vec![Unit { path: "include/program/data.hpp".into(), text: h }, Unit { path: "src/program/data.cpp".into(), text: c }]
+    vec![
+        Unit { path: "include/program/data.hpp".into(), text: h },
+        Unit { path: "src/program/data.cpp".into(), text: c },
+    ]
 }
 
 /// The descriptions of the declared types the manifest names, numbered as they are first asked for.
@@ -100,14 +130,6 @@ impl Types<'_, '_> {
             }
         };
         format!("type_{i}")
-    }
-
-    /// The structure under aliases and claims, and the declared name on the way.
-    fn shape<'d>(&self, d: &'d DTy) -> (&'d DTy, String)
-    where
-        'static: 'd,
-    {
-        (d, String::new())
     }
 
     fn print(&mut self) -> String {
@@ -167,7 +189,10 @@ impl Types<'_, '_> {
                         name = lir.ty(*t).info.name.clone();
                     }
                     let fields = |me: &mut Self, fs: &[spec_lang_lir::Field]| {
-                        fs.iter().map(|f| format!("{{{}, &{}}}", string_literal(&f.name), me.of(&f.check))).collect::<Vec<_>>().join(", ")
+                        fs.iter()
+                            .map(|f| format!("{{{}, &{}}}", string_literal(&f.name), me.of(&f.check)))
+                            .collect::<Vec<_>>()
+                            .join(", ")
                     };
                     match &lir.ty(*t).def {
                         TypeDef::Record { fields: fs } => {
@@ -195,31 +220,45 @@ impl Types<'_, '_> {
             all.extend(parts);
             let mut fx = Fx::new(g, None, no_span());
             if let Some(c) = fx.conform(&d, "value") {
-                all.push(format!(".conforms = [](const rt::Data& data) {{\nconst auto value = rt::from<{}>(data);\nreturn {c};\n}}", g.dty(&d)));
+                all.push(format!(
+                    ".conforms = [](const rt::Data& data) {{\nconst auto value = rt::from<{}>(data);\nreturn {c};\n}}",
+                    g.dty(&d)
+                ));
             }
-            let _ = writeln!(bodies, "const rt::meta::Type& type_{i}() {{\nstatic const rt::meta::Type type{{{}}};\nreturn type;\n}}\n", all.join(", "));
+            let _ = writeln!(
+                bodies,
+                "const rt::meta::Type& type_{i}() {{\nstatic const rt::meta::Type type{{{}}};\nreturn type;\n}}\n",
+                all.join(", ")
+            );
             i += 1;
         }
         let mut out = String::from("// The declared types the app's rules and states name.\n");
         for (i, d) in self.types.iter().enumerate() {
             let _ = writeln!(out, "const rt::meta::Type& type_{i}();  // {}", g.dty(d));
         }
-        let _ = self.shape(&DTy::Unit);
         out + "\n" + &bodies
     }
 }
 
 fn note_value(v: &NoteValue) -> String {
     match v {
-        NoteValue::Int(n) => format!("{{.kind = rt::meta::NoteValue::Kind::Int, .number = {}}}", crate::emit::int_literal(*n).s),
-        NoteValue::Text(t) => format!("{{.kind = rt::meta::NoteValue::Kind::Text, .text = {}}}", string_literal(&unescape(t))),
+        NoteValue::Int(n) => {
+            format!("{{.kind = rt::meta::NoteValue::Kind::Int, .number = {}}}", crate::emit::int_literal(*n).s)
+        }
+        NoteValue::Text(t) => {
+            format!("{{.kind = rt::meta::NoteValue::Kind::Text, .text = {}}}", string_literal(&unescape(t)))
+        }
         NoteValue::Quantity { value, unit } => format!(
             "{{.kind = rt::meta::NoteValue::Kind::Quantity, .number = {}, .text = {}}}",
             crate::emit::int_literal(*value).s,
             string_literal(unit)
         ),
         NoteValue::Variant { name, args } => {
-            format!("{{.kind = rt::meta::NoteValue::Kind::Variant, .text = {}, .args = {{{}}}}}", string_literal(name), note_args(args))
+            format!(
+                "{{.kind = rt::meta::NoteValue::Kind::Variant, .text = {}, .args = {{{}}}}}",
+                string_literal(name),
+                note_args(args)
+            )
         }
     }
 }
@@ -244,7 +283,10 @@ fn unescape(t: &str) -> String {
 }
 
 fn note_args(args: &[NoteArg]) -> String {
-    args.iter().map(|a| format!("{{{}, {}}}", string_literal(&a.param), note_value(&a.value))).collect::<Vec<_>>().join(", ")
+    args.iter()
+        .map(|a| format!("{{{}, {}}}", string_literal(&a.param), note_value(&a.value)))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn note(n: &Note) -> String {
@@ -262,11 +304,26 @@ fn plain(t: &LTy) -> bool {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-fn callable(g: &Gen<'_>, types: &mut Types<'_, '_>, qualified: &str, name: &str, cpp: &str, rule: bool, ctx: bool, triggers: &[Note], params: &[Param], result: &LTy, check: &Option<DTy>) -> String {
+/// What the manifest says of one rule or `fn`.
+struct Decl<'a> {
+    info: &'a spec_lang_lir::Info,
+    cpp: String,
+    rule: bool,
+    writes: bool,
+    ctx: bool,
+    triggers: &'a [Note],
+    params: &'a [Param],
+    result: &'a LTy,
+    check: &'a Option<DTy>,
+    body: &'a Body,
+}
+
+fn callable(g: &Gen<'_>, types: &mut Types<'_, '_>, d: &Decl<'_>) -> String {
+    let Decl { cpp, rule, writes, ctx, triggers, params, result, check, .. } = d;
+    let (ctx, result, check, params) = (*ctx, *result, *check, *params);
     let mut ps = Vec::new();
     for p in params {
-        let mut one = format!("{{{}, &{}", string_literal(&p.name), types.of(&p.check));
+        let mut one = format!("{{{}, &{}, {}", string_literal(&p.name), types.of(&p.check), p.default.is_some());
         if let Some(d) = p.default.as_ref().filter(|d| crate::emit::closed(d) && !g.facts.needs_ctx(d)) {
             let mut fx = Fx::new(g, None, d.span);
             let value = fx.expr(d).at(2);
@@ -277,20 +334,36 @@ fn callable(g: &Gen<'_>, types: &mut Types<'_, '_>, qualified: &str, name: &str,
     let mut args: Vec<String> = if ctx { vec!["ctx".into()] } else { Vec::new() };
     args.extend(params.iter().enumerate().map(|(i, p)| format!("rt::from<{}>(args.at({i}))", g.ty(&p.ty))));
     let call = format!("{cpp}({})", args.join(", "));
-    let body = if *result == LTy::Unit { format!("{call};\nreturn rt::Data{{rt::unit}};") } else { format!("return to_data({call});") };
+    let body = if *result == LTy::Unit {
+        format!("{call};\nreturn rt::Data{{rt::unit}};")
+    } else {
+        format!("return to_data({call});")
+    };
     let result_ty = check.clone().unwrap_or(DTy::Unit);
     let result_ty = if *result == LTy::Unit { DTy::Unit } else { result_ty };
     let ts: Vec<String> = triggers.iter().map(note).collect();
+    let foreign = match d.body {
+        Body::Extern(x) => (if x.library.is_empty() { x.lang.clone() } else { x.library.clone() }, x.symbol.clone()),
+        Body::Expr(_) => (String::new(), String::new()),
+    };
     format!(
-        "{{.qualified = {}, .name = {}, .rule = {rule}, .triggers = {{{}}}, .params = {{{}}}, .result = &{}, .call = []({}program::Machine& ctx, {}const std::vector<rt::Data>& args) -> rt::Data {{\n{body}\n}}}}",
-        string_literal(qualified),
-        string_literal(name),
+        "{{.qualified = {}, .name = {}, .why = {}, .foreign_library = {}, .foreign_symbol = {}, .rule = {rule}, .writes = {writes}, .triggers = {{{}}}, .params = {{{}}}, .result = &{}, .call = []({}program::Machine& ctx, {}const std::vector<rt::Data>& args) -> rt::Data {{\n{body}\n}}}}",
+        string_literal(&d.info.qualified),
+        string_literal(&d.info.name),
+        string_literal(d.info.why.as_deref().unwrap_or("")),
+        string_literal(&foreign.0),
+        string_literal(&foreign.1),
         ts.join(", "),
         ps.join(", "),
         types.of(&result_ty),
         if ctx { "" } else { "[[maybe_unused]] " },
         if params.is_empty() { "[[maybe_unused]] " } else { "" },
     )
+}
+
+/// Whether `@uses` names a write that is not a handler's: a write of a state.
+fn writes(g: &Gen<'_>, uses: &[String]) -> bool {
+    uses.iter().any(|u| u.ends_with(".write") && !g.lir.handlers.iter().any(|h| h.labels.contains(u)))
 }
 
 /// `include/program/manifest.hpp` and its source.
@@ -305,27 +378,83 @@ fn manifest(g: &Gen<'_>, lines: &Lines, app: &Manifest) -> Vec<Unit> {
     for r in &app.rules {
         let d = lir.rule(*r);
         if !d.params.iter().all(|p| plain(&p.ty)) || !plain(&d.result) {
-            g.unsupported(d.info.span, format_args!("rule {} in an app: a parameter or its result is not plain data", d.info.qualified));
+            g.unsupported(
+                d.info.span,
+                format_args!("rule {} in an app: a parameter or its result is not plain data", d.info.qualified),
+            );
             continue;
         }
-        rules.push(format!("// rule {} ({})\n{}", d.info.qualified, lines.at(lir, &d.info), callable(g, &mut types, &d.info.qualified, &d.info.name, &g.rule_name(*r), true, true, &d.triggers, &d.params, &d.result, &d.result_check)));
+        rules.push(format!(
+            "// rule {} ({})\n{}",
+            d.info.qualified,
+            lines.at(lir, &d.info),
+            callable(
+                g,
+                &mut types,
+                &Decl {
+                    info: &d.info,
+                    cpp: g.rule_name(*r),
+                    rule: true,
+                    writes: writes(g, &d.uses),
+                    ctx: true,
+                    triggers: &d.triggers,
+                    params: &d.params,
+                    result: &d.result,
+                    check: &d.result_check,
+                    body: &d.body
+                }
+            )
+        ));
     }
     let mut fns = Vec::new();
-    let named: Vec<usize> = app.params.iter().flat_map(|p| &p.decls).filter_map(|n| if let Named::Fn(f) = n { Some(f.index()) } else { None }).collect();
+    let named: Vec<usize> = app
+        .params
+        .iter()
+        .flat_map(|p| &p.decls)
+        .filter_map(|n| if let Named::Fn(f) = n { Some(f.index()) } else { None })
+        .collect();
     for (i, d) in lir.fns.iter().enumerate() {
-        let wanted = named.contains(&i) || (d.info.is_pub && matches!(d.body, Body::Expr(_)) && lir.modules[d.info.module.index()].name != app.module);
+        let wanted = named.contains(&i)
+            || (d.info.is_pub
+                && matches!(d.body, Body::Expr(_))
+                && lir.modules[d.info.module.index()].name != app.module);
         if !wanted || !d.params.iter().all(|p| plain(&p.ty)) || !plain(&d.result) {
             continue;
         }
         let cpp = g.fn_name(spec_lang_ir::FnId(i as u32));
-        fns.push(format!("// fn {} ({})\n{}", d.info.qualified, lines.at(lir, &d.info), callable(g, &mut types, &d.info.qualified, &d.info.name, &cpp, false, g.facts.fn_ctx[i], &[], &d.params, &d.result, &d.result_check)));
+        fns.push(format!(
+            "// fn {} ({})\n{}",
+            d.info.qualified,
+            lines.at(lir, &d.info),
+            callable(
+                g,
+                &mut types,
+                &Decl {
+                    info: &d.info,
+                    cpp,
+                    rule: false,
+                    writes: false,
+                    ctx: g.facts.fn_ctx[i],
+                    triggers: &[],
+                    params: &d.params,
+                    result: &d.result,
+                    check: &d.result_check,
+                    body: &d.body
+                }
+            )
+        ));
     }
     let mut states = Vec::new();
     let mut get = Vec::new();
     let mut set = String::new();
     for (i, s) in lir.states.iter().enumerate() {
         let field = g.state_field(StateId(i as u32));
-        states.push(format!("{{{}, {}, &{}}}", string_literal(&s.info.qualified), string_literal(&s.info.name), types.of(&s.check)));
+        states.push(format!(
+            "{{{}, {}, &{}}}",
+            string_literal(&s.info.qualified),
+            string_literal(&s.info.name),
+            types.of(&s.check)
+        ));
         get.push(format!("to_data(ctx.world.{field})"));
         let _ = writeln!(set, "from_data(data.values().at({i}), ctx.world.{field});");
     }
@@ -336,7 +465,11 @@ fn manifest(g: &Gen<'_>, lines: &Lines, app: &Manifest) -> Vec<Unit> {
         let trace = fx.declare(&l.params[0].name);
         let mut body = String::new();
         fx.tail(&l.body, &mut body, Ret::Value);
-        let text = format!("// law {} ({})\n[]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& {trace}) -> bool {{\n{body}}},\n", l.info.qualified, lines.at(lir, &l.info));
+        let text = format!(
+            "// law {} ({})\n[]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& {trace}) -> bool {{\n{body}}},\n",
+            l.info.qualified,
+            lines.at(lir, &l.info)
+        );
         laws.push_str(&fx.resolve(&text).replace("fresh.", "ctx."));
     }
     let params: Vec<String> = app
@@ -357,15 +490,23 @@ fn manifest(g: &Gen<'_>, lines: &Lines, app: &Manifest) -> Vec<Unit> {
     let notes: Vec<String> = app.notes.iter().map(note).collect();
 
     let mut c = banner(&what);
-    c.push_str("#include \"program/manifest.hpp\"\n\n#include \"program/data.hpp\"\n#include \"program/machine.hpp\"\n");
+    c.push_str(
+        "#include \"program/manifest.hpp\"\n\n#include \"program/data.hpp\"\n#include \"program/machine.hpp\"\n",
+    );
     for m in &lir.modules {
         if !ModuleDecls::of(g, m.id).is_empty() {
             let _ = writeln!(c, "#include \"{}.hpp\"", path(&m.name));
         }
     }
     let types_text = types.print();
-    let _ = writeln!(c, "\nnamespace program {{\n\nnamespace {{\n\nusing rt::from_data;\nusing rt::to_data;\n\n{types_text}");
-    let _ = writeln!(c, "// The laws about one world alone: each must hold on a world a library hands back to the program.\nconst std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {{\n{laws}}};\n\n}}  // namespace\n");
+    let _ = writeln!(
+        c,
+        "\nnamespace program {{\n\nnamespace {{\n\nusing rt::from_data;\nusing rt::to_data;\n\n{types_text}"
+    );
+    let _ = writeln!(
+        c,
+        "// The laws about one world alone: each must hold on a world a library hands back to the program.\nconst std::vector<bool (*)(Machine&, const rt::Trace<World>&)> laws = {{\n{laws}}};\n\n}}  // namespace\n"
+    );
     for n in &app.notes {
         let _ = writeln!(c, "// @{}", note_text(n));
     }
@@ -384,7 +525,10 @@ fn manifest(g: &Gen<'_>, lines: &Lines, app: &Manifest) -> Vec<Unit> {
         states.join(", "),
         get.join(", "),
     );
-    vec![Unit { path: "include/program/manifest.hpp".into(), text: h }, Unit { path: "src/program/manifest.cpp".into(), text: c }]
+    vec![
+        Unit { path: "include/program/manifest.hpp".into(), text: h },
+        Unit { path: "src/program/manifest.cpp".into(), text: c },
+    ]
 }
 
 /// The libraries an app needs a runtime of: its shape's, its notes', its rules' triggers', the handlers'
@@ -436,7 +580,11 @@ fn cmake_notes(app: &Manifest) -> String {
                 let _ = writeln!(out, "set({prefix} \"{n}\")");
             }
             NoteValue::Text(t) => {
-                let _ = writeln!(out, "set({prefix} \"{}\")", t.replace('\\', "\\\\").replace('"', "\\\"").replace('$', "\\$"));
+                let _ = writeln!(
+                    out,
+                    "set({prefix} \"{}\")",
+                    t.replace('\\', "\\\\").replace('"', "\\\"").replace('$', "\\$")
+                );
             }
             NoteValue::Quantity { value, unit } => {
                 let _ = writeln!(out, "set({prefix} \"{value}{unit}\")");
@@ -504,8 +652,12 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
                 }
             }
             None => errors.push(
-                Diag::new(spec_lang_diag::Severity::Error, "E-UNSUPPORTED", format!("app {}: library `{l}` has no runtime for cpp (libs/{l}/real/cpp)", app.name))
-                    .with_decl(app.qualified.clone()),
+                Diag::new(
+                    spec_lang_diag::Severity::Error,
+                    "E-UNSUPPORTED",
+                    format!("app {}: library `{l}` has no runtime for cpp (libs/{l}/real/cpp)", app.name),
+                )
+                .with_decl(app.qualified.clone()),
             ),
         }
     }
@@ -520,12 +672,20 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     let what = format!("app {} ({}.slg)", app.qualified, app.module.replace('.', "/"));
     let driver = libs.first().cloned().unwrap_or_default();
     let mut main = banner(&what);
-    let _ = writeln!(main, "// The `{driver}` library runs the app: it reads the manifest and does the rest.\n#include \"lib/{driver}/main.hpp\"\n#include \"program/manifest.hpp\"\n\nint main(int argc, char** argv) {{\nreturn lib::{}::main(program::app(), argc, argv);\n}}", ident(&driver));
+    let _ = writeln!(
+        main,
+        "// The `{driver}` library runs the app: it reads the manifest and does the rest.\n#include \"lib/{driver}/main.hpp\"\n#include \"program/manifest.hpp\"\n\nint main(int argc, char** argv) {{\nreturn lib::{}::main(program::app(), argc, argv);\n}}",
+        ident(&driver)
+    );
     printed.units.push(Unit { path: "src/main.cpp".into(), text: main });
     printed.plain.extend(
-        [("include/rt/data.hpp", include_str!("../runtime/include/rt/data.hpp")), ("include/rt/meta.hpp", include_str!("../runtime/include/rt/meta.hpp")), ("src/rt/data.cpp", include_str!("../runtime/src/rt/data.cpp"))]
-            .iter()
-            .map(|(p, t)| project::runtime_file(p, t)),
+        [
+            ("include/rt/data.hpp", include_str!("../runtime/include/rt/data.hpp")),
+            ("include/rt/meta.hpp", include_str!("../runtime/include/rt/meta.hpp")),
+            ("src/rt/data.cpp", include_str!("../runtime/src/rt/data.cpp")),
+        ]
+        .iter()
+        .map(|(p, t)| project::runtime_file(p, t)),
     );
     let has_foreign = !crate::machine::foreign_libraries(&g).is_empty();
     crate::finish(&g, printed, |files| {
@@ -534,11 +694,31 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
             .filter(|l| !l.ends_with("src/main.cpp") && !l.contains("src/program/foreign_"))
             .map(|l| format!("{l}\n"))
             .collect();
-        let mut cmake = format!("# {}\n{}", banner(&what).trim_start_matches("// ").trim_end(), project::CMAKE_HEAD.replace("@NAME@", &snake(&app.name)));
-        let _ = writeln!(cmake, "\n# The app's notes, for its libraries' build files.\nset(APP_NAME \"{}\")\n{}", app.name, cmake_notes(app));
-        let _ = writeln!(cmake, "# The program: its modules, the machine, the manifest, the runtime prelude. No library, no I/O.\nadd_library(program STATIC\n{program_sources})\ntarget_include_directories(program PUBLIC include)\n");
-        let _ = writeln!(cmake, "# The app: `main` hands the manifest to the library that runs it.\nadd_executable(app\n  src/main.cpp\n{})\ntarget_link_libraries(app PRIVATE program)\n", if has_foreign { "  src/program/foreign_real.cpp\n" } else { "" });
-        let _ = writeln!(cmake, "# The program's own checks, as `spec-lang test` runs them; a check that reaches a foreign body is blocked.\nenable_testing()\nadd_executable(checks\n{}{})\ntarget_include_directories(checks PRIVATE tests)\ntarget_link_libraries(checks PRIVATE program)\nadd_test(NAME checks COMMAND checks)\n", project::sources(files, "tests/"), if has_foreign { "  src/program/foreign_blocked.cpp\n" } else { "" });
+        let mut cmake = format!(
+            "# {}\n{}",
+            banner(&what).trim_start_matches("// ").trim_end(),
+            project::CMAKE_HEAD.replace("@NAME@", &snake(&app.name))
+        );
+        let _ = writeln!(
+            cmake,
+            "\n# The app's notes, for its libraries' build files.\nset(APP_NAME \"{}\")\n{}",
+            app.name,
+            cmake_notes(app)
+        );
+        let _ = writeln!(
+            cmake,
+            "# The program: its modules, the machine, the manifest, the runtime prelude. No library, no I/O.\nadd_library(program STATIC\n{program_sources})\ntarget_include_directories(program PUBLIC include ${{CMAKE_CURRENT_SOURCE_DIR}})\n"
+        );
+        cmake.push_str("# The program with its foreign declarations: bound to the libraries' runtimes for the app, and blocked\n# for tests, where a check that reaches a foreign body is blocked, never run.\nadd_library(program_real INTERFACE)\ntarget_link_libraries(program_real INTERFACE program)\nadd_library(program_blocked INTERFACE)\ntarget_link_libraries(program_blocked INTERFACE program)\n");
+        if has_foreign {
+            cmake.push_str("target_sources(program_real INTERFACE src/program/foreign_real.cpp)\ntarget_sources(program_blocked INTERFACE src/program/foreign_blocked.cpp)\n");
+        }
+        cmake.push_str("\n# The app: `main` hands the manifest to the library that runs it.\nadd_executable(app src/main.cpp)\ntarget_link_libraries(app PRIVATE program_real)\n\n");
+        let _ = writeln!(
+            cmake,
+            "# The program's own checks, as `spec-lang test` runs them.\nenable_testing()\nadd_executable(checks\n{})\ntarget_include_directories(checks PRIVATE tests)\ntarget_link_libraries(checks PRIVATE program_blocked)\nadd_test(NAME checks COMMAND checks)\n",
+            project::sources(files, "tests/")
+        );
         cmake.push_str("# The libraries' runtimes, each as its own build file says.\n");
         for l in &libs {
             let _ = writeln!(cmake, "include(lib/{l}/runtime.cmake)");

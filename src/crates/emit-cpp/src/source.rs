@@ -105,9 +105,10 @@ impl Reach {
                 ExprKind::Construct { ty, .. } | ExprKind::Variant { ty, .. } | ExprKind::With { ty, .. } => {
                     self.modules.insert(lir.ty(*ty).info.module);
                 }
-                ExprKind::State(_) | ExprKind::Effect { .. } | ExprKind::EffectRead { .. } | ExprKind::WorldState { .. } => {
-                    self.machine = true
-                }
+                ExprKind::State(_)
+                | ExprKind::Effect { .. }
+                | ExprKind::EffectRead { .. }
+                | ExprKind::WorldState { .. } => self.machine = true,
                 ExprKind::Lambda(l) => {
                     l.params.iter().for_each(|(_, t)| self.lty(lir, t));
                     self.lty(lir, &l.result);

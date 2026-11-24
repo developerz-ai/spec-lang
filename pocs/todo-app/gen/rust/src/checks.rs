@@ -1,9 +1,11 @@
 //! Every check of the program, as `spec-lang test` names and runs it.
+
 use crate::rt::{self, R};
 use crate::rt::rng::Rng;
 use crate::rt::runner::{Body, Check, Given, LawBody, LawDecl, TestDecl, Trace, What};
 use crate::machine::{Machine, Pools};
 use std::collections::BTreeSet;
+
 /// `@given(todo.board.tasks -> ..)` of `todo.board.three_open_one_done`.
 fn given_0_0(m: &mut Machine) -> R<()> {
     let v = rt::map_of(
@@ -57,6 +59,7 @@ fn given_0_0(m: &mut Machine) -> R<()> {
     m.world.tasks = v;
     Ok(())
 }
+
 /// `@given(todo.board.next_no -> ..)` of `todo.board.three_open_one_done`.
 fn given_0_1(m: &mut Machine) -> R<()> {
     let v = 5;
@@ -64,12 +67,14 @@ fn given_0_1(m: &mut Machine) -> R<()> {
     m.world.next_no = v;
     Ok(())
 }
+
 /// A test with parameters has no one end world.
 fn no_end(_: &mut Machine) -> R<()> {
     Err(rt::stop("E-TYPE-MISMATCH", "a test with parameters has no one end world"))
 }
+
 /// The parameters of `todo.laws.numbers_below_next` besides its trace, drawn after it.
-fn law_0(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_0(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::numbers_below_next(
             m,
@@ -77,8 +82,9 @@ fn law_0(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.next_only_grows` besides its trace, drawn after it.
-fn law_1(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_1(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::next_only_grows(
             m,
@@ -86,6 +92,7 @@ fn law_1(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.others_untouched` besides its trace, drawn after it.
 fn law_2(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
     let a1 = crate::draw::task_no(m, rng, pools)?;
@@ -97,8 +104,9 @@ fn law_2(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.clear_keeps_every_open_task` besides its trace, drawn after it.
-fn law_3(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_3(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::clear_keeps_every_open_task(
             m,
@@ -106,8 +114,9 @@ fn law_3(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.reads_change_nothing` besides its trace, drawn after it.
-fn law_4(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_4(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::reads_change_nothing(
             m,
@@ -115,8 +124,9 @@ fn law_4(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.refusal_changes_nothing` besides its trace, drawn after it.
-fn law_5(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_5(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::refusal_changes_nothing(
             m,
@@ -124,8 +134,9 @@ fn law_5(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// The parameters of `todo.laws.stored_under_its_number` besides its trace, drawn after it.
-fn law_6(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
+fn law_6(_m: &mut Machine, _rng: &mut Rng, _pools: &Pools) -> R<LawBody> {
     Ok(
         Box::new(move |m: &mut Machine, t: Trace| crate::todo::laws::stored_under_its_number(
             m,
@@ -133,98 +144,114 @@ fn law_6(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {
         )),
     )
 }
+
 /// `todo.model.is_title case[0]`.
-fn case_8(m: &mut Machine) -> R<bool> {
+fn case_8(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("milk")))?;
     let want: bool = true;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[1]`.
-fn case_9(m: &mut Machine) -> R<bool> {
+fn case_9(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[2]`.
-fn case_10(m: &mut Machine) -> R<bool> {
+fn case_10(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("   ")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[3]`.
-fn case_11(m: &mut Machine) -> R<bool> {
+fn case_11(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("a\tb")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[4]`.
-fn case_12(m: &mut Machine) -> R<bool> {
+fn case_12(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("\u{3000}")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[5]`.
-fn case_13(m: &mut Machine) -> R<bool> {
+fn case_13(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("a\u{2028}b")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_title case[6]`.
-fn case_14(m: &mut Machine) -> R<bool> {
+fn case_14(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_title(String::from("a\u{85}b")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[0]`.
-fn case_15(m: &mut Machine) -> R<bool> {
+fn case_15(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("home")))?;
     let want: bool = true;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[1]`.
-fn case_16(m: &mut Machine) -> R<bool> {
+fn case_16(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("deep-work")))?;
     let want: bool = true;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[2]`.
-fn case_17(m: &mut Machine) -> R<bool> {
+fn case_17(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("Home")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[3]`.
-fn case_18(m: &mut Machine) -> R<bool> {
+fn case_18(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[4]`.
-fn case_19(m: &mut Machine) -> R<bool> {
+fn case_19(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("a b")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[5]`.
-fn case_20(m: &mut Machine) -> R<bool> {
+fn case_20(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("-x")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.model.is_tag case[6]`.
-fn case_21(m: &mut Machine) -> R<bool> {
+fn case_21(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::model::is_tag(String::from("--all")))?;
     let want: bool = false;
     Ok(got == Ok(want))
 }
+
 /// `todo.render.tag_text case[0]`.
-fn case_22(m: &mut Machine) -> R<bool> {
+fn case_22(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(crate::todo::render::tag_text(BTreeSet::<String>::new()))?;
     let want: String = String::from("");
     Ok(got == Ok(want))
 }
+
 /// `todo.render.tag_text case[1]`.
-fn case_23(m: &mut Machine) -> R<bool> {
+fn case_23(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(
         crate::todo::render::tag_text(
             BTreeSet::from([String::from("work"), String::from("home")]),
@@ -233,8 +260,9 @@ fn case_23(m: &mut Machine) -> R<bool> {
     let want: String = String::from(" #home #work");
     Ok(got == Ok(want))
 }
+
 /// `todo.render.line case[0]`.
-fn case_24(m: &mut Machine) -> R<bool> {
+fn case_24(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(
         crate::todo::render::line(
             crate::todo::model::Task::new(1, String::from("milk"), None, None, None)?,
@@ -243,8 +271,9 @@ fn case_24(m: &mut Machine) -> R<bool> {
     let want: String = String::from("1 [ ] milk");
     Ok(got == Ok(want))
 }
+
 /// `todo.render.line case[1]`.
-fn case_25(m: &mut Machine) -> R<bool> {
+fn case_25(_m: &mut Machine) -> R<bool> {
     let got = rt::settle(
         crate::todo::render::line(
             crate::todo::model::Task::new(
@@ -259,6 +288,7 @@ fn case_25(m: &mut Machine) -> R<bool> {
     let want: String = String::from("2 [x] ship !high #work");
     Ok(got == Ok(want))
 }
+
 /// Arguments of `todo.tests.scenarios.unknown_numbers_are_refused` drawn from its parameters' types.
 fn draw_34(m: &mut Machine, rng: &mut Rng) -> R<Body> {
     let pools = Pools::default();
@@ -270,6 +300,7 @@ fn draw_34(m: &mut Machine, rng: &mut Rng) -> R<Body> {
         )),
     )
 }
+
 /// Every test, by number.
 pub static TESTS: &[TestDecl] = &[
     TestDecl {
@@ -333,6 +364,7 @@ pub static TESTS: &[TestDecl] = &[
         run: no_end,
     },
 ];
+
 /// Every law, by number.
 pub static LAWS: &[LawDecl] = &[
     LawDecl {
@@ -378,6 +410,7 @@ pub static LAWS: &[LawDecl] = &[
         draw: law_6,
     },
 ];
+
 /// Every check, in the order `spec-lang test` runs them.
 pub static CHECKS: &[Check] = &[
     Check {

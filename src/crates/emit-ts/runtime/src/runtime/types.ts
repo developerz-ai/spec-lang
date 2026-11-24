@@ -131,6 +131,17 @@ export class OptionType<T> extends Type<Option<T>> {
   }
 }
 
+/** Values known to conform: they are immutable and claims read nothing else, so one check is enough. */
+class Known {
+  private readonly values = new WeakSet<object>();
+  conform<T>(v: T, check: () => string | undefined): string | undefined {
+    if (this.values.has(v as object)) return undefined;
+    const why = check();
+    if (why === undefined) this.values.add(v as object);
+    return why;
+  }
+}
+
 function compareItems<T>(t: (i: number) => Type<T>, a: readonly T[], b: readonly T[]): number {
   const n = Math.min(a.length, b.length);
   for (let i = 0; i < n; i++) {
@@ -151,6 +162,7 @@ function conformItems<T>(t: (i: number) => Type<T>, xs: Iterable<T>): string | u
 
 export class ListType<T> extends Type<readonly T[]> {
   readonly key: string;
+  private readonly known = new Known();
   constructor(readonly of: Type<T>) {
     super();
     this.key = `List[${of.key}]`;
@@ -162,7 +174,7 @@ export class ListType<T> extends Type<readonly T[]> {
     return `[${v.map((x) => this.of.show(x)).join(", ")}]`;
   }
   override conform(v: readonly T[]): string | undefined {
-    return conformItems(() => this.of, v);
+    return this.known.conform(v, () => conformItems(() => this.of, v));
   }
 }
 
@@ -247,9 +259,7 @@ export function field(name: string, prop: string, type: Type, fallback?: () => u
 type Fields = Readonly<Record<string, unknown>>;
 
 function showFields(fields: readonly Field[], v: Fields): string {
-  return fields
-    .map((f, i) => (i === 0 ? f.type.show(v[f.prop]) : `${f.name}: ${f.type.show(v[f.prop])}`))
-    .join(", ");
+  return fields.map((f, i) => (i === 0 ? f.type.show(v[f.prop]) : `${f.name}: ${f.type.show(v[f.prop])}`)).join(", ");
 }
 
 function compareFields(fields: readonly Field[], a: Fields, b: Fields): number {
@@ -305,6 +315,7 @@ abstract class Named<T> extends Type<T> {
 }
 
 export class RecordType<T> extends Named<T> {
+  private readonly known = new Known();
   private cached: readonly Field[] | undefined;
   constructor(
     qualified: string,
@@ -340,7 +351,7 @@ export class RecordType<T> extends Named<T> {
     return `${this.name}(${showFields(this.fields, v as Fields)})`;
   }
   override conform(v: T): string | undefined {
-    return conformFields(this.fields, v as Fields);
+    return this.known.conform(v, () => conformFields(this.fields, v as Fields));
   }
 }
 
@@ -436,11 +447,24 @@ class AnyType extends Type {
 
 export const anyType: Type = new AnyType();
 
-/** Order without a type: only for values the program cannot sort by type (a reply's payload). */
+/** Values of different kinds order by kind, in this order. */
+function kindRank(v: unknown): number {
+  if (v === null) return 0;
+  if (typeof v === "boolean") return 1;
+  if (typeof v === "bigint") return 2;
+  if (typeof v === "string") return 3;
+  if (Array.isArray(v)) return 4;
+  if (v instanceof OrdSet) return 5;
+  if (v instanceof OrdMap) return 6;
+  return 7;
+}
+
+/** Order without a type: only for values the program cannot type (a reply's payload nothing recorded). */
 export function compareAny(a: unknown, b: unknown): number {
   if (typeof a === "bigint" && typeof b === "bigint") return a < b ? -1 : a > b ? 1 : 0;
   if (typeof a === "string" && typeof b === "string") return sign(compareText(a, b));
   if (typeof a === "boolean" && typeof b === "boolean") return Number(a) - Number(b);
+  if (kindRank(a) !== kindRank(b)) return sign(kindRank(a) - kindRank(b));
   if (Array.isArray(a) && Array.isArray(b)) return compareItems(() => anyType, a, b);
   if (a instanceof OrdSet && b instanceof OrdSet) return compareItems(() => anyType, a.items, b.items);
   if (typeof a === "object" && a !== null && typeof b === "object" && b !== null) {
@@ -456,7 +480,8 @@ export function showAny(v: unknown): string {
   if (typeof v === "string") return quote(v);
   if (Array.isArray(v)) return `[${v.map(showAny).join(", ")}]`;
   if (v instanceof OrdSet) return `Set(${v.items.map(showAny).join(", ")})`;
-  if (v instanceof OrdMap) return `Map(${v.keyList.map((k, i) => `${showAny(k)} -> ${showAny(v.valueList[i])}`).join(", ")})`;
+  if (v instanceof OrdMap)
+    return `Map(${v.keyList.map((k, i) => `${showAny(k)} -> ${showAny(v.valueList[i])}`).join(", ")})`;
   if (typeof v === "object" && "kind" in v) {
     const { kind, ...rest } = v as { kind: string };
     const fields = Object.values(rest);
@@ -521,8 +546,15 @@ export function option<T>(of: Type<T>): OptionType<T> {
   return once(`Option[${of.key}]`, () => new OptionType(of));
 }
 
-export function tuple(...items: readonly Type[]): TupleType {
-  return once(`(${items.map((t) => t.key).join(",")})`, () => new TupleType(items));
+/** The values of a tuple of these types. */
+type Values<T extends readonly Type<never>[]> = {
+  readonly [K in keyof T]: T[K] extends Type<infer V> ? V : never;
+};
+
+export function tuple<T extends readonly Type<never>[]>(...items: T): Type<Values<T>> {
+  const types = items as unknown as readonly Type[];
+  const made = once(`(${types.map((t) => t.key).join(",")})`, () => new TupleType(types));
+  return made as unknown as Type<Values<T>>;
 }
 
 export function inRange(lo: Int, hi: Int, inclusive: boolean): RangeType {
@@ -538,7 +570,10 @@ export function record<T>(qualified: string, fields: () => readonly Field[]): Re
   return new RecordType(qualified, fields);
 }
 
-export function oneOf<T extends { readonly kind: string }>(qualified: string, variants: () => readonly Variant[]): SumType<T> {
+export function oneOf<T extends { readonly kind: string }>(
+  qualified: string,
+  variants: () => readonly Variant[],
+): SumType<T> {
   return new SumType(qualified, variants);
 }
 
@@ -551,6 +586,14 @@ export function check<T>(type: Type<T>, v: T, what = "the value"): T {
   const why = type.conform(v);
   if (why !== undefined) throw new ClaimBroken(`${what}: ${why}`);
   return v;
+}
+
+/** Arguments already evaluated, each checked in order. */
+export function checked<A extends readonly unknown[]>(types: readonly Type[], args: A): A {
+  types.forEach((t, i) => {
+    check(t, args[i]);
+  });
+  return args;
 }
 
 /** A field of a sum value by name; a variant without it stops (`E-TYPE-MISMATCH`). */

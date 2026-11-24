@@ -9,8 +9,8 @@ export class Failure extends Error {
   constructor(
     readonly failure: string,
     readonly data: readonly unknown[] = [],
-    /** How to show each item of `data`, when it was given. */
-    readonly shows: readonly ((v: unknown) => string)[] = [],
+    /** The type of each item of `data`. */
+    readonly types: readonly unknown[] = [],
   ) {
     super(failure);
   }
@@ -37,8 +37,8 @@ export class Blocked extends Error {
 }
 
 /** `fail Name(data)`. */
-export function fail(name: string, data: readonly unknown[] = [], shows: readonly ((v: unknown) => string)[] = []): never {
-  throw new Failure(name, data, shows);
+export function fail(name: string, data: readonly unknown[] = [], types: readonly unknown[] = []): never {
+  throw new Failure(name, data, types);
 }
 
 /** An absent key or index, an empty `first`, `min` or `max`. */
@@ -48,6 +48,18 @@ export function missing(): never {
 
 export function stop(code: string, message: string): never {
   throw new Stop(code, message);
+}
+
+/** `while` turns left; only the checks set a limit, so a loop that does not end is a failed check. */
+let turns = Number.POSITIVE_INFINITY;
+
+export function limitTurns(n: number): void {
+  turns = n;
+}
+
+/** One turn of a `while`. */
+export function turn(): void {
+  if (--turns < 0) stop("E-RUNTIME", "a loop that does not end");
 }
 
 /** `?name`: the program is not finished here. */
@@ -76,7 +88,9 @@ export function holds(condition: () => boolean): boolean {
 }
 
 /** The failure a call ended with, or undefined when it gave a value: for `-> fail E` and replies. */
-export function outcome<T>(call: () => T): { readonly ok: true; readonly value: T } | { readonly ok: false; readonly failure: Failure } {
+export function outcome<T>(
+  call: () => T,
+): { readonly ok: true; readonly value: T } | { readonly ok: false; readonly failure: Failure } {
   try {
     return { ok: true, value: call() };
   } catch (e) {

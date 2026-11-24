@@ -18,7 +18,11 @@ interface Output {
   readonly code: number;
 }
 
-const printed = (lines: readonly string[]): Output => ({ stdout: lines.map((l) => `${l}\n`).join(""), stderr: "", code: EXIT.ok });
+const printed = (lines: readonly string[]): Output => ({
+  stdout: lines.map((l) => `${l}\n`).join(""),
+  stderr: "",
+  code: EXIT.ok,
+});
 const failure = (message: string, code: number): Output => ({ stdout: "", stderr: `error: ${message}\n`, code });
 
 /** What `game` needs of the `screen` handler: a window. */
@@ -77,7 +81,8 @@ function note<W>(app: rt.App<W>, name: string): readonly rt.NoteValue[] {
   return app.notes.find((n) => n.library === "game" && n.name === name)?.args.map((a) => a.value) ?? [];
 }
 
-const int = (v: rt.NoteValue | undefined): number => (v?.kind === "int" || v?.kind === "quantity" ? Number(v.value) : 0);
+const int = (v: rt.NoteValue | undefined): number =>
+  v?.kind === "int" || v?.kind === "quantity" ? Number(v.value) : 0;
 const text = (v: rt.NoteValue | undefined): string => (v?.kind === "text" ? v.value : "");
 
 function base(t: rt.Type): rt.Type {
@@ -91,7 +96,9 @@ function typeName(t: rt.Type): string {
 }
 
 function help<W>(bin: string, app: rt.App<W>): string {
-  const commands = Object.entries(FLAGS).map(([c, flags]) => `  ${c}${flags.map((f) => ` [--${f} ${HINTS[f]}]`).join("")}`);
+  const commands = Object.entries(FLAGS).map(
+    ([c, flags]) => `  ${c}${flags.map((f) => ` [--${f} ${HINTS[f]}]`).join("")}`,
+  );
   const how = fn(app, "input").why ?? "the controls";
   return [
     `usage: ${bin} <command> [options]`,
@@ -105,7 +112,12 @@ function help<W>(bin: string, app: rt.App<W>): string {
   ].join("\n");
 }
 
-type Command = { readonly name: string; readonly level: unknown; readonly at: bigint | null; readonly out: string | null };
+type Command = {
+  readonly name: string;
+  readonly level: unknown;
+  readonly at: bigint | null;
+  readonly out: string | null;
+};
 
 function parse<W>(app: rt.App<W>, argv: readonly string[]): Command | Output | "help" {
   const first = argv[0];
@@ -131,7 +143,8 @@ function parse<W>(app: rt.App<W>, argv: readonly string[]): Command | Output | "
     if (flag === "level") {
       const t = levelParam?.type ?? rt.int;
       level = /^[0-9]+$/.test(value) && base(t) instanceof rt.IntType ? BigInt(value) : undefined;
-      if (level === undefined || t.conform(level) !== undefined) return failure(`--level: not a ${typeName(t)}`, EXIT.usage);
+      if (level === undefined || t.conform(level) !== undefined)
+        return failure(`--level: not a ${typeName(t)}`, EXIT.usage);
     } else if (flag === "at") {
       if (!/^[0-9]+$/.test(value)) return failure("--at: not a tick", EXIT.usage);
       at = BigInt(value);
@@ -147,7 +160,8 @@ function parse<W>(app: rt.App<W>, argv: readonly string[]): Command | Output | "
 function firstValue(p: rt.ParamInfo | undefined): unknown {
   if (p === undefined || p.hasDefault) return undefined;
   const t = base(p.type);
-  return t instanceof rt.RangeType ? t.lo : 0n;
+  if (t instanceof rt.RangeType) return t.lo;
+  return rt.stop("E-UNSUPPORTED", `\`${p.name}\` has no default and no least value`);
 }
 
 /** A game being played: the world, its handlers, and the app's declarations. */
@@ -182,7 +196,7 @@ class Game<W extends rt.Machine, V> {
 
   /** One tick; false when refused, which ends the run. */
   tick(pad: unknown): boolean {
-    const reply = rt.reply(() => this.tickRule.call(this.w, [pad]));
+    const reply = rt.reply(this.tickRule, this.w, [pad]);
     if (reply.kind === "Err") return false;
     this.ticks++;
     return true;
@@ -208,7 +222,13 @@ class Game<W extends rt.Machine, V> {
     return fn(this.app, name).call(this.w, []);
   }
 
-  screenSpec(width: number, height: number, hidden: boolean, bin: string, env: Readonly<Record<string, string | undefined>>) {
+  screenSpec(
+    width: number,
+    height: number,
+    hidden: boolean,
+    bin: string,
+    env: Readonly<Record<string, string | undefined>>,
+  ) {
     return { bin, width, height, title: text(note(this.app, "window")[2]), hidden, env };
   }
 }
@@ -277,8 +297,20 @@ function writeAll(fd: number, s: string): void {
 }
 
 /** The process: arguments, environment and standard input in; standard output and error and an exit code out. */
-export function main<W extends rt.Machine, V>(app: rt.App<W>, program: rt.Program<W, V>, libraries: readonly rt.Library[]): void {
-  const out = run(app, program, libraries, process.argv.slice(2), process.env, () => readFileSync(0), (t) => writeAll(1, t));
+export function main<W extends rt.Machine, V>(
+  app: rt.App<W>,
+  program: rt.Program<W, V>,
+  libraries: readonly rt.Library[],
+): void {
+  const out = run(
+    app,
+    program,
+    libraries,
+    process.argv.slice(2),
+    process.env,
+    () => readFileSync(0),
+    (t) => writeAll(1, t),
+  );
   writeAll(1, out.stdout);
   writeAll(2, out.stderr);
   process.exit(out.code);

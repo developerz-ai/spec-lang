@@ -20,7 +20,10 @@ pub struct App {
     pub params: &'static [AppParam],
     /// Every rule a named declaration reaches.
     pub rules: &'static [Rule],
+    /// The `fn`s its parameters name, then every `fn` of one parameter of a foreign parameter's type.
     pub fns: &'static [Func],
+    /// Every foreign declaration of the program.
+    pub externs: &'static [Extern],
     /// Every state, in world order.
     pub states: &'static [State],
     /// Operations of handlers read as values (`out.text`).
@@ -103,10 +106,20 @@ pub struct Rule {
     pub call: fn(&mut Machine, Vec<Option<Data>>) -> R<Data>,
 }
 
+/// `foreign c "raylib#DrawCube"`.
+#[derive(Debug)]
+pub struct Extern {
+    pub library: &'static str,
+    pub symbol: &'static str,
+    pub params: &'static [Param],
+}
+
 #[derive(Debug)]
 pub struct Func {
     pub name: &'static str,
     pub qualified: &'static str,
+    /// `@why`.
+    pub why: Option<&'static str>,
     pub params: &'static [Param],
     pub result: &'static Ty,
     pub call: fn(&mut Machine, Vec<Option<Data>>) -> R<Data>,
@@ -147,7 +160,8 @@ impl App {
 /// An argument of a call as its parameter's Rust type: a missing required one stops.
 pub fn arg<T: super::data::AsData>(args: &mut std::vec::IntoIter<Option<Data>>, name: &str) -> R<T> {
     match args.next().flatten() {
-        Some(d) => T::from_data(&d).ok_or_else(|| super::stop("E-TYPE-MISMATCH", format!("argument `{name}` is not of its type"))),
+        Some(d) => T::from_data(&d)
+            .ok_or_else(|| super::stop("E-TYPE-MISMATCH", format!("argument `{name}` is not of its type"))),
         None => Err(super::stop("E-TYPE-ARITY", format!("missing argument `{name}`"))),
     }
 }

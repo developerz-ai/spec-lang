@@ -9,7 +9,7 @@ import * as render from "./hop/render.ts";
 import * as screen from "./hop/screen.ts";
 import * as runs from "./hop/tests/runs.ts";
 import * as world from "./hop/world.ts";
-import { states, World, worldType, type WorldValue } from "./machine.ts";
+import { states, World, type WorldValue, worldType } from "./machine.ts";
 import * as rt from "./runtime/index.ts";
 
 export const hopScreenClearBackgroundRule: rt.RuleInfo<World> = {
@@ -29,7 +29,10 @@ export const hopScreenBeginMode3dRule: rt.RuleInfo<World> = {
   name: "begin_mode_3d",
   module: "screen",
   why: "a perspective camera, y up, 45 degrees of vertical view",
-  params: [{ name: "eye", type: geom.Vec3, hasDefault: false }, { name: "target", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "eye", type: geom.Vec3, hasDefault: false },
+    { name: "target", type: geom.Vec3, hasDefault: false },
+  ],
   result: rt.unit,
   triggers: [],
   reads: true,
@@ -77,7 +80,10 @@ export const hopScreenDrawCubeRule: rt.RuleInfo<World> = {
   name: "draw_cube",
   module: "screen",
   why: undefined,
-  params: [{ name: "box", type: geom.Box, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "box", type: geom.Box, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
   triggers: [],
   reads: true,
@@ -89,7 +95,10 @@ export const hopScreenDrawCubeWiresRule: rt.RuleInfo<World> = {
   name: "draw_cube_wires",
   module: "screen",
   why: undefined,
-  params: [{ name: "box", type: geom.Box, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "box", type: geom.Box, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
   triggers: [],
   reads: true,
@@ -101,7 +110,11 @@ export const hopScreenDrawModelRule: rt.RuleInfo<World> = {
   name: "draw_model",
   module: "screen",
   why: undefined,
-  params: [{ name: "asset", type: render.Asset, hasDefault: false }, { name: "at", type: geom.Vec3, hasDefault: false }, { name: "yaw", type: rt.inRange(0n, 359n, true), hasDefault: false }],
+  params: [
+    { name: "asset", type: render.Asset, hasDefault: false },
+    { name: "at", type: geom.Vec3, hasDefault: false },
+    { name: "yaw", type: rt.inRange(0n, 359n, true), hasDefault: false },
+  ],
   result: rt.unit,
   triggers: [],
   reads: true,
@@ -113,7 +126,13 @@ export const hopScreenDrawTextRule: rt.RuleInfo<World> = {
   name: "draw_text",
   module: "screen",
   why: undefined,
-  params: [{ name: "text", type: rt.text, hasDefault: false }, { name: "x", type: rt.int, hasDefault: false }, { name: "y", type: rt.int, hasDefault: false }, { name: "size", type: rt.int, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "text", type: rt.text, hasDefault: false },
+    { name: "x", type: rt.int, hasDefault: false },
+    { name: "y", type: rt.int, hasDefault: false },
+    { name: "size", type: rt.int, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
   triggers: [],
   reads: true,
@@ -163,7 +182,9 @@ export const hopWorldStepRule: rt.RuleInfo<World> = {
   why: "one tick of play: carry, steer, jump, fall, then everything the hero touches",
   params: [{ name: "pad", type: model.Pad, hasDefault: false }],
   result: rt.unit,
-  triggers: [{ library: "game", name: "tick", args: [{ param: "rate", value: { kind: "quantity", value: 60n, unit: "Hz" } }] }],
+  triggers: [
+    { library: "game", name: "tick", args: [{ param: "rate", value: { kind: "quantity", value: 60n, unit: "Hz" } }] },
+  ],
   reads: false,
   call: (w, a) => world.step(w, a[0] as model.Pad),
 };
@@ -172,7 +193,10 @@ export const hopGeomPlusFn: rt.FnInfo<World> = {
   id: "hop.geom.plus",
   name: "plus",
   why: undefined,
-  params: [{ name: "a", type: geom.Vec3, hasDefault: false }, { name: "b", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Vec3, hasDefault: false },
+    { name: "b", type: geom.Vec3, hasDefault: false },
+  ],
   result: geom.Vec3,
   call: (_w, a) => geom.plus(a[0] as geom.Vec3, a[1] as geom.Vec3),
 };
@@ -181,7 +205,10 @@ export const hopGeomMinusFn: rt.FnInfo<World> = {
   id: "hop.geom.minus",
   name: "minus",
   why: undefined,
-  params: [{ name: "a", type: geom.Vec3, hasDefault: false }, { name: "b", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Vec3, hasDefault: false },
+    { name: "b", type: geom.Vec3, hasDefault: false },
+  ],
   result: geom.Vec3,
   call: (_w, a) => geom.minus(a[0] as geom.Vec3, a[1] as geom.Vec3),
 };
@@ -190,7 +217,10 @@ export const hopGeomScaledFn: rt.FnInfo<World> = {
   id: "hop.geom.scaled",
   name: "scaled",
   why: undefined,
-  params: [{ name: "v", type: geom.Vec3, hasDefault: false }, { name: "k", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "v", type: geom.Vec3, hasDefault: false },
+    { name: "k", type: rt.int, hasDefault: false },
+  ],
   result: geom.Vec3,
   call: (_w, a) => geom.scaled(a[0] as geom.Vec3, a[1] as bigint),
 };
@@ -199,7 +229,10 @@ export const hopGeomShiftedFn: rt.FnInfo<World> = {
   id: "hop.geom.shifted",
   name: "shifted",
   why: undefined,
-  params: [{ name: "b", type: geom.Box, hasDefault: false }, { name: "by", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "b", type: geom.Box, hasDefault: false },
+    { name: "by", type: geom.Vec3, hasDefault: false },
+  ],
   result: geom.Box,
   call: (_w, a) => geom.shifted(a[0] as geom.Box, a[1] as geom.Vec3),
 };
@@ -208,7 +241,10 @@ export const hopGeomAroundFeetFn: rt.FnInfo<World> = {
   id: "hop.geom.around_feet",
   name: "around_feet",
   why: "a body is placed by the centre of its base: its feet",
-  params: [{ name: "feet", type: geom.Vec3, hasDefault: false }, { name: "half", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "feet", type: geom.Vec3, hasDefault: false },
+    { name: "half", type: geom.Vec3, hasDefault: false },
+  ],
   result: geom.Box,
   call: (_w, a) => geom.aroundFeet(a[0] as geom.Vec3, a[1] as geom.Vec3),
 };
@@ -217,7 +253,10 @@ export const hopGeomAroundCentreFn: rt.FnInfo<World> = {
   id: "hop.geom.around_centre",
   name: "around_centre",
   why: "a gem is placed by its centre",
-  params: [{ name: "c", type: geom.Vec3, hasDefault: false }, { name: "half", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "c", type: geom.Vec3, hasDefault: false },
+    { name: "half", type: rt.int, hasDefault: false },
+  ],
   result: geom.Box,
   call: (_w, a) => geom.aroundCentre(a[0] as geom.Vec3, a[1] as bigint),
 };
@@ -226,7 +265,10 @@ export const hopGeomOverlapsFn: rt.FnInfo<World> = {
   id: "hop.geom.overlaps",
   name: "overlaps",
   why: "solids block only when they share volume: a body standing on a floor touches it and is not inside it",
-  params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Box, hasDefault: false },
+    { name: "b", type: geom.Box, hasDefault: false },
+  ],
   result: rt.bool,
   call: (_w, a) => geom.overlaps(a[0] as geom.Box, a[1] as geom.Box),
 };
@@ -235,7 +277,10 @@ export const hopGeomTouchesFn: rt.FnInfo<World> = {
   id: "hop.geom.touches",
   name: "touches",
   why: "pickups and hits count a touch, faces included: the same test raylib's CheckCollisionBoxes makes",
-  params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Box, hasDefault: false },
+    { name: "b", type: geom.Box, hasDefault: false },
+  ],
   result: rt.bool,
   call: (_w, a) => geom.touches(a[0] as geom.Box, a[1] as geom.Box),
 };
@@ -244,7 +289,10 @@ export const hopGeomOverFn: rt.FnInfo<World> = {
   id: "hop.geom.over",
   name: "over",
   why: "the footprints meet strictly: standing needs some floor under the feet, not an edge",
-  params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Box, hasDefault: false },
+    { name: "b", type: geom.Box, hasDefault: false },
+  ],
   result: rt.bool,
   call: (_w, a) => geom.over(a[0] as geom.Box, a[1] as geom.Box),
 };
@@ -253,7 +301,10 @@ export const hopGeomTriangleFn: rt.FnInfo<World> = {
   id: "hop.geom.triangle",
   name: "triangle",
   why: "back and forth along a path without division: 0 up to n, then down to 0, period 2n",
-  params: [{ name: "t", type: rt.int, hasDefault: false }, { name: "n", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "t", type: rt.int, hasDefault: false },
+    { name: "n", type: rt.int, hasDefault: false },
+  ],
   result: rt.int,
   call: (_w, a) => geom.triangle(a[0] as bigint, a[1] as bigint),
 };
@@ -262,7 +313,11 @@ export const hopGeomApproachFn: rt.FnInfo<World> = {
   id: "hop.geom.approach",
   name: "approach",
   why: undefined,
-  params: [{ name: "v", type: rt.int, hasDefault: false }, { name: "target", type: rt.int, hasDefault: false }, { name: "step", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "v", type: rt.int, hasDefault: false },
+    { name: "target", type: rt.int, hasDefault: false },
+    { name: "step", type: rt.int, hasDefault: false },
+  ],
   result: rt.int,
   call: (_w, a) => geom.approach(a[0] as bigint, a[1] as bigint, a[2] as bigint),
 };
@@ -289,7 +344,11 @@ export const hopLevelsAtFn: rt.FnInfo<World> = {
   id: "hop.levels.at",
   name: "at",
   why: undefined,
-  params: [{ name: "x", type: rt.int, hasDefault: false }, { name: "y", type: rt.int, hasDefault: false }, { name: "z", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "x", type: rt.int, hasDefault: false },
+    { name: "y", type: rt.int, hasDefault: false },
+    { name: "z", type: rt.int, hasDefault: false },
+  ],
   result: geom.Vec3,
   call: (_w, a) => levels.at(a[0] as bigint, a[1] as bigint, a[2] as bigint),
 };
@@ -298,7 +357,11 @@ export const hopLevelsSlabFn: rt.FnInfo<World> = {
   id: "hop.levels.slab",
   name: "slab",
   why: undefined,
-  params: [{ name: "from", type: geom.Vec3, hasDefault: false }, { name: "to", type: geom.Vec3, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "from", type: geom.Vec3, hasDefault: false },
+    { name: "to", type: geom.Vec3, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: model.Solid,
   call: (_w, a) => levels.slab(a[0] as geom.Vec3, a[1] as geom.Vec3, a[2] as model.Rgb),
 };
@@ -334,7 +397,10 @@ export const hopPhysicsMoverBoxFn: rt.FnInfo<World> = {
   id: "hop.physics.mover_box",
   name: "mover_box",
   why: undefined,
-  params: [{ name: "m", type: model.Mover, hasDefault: false }, { name: "t", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "m", type: model.Mover, hasDefault: false },
+    { name: "t", type: rt.int, hasDefault: false },
+  ],
   result: geom.Box,
   call: (_w, a) => physics.moverBox(a[0] as model.Mover, a[1] as bigint),
 };
@@ -343,7 +409,10 @@ export const hopPhysicsMoverShiftFn: rt.FnInfo<World> = {
   id: "hop.physics.mover_shift",
   name: "mover_shift",
   why: "a rider moves exactly as far as its mover did this tick",
-  params: [{ name: "m", type: model.Mover, hasDefault: false }, { name: "t", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "m", type: model.Mover, hasDefault: false },
+    { name: "t", type: rt.int, hasDefault: false },
+  ],
   result: geom.Vec3,
   call: (_w, a) => physics.moverShift(a[0] as model.Mover, a[1] as bigint),
 };
@@ -352,7 +421,10 @@ export const hopPhysicsAxisFn: rt.FnInfo<World> = {
   id: "hop.physics.axis",
   name: "axis",
   why: undefined,
-  params: [{ name: "neg", type: rt.bool, hasDefault: false }, { name: "pos", type: rt.bool, hasDefault: false }],
+  params: [
+    { name: "neg", type: rt.bool, hasDefault: false },
+    { name: "pos", type: rt.bool, hasDefault: false },
+  ],
   result: rt.int,
   call: (_w, a) => physics.axis(a[0] as boolean, a[1] as boolean),
 };
@@ -370,7 +442,10 @@ export const hopPhysicsFacingFn: rt.FnInfo<World> = {
   id: "hop.physics.facing",
   name: "facing",
   why: "the hero faces where the pad points, and keeps facing there when it lets go",
-  params: [{ name: "pad", type: model.Pad, hasDefault: false }, { name: "was", type: rt.int, hasDefault: false }],
+  params: [
+    { name: "pad", type: model.Pad, hasDefault: false },
+    { name: "was", type: rt.int, hasDefault: false },
+  ],
   result: rt.int,
   call: (_w, a) => physics.facing(a[0] as model.Pad, a[1] as bigint),
 };
@@ -379,7 +454,11 @@ export const hopPhysicsSlideXFn: rt.FnInfo<World> = {
   id: "hop.physics.slide_x",
   name: "slide_x",
   why: "move on one axis, then stop flush against the first solid in the way",
-  params: [{ name: "at", type: geom.Vec3, hasDefault: false }, { name: "v", type: rt.int, hasDefault: false }, { name: "solids", type: rt.list(model.Solid), hasDefault: false }],
+  params: [
+    { name: "at", type: geom.Vec3, hasDefault: false },
+    { name: "v", type: rt.int, hasDefault: false },
+    { name: "solids", type: rt.list(model.Solid), hasDefault: false },
+  ],
   result: physics.Axis,
   call: (_w, a) => physics.slideX(a[0] as geom.Vec3, a[1] as bigint, a[2] as readonly model.Solid[]),
 };
@@ -388,7 +467,11 @@ export const hopPhysicsSlideZFn: rt.FnInfo<World> = {
   id: "hop.physics.slide_z",
   name: "slide_z",
   why: undefined,
-  params: [{ name: "at", type: geom.Vec3, hasDefault: false }, { name: "v", type: rt.int, hasDefault: false }, { name: "solids", type: rt.list(model.Solid), hasDefault: false }],
+  params: [
+    { name: "at", type: geom.Vec3, hasDefault: false },
+    { name: "v", type: rt.int, hasDefault: false },
+    { name: "solids", type: rt.list(model.Solid), hasDefault: false },
+  ],
   result: physics.Axis,
   call: (_w, a) => physics.slideZ(a[0] as geom.Vec3, a[1] as bigint, a[2] as readonly model.Solid[]),
 };
@@ -397,9 +480,15 @@ export const hopPhysicsFallFn: rt.FnInfo<World> = {
   id: "hop.physics.fall",
   name: "fall",
   why: "solids stop the body both ways; a mover's top only catches feet that were above it",
-  params: [{ name: "at", type: geom.Vec3, hasDefault: false }, { name: "v", type: rt.int, hasDefault: false }, { name: "solids", type: rt.list(model.Solid), hasDefault: false }, { name: "tops", type: rt.list(physics.Placed), hasDefault: false }],
+  params: [
+    { name: "at", type: geom.Vec3, hasDefault: false },
+    { name: "v", type: rt.int, hasDefault: false },
+    { name: "solids", type: rt.list(model.Solid), hasDefault: false },
+    { name: "tops", type: rt.list(physics.Placed), hasDefault: false },
+  ],
   result: physics.Fall,
-  call: (_w, a) => physics.fall(a[0] as geom.Vec3, a[1] as bigint, a[2] as readonly model.Solid[], a[3] as readonly physics.Placed[]),
+  call: (_w, a) =>
+    physics.fall(a[0] as geom.Vec3, a[1] as bigint, a[2] as readonly model.Solid[], a[3] as readonly physics.Placed[]),
 };
 
 export const hopPhysicsPatrolFn: rt.FnInfo<World> = {
@@ -415,7 +504,11 @@ export const hopPhysicsStompsFn: rt.FnInfo<World> = {
   id: "hop.physics.stomps",
   name: "stomps",
   why: "from above and falling, on the upper half: a stomp; any other touch hurts",
-  params: [{ name: "feet", type: rt.int, hasDefault: false }, { name: "vy", type: rt.int, hasDefault: false }, { name: "c", type: model.Crawler, hasDefault: false }],
+  params: [
+    { name: "feet", type: rt.int, hasDefault: false },
+    { name: "vy", type: rt.int, hasDefault: false },
+    { name: "c", type: model.Crawler, hasDefault: false },
+  ],
   result: rt.bool,
   call: (_w, a) => physics.stomps(a[0] as bigint, a[1] as bigint, a[2] as model.Crawler),
 };
@@ -442,7 +535,10 @@ export const hopRenderBlockFn: rt.FnInfo<World> = {
   id: "hop.render.block",
   name: "block",
   why: undefined,
-  params: [{ name: "box", type: geom.Box, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "box", type: geom.Box, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.list(render.Draw),
   call: (_w, a) => render.block(a[0] as geom.Box, a[1] as model.Rgb),
 };
@@ -514,7 +610,10 @@ export const hopScreenCheckCollisionBoxesFn: rt.FnInfo<World> = {
   id: "hop.screen.check_collision_boxes",
   name: "check_collision_boxes",
   why: "raylib's own box test, so the game's rule can be checked against the library's",
-  params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Box, hasDefault: false },
+    { name: "b", type: geom.Box, hasDefault: false },
+  ],
   result: rt.bool,
   call: (_w, a) => screen.checkCollisionBoxes(a[0] as geom.Box, a[1] as geom.Box),
 };
@@ -641,9 +740,89 @@ export const program: rt.Program<World, WorldValue> = {
   world: (handlers) => new World(handlers as unknown as ConstructorParameters<typeof World>[0]),
   states,
   value: (w) => w.value(),
-  rules: [hopScreenClearBackgroundRule, hopScreenBeginMode3dRule, hopScreenEndMode3dRule, hopScreenBeginLitRule, hopScreenEndLitRule, hopScreenDrawCubeRule, hopScreenDrawCubeWiresRule, hopScreenDrawModelRule, hopScreenDrawTextRule, hopScreenPresentRule, hopWorldStartRule, hopWorldLoseRule, hopWorldStepRule],
-  fns: [hopGeomPlusFn, hopGeomMinusFn, hopGeomScaledFn, hopGeomShiftedFn, hopGeomAroundFeetFn, hopGeomAroundCentreFn, hopGeomOverlapsFn, hopGeomTouchesFn, hopGeomOverFn, hopGeomTriangleFn, hopGeomApproachFn, hopGeomVecTextFn, hopLevelsQFn, hopLevelsAtFn, hopLevelsSlabFn, hopLevelsLevelFn, hopPhysicsBodyFn, hopPhysicsCrawlerBoxFn, hopPhysicsMoverBoxFn, hopPhysicsMoverShiftFn, hopPhysicsAxisFn, hopPhysicsWalkTargetFn, hopPhysicsFacingFn, hopPhysicsSlideXFn, hopPhysicsSlideZFn, hopPhysicsFallFn, hopPhysicsPatrolFn, hopPhysicsStompsFn, hopRenderAssetNameFn, hopRenderBobFn, hopRenderBlockFn, hopRenderBannerFn, hopRenderSceneFn, hopRenderRgbTextFn, hopRenderDrawTextFn, hopRenderFrameLinesFn, hopRenderDumpFn, hopScreenKeyDownFn, hopScreenCheckCollisionBoxesFn, hopScreenReadPadFn, hopTestsRunsPadOfFn, hopWorldModeTextFn, hopWorldSummaryFn, hopWorldViewFn],
-  laws: [hopLawsNeverInsideASolidLaw, hopLawsSpeedIsBoundedLaw, hopLawsTakenOnlyGrowsLaw, hopLawsLivesNeverRiseLaw, hopLawsLostMeansNoLivesLaw, hopLawsOverIsFinalLaw, hopLawsOneTickPerStepLaw, hopLawsTakenAreRealGemsLaw],
-  externs: [screen.keyDownForeign, screen.checkCollisionBoxesForeign, screen.clearBackgroundForeign, screen.beginMode3dForeign, screen.endMode3dForeign, screen.beginLitForeign, screen.endLitForeign, screen.drawCubeForeign, screen.drawCubeWiresForeign, screen.drawModelForeign, screen.drawTextForeign],
+  rules: [
+    hopScreenClearBackgroundRule,
+    hopScreenBeginMode3dRule,
+    hopScreenEndMode3dRule,
+    hopScreenBeginLitRule,
+    hopScreenEndLitRule,
+    hopScreenDrawCubeRule,
+    hopScreenDrawCubeWiresRule,
+    hopScreenDrawModelRule,
+    hopScreenDrawTextRule,
+    hopScreenPresentRule,
+    hopWorldStartRule,
+    hopWorldLoseRule,
+    hopWorldStepRule,
+  ],
+  fns: [
+    hopGeomPlusFn,
+    hopGeomMinusFn,
+    hopGeomScaledFn,
+    hopGeomShiftedFn,
+    hopGeomAroundFeetFn,
+    hopGeomAroundCentreFn,
+    hopGeomOverlapsFn,
+    hopGeomTouchesFn,
+    hopGeomOverFn,
+    hopGeomTriangleFn,
+    hopGeomApproachFn,
+    hopGeomVecTextFn,
+    hopLevelsQFn,
+    hopLevelsAtFn,
+    hopLevelsSlabFn,
+    hopLevelsLevelFn,
+    hopPhysicsBodyFn,
+    hopPhysicsCrawlerBoxFn,
+    hopPhysicsMoverBoxFn,
+    hopPhysicsMoverShiftFn,
+    hopPhysicsAxisFn,
+    hopPhysicsWalkTargetFn,
+    hopPhysicsFacingFn,
+    hopPhysicsSlideXFn,
+    hopPhysicsSlideZFn,
+    hopPhysicsFallFn,
+    hopPhysicsPatrolFn,
+    hopPhysicsStompsFn,
+    hopRenderAssetNameFn,
+    hopRenderBobFn,
+    hopRenderBlockFn,
+    hopRenderBannerFn,
+    hopRenderSceneFn,
+    hopRenderRgbTextFn,
+    hopRenderDrawTextFn,
+    hopRenderFrameLinesFn,
+    hopRenderDumpFn,
+    hopScreenKeyDownFn,
+    hopScreenCheckCollisionBoxesFn,
+    hopScreenReadPadFn,
+    hopTestsRunsPadOfFn,
+    hopWorldModeTextFn,
+    hopWorldSummaryFn,
+    hopWorldViewFn,
+  ],
+  laws: [
+    hopLawsNeverInsideASolidLaw,
+    hopLawsSpeedIsBoundedLaw,
+    hopLawsTakenOnlyGrowsLaw,
+    hopLawsLivesNeverRiseLaw,
+    hopLawsLostMeansNoLivesLaw,
+    hopLawsOverIsFinalLaw,
+    hopLawsOneTickPerStepLaw,
+    hopLawsTakenAreRealGemsLaw,
+  ],
+  externs: [
+    screen.keyDownForeign,
+    screen.checkCollisionBoxesForeign,
+    screen.clearBackgroundForeign,
+    screen.beginMode3dForeign,
+    screen.endMode3dForeign,
+    screen.beginLitForeign,
+    screen.endLitForeign,
+    screen.drawCubeForeign,
+    screen.drawCubeWiresForeign,
+    screen.drawModelForeign,
+    screen.drawTextForeign,
+  ],
   handlers: ["out", "screen", "keys"],
 };

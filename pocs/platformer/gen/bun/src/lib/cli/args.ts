@@ -74,20 +74,29 @@ function argType(t: rt.Type): ArgType {
     };
   }
   const hint = `<${name.toLowerCase()}>`;
-  if (b instanceof rt.IntType) return { name, hint, parse: (text) => checked(DIGITS.test(text) ? BigInt(text) : undefined) };
+  if (b instanceof rt.IntType)
+    return { name, hint, parse: (text) => checked(DIGITS.test(text) ? BigInt(text) : undefined) };
   if (b instanceof rt.BoolType) {
     return { name, hint, parse: (text) => checked(text === "true" ? true : text === "false" ? false : undefined) };
   }
   if (b instanceof rt.TextType) return { name, hint, parse: (text) => checked(text.isWellFormed() ? text : undefined) };
-  return { name, hint, parse: () => undefined };
+  return rt.stop("E-UNSUPPORTED", `a ${name} has no command-line form`);
 }
 
 function param(p: rt.ParamInfo): Param {
   const b = base(p.type);
   if (!p.hasDefault) {
-    return { name: p.name, shape: "positional", type: argType(p.type), set: undefined, some: false, usage: `<${p.name}>` };
+    return {
+      name: p.name,
+      shape: "positional",
+      type: argType(p.type),
+      set: undefined,
+      some: false,
+      usage: `<${p.name}>`,
+    };
   }
   if (b instanceof rt.BoolType) {
+    if (p.default?.() !== false) rt.stop("E-UNSUPPORTED", `--${p.name}: a switch starts false`);
     return { name: p.name, shape: "switch", type: undefined, set: undefined, some: false, usage: `[--${p.name}]` };
   }
   if (b instanceof rt.SetType) {
@@ -99,10 +108,13 @@ function param(p: rt.ParamInfo): Param {
   return { name: p.name, shape: "once", type, set: undefined, some, usage: `[--${p.name} ${type.hint}]` };
 }
 
-/** Every rule of the app with a `cli` trigger, in the app's order. */
-export function commands<W>(rules: readonly rt.RuleInfo<W>[]): readonly Command<W>[] {
+/** Every rule the app names with a `cli` trigger, in the app's order. */
+export function commands<W>(app: rt.App<W>): readonly Command<W>[] {
   const out: Command<W>[] = [];
-  for (const rule of rules) {
+  const named = app.params.find((p) => p.name === "rules")?.decls ?? [];
+  for (const d of named) {
+    if (d.kind !== "rule") continue;
+    const { rule } = d;
     for (const t of rule.triggers) {
       const arg = t.args[0]?.value;
       if (t.library === "cli" && t.name === "cli" && arg?.kind === "text") {

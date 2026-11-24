@@ -1,7 +1,7 @@
 //! Statements, blocks, places. A `return` leaves the innermost block expression: the Rust function or closure
 //! when that block is its body (`return Ok(v)`), else a labelled block (`break 'b v`).
 
-use crate::code::{Code, Fx, Target};
+use crate::code::{Code, Fx, Target, declared, uses};
 use crate::names::{ident, local};
 use spec_lang_lir::node::{Block, Expected, ExprKind, Lambda, LambdaBody, Place, PlaceRoot, PlaceStep, Stmt, StmtKind};
 use spec_lang_lir::{LTy, Prim, TypeDef, walk};
@@ -57,18 +57,38 @@ impl Fx<'_, '_> {
 
     /// Prints statements up to the first top-level `return`, whose value it gives back.
     fn stmts(&mut self, stmts: &[Stmt], out: &mut Vec<String>) -> Option<Code> {
+        let mut lets = Vec::new();
+        let mut tail = None;
         for s in stmts {
+            if let StmtKind::Let { name, .. } = &s.kind {
+                let from = out.len();
+                self.stmt(s, out);
+                let n = local(name);
+                let head = [format!("let {n}:"), format!("let mut {n}:")];
+                if let Some(i) = (from..out.len()).find(|i| head.iter().any(|h| out[*i].starts_with(h))) {
+                    lets.push((i, n));
+                }
+                continue;
+            }
             if let StmtKind::Return(v) = &s.kind {
                 let c = match v {
                     Some(e) => self.value(e),
                     None => Code::lit("()"),
                 };
                 out.extend(c.pre.iter().cloned());
-                return Some(c);
+                tail = Some(c);
+                break;
             }
             self.stmt(s, out);
         }
-        None
+        // A local nothing reads is declared so.
+        for (i, n) in lets {
+            let read = out[i + 1..].iter().any(|l| uses(l, &n)) || tail.as_ref().is_some_and(|c| uses(&c.text, &n));
+            if !read {
+                out[i] = out[i].replacen(&n, &format!("_{}", n.trim_start_matches("r#")), 1);
+            }
+        }
+        tail
     }
 
     fn nested(&mut self, b: &Block) -> String {
@@ -136,7 +156,7 @@ impl Fx<'_, '_> {
                 let c = self.value(iter);
                 out.extend(c.pre.iter().cloned());
                 let body = self.nested(body);
-                out.push(format!("for {} in {} {{ {body} }}", local(var), c.text));
+                out.push(format!("for {} in {} {{ {body} }}", declared(&local(var), &body), c.text));
             }
             StmtKind::While { cond, body } => {
                 let c = self.value(cond);
@@ -250,7 +270,11 @@ impl Fx<'_, '_> {
                 PlaceStep::Field { ty, index } => {
                     let f = self.field_name(*ty, *index);
                     if last {
-                        let v = if self.cx.is_boxed(*ty, crate::cx::RECORD, *index) { format!("Box::new({value})") } else { value.to_string() };
+                        let v = if self.cx.is_boxed(*ty, crate::cx::RECORD, *index) {
+                            format!("Box::new({value})")
+                        } else {
+                            value.to_string()
+                        };
                         return format!("{cur}.{f} = {v};");
                     }
                     cur = format!("{cur}.{f}");
@@ -323,7 +347,9 @@ impl Fx<'_, '_> {
         let cur = self.tmp();
         out.push(format!("let {cur} = {};", self.read(place, &keys)));
         let mut items = vec![(Code { place: true, copy: self.cx.copy(&place.ty), ..Code::lit(cur) }, place.ty.clone())];
-        items.extend(vals.into_iter().map(|(t, ty)| (Code { place: true, copy: self.cx.copy(&ty), ..Code::lit(t) }, ty)));
+        items.extend(
+            vals.into_iter().map(|(t, ty)| (Code { place: true, copy: self.cx.copy(&ty), ..Code::lit(t) }, ty)),
+        );
         let new = self.prim_on(op, items, &place.ty);
         let v = self.tmp();
         out.extend(new.pre.iter().cloned());
@@ -394,7 +420,11 @@ pub fn assigned(stmts: &[Stmt], out: &mut BTreeSet<String>) {
             _ => {}
         }
     }
-    let wrap = Block { stmts: stmts.to_vec(), ty: LTy::Unit, span: spec_lang_syntax::Span::new(spec_lang_syntax::FileId(0), 0, 0) };
+    let wrap = Block {
+        stmts: stmts.to_vec(),
+        ty: LTy::Unit,
+        span: spec_lang_syntax::Span::new(spec_lang_syntax::FileId(0), 0, 0),
+    };
     let mut inner = Vec::new();
     walk::block_exprs(&wrap, &mut |e| match &e.kind {
         ExprKind::Block(b) => inner.push(b.stmts.clone()),

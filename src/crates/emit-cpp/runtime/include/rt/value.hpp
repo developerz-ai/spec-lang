@@ -42,16 +42,26 @@ class Option {
   constexpr Option() = default;
   constexpr explicit Option(T value) : value_(std::move(value)) {}
 
-  constexpr bool has_value() const { return value_.has_value(); }
-  constexpr const T& operator*() const { return *value_; }
-  constexpr const T* operator->() const { return &*value_; }
-  constexpr T value_or(T fallback) const { return value_ ? *value_ : fallback; }
+  constexpr bool has_value() const {
+    return value_.has_value();
+  }
+  constexpr const T& operator*() const {
+    return *value_;
+  }
+  constexpr const T* operator->() const {
+    return &*value_;
+  }
+  constexpr T value_or(T fallback) const {
+    return value_ ? *value_ : fallback;
+  }
 
   friend constexpr std::strong_ordering operator<=>(const Option& a, const Option& b) {
     if (a.value_ && b.value_) return *a.value_ <=> *b.value_;
     return b.has_value() <=> a.has_value();
   }
-  friend constexpr bool operator==(const Option& a, const Option& b) { return a.value_ == b.value_; }
+  friend constexpr bool operator==(const Option& a, const Option& b) {
+    return a.value_ == b.value_;
+  }
 
  private:
   std::optional<T> value_;
@@ -78,11 +88,19 @@ class Box {
   Box& operator=(Box&&) noexcept = default;
   ~Box() = default;
 
-  const T& operator*() const { return *held_; }
-  T& operator*() { return *held_; }
+  const T& operator*() const {
+    return *held_;
+  }
+  T& operator*() {
+    return *held_;
+  }
 
-  friend std::strong_ordering operator<=>(const Box& a, const Box& b) { return *a.held_ <=> *b.held_; }
-  friend bool operator==(const Box& a, const Box& b) { return *a.held_ == *b.held_; }
+  friend std::strong_ordering operator<=>(const Box& a, const Box& b) {
+    return *a.held_ <=> *b.held_;
+  }
+  friend bool operator==(const Box& a, const Box& b) {
+    return *a.held_ == *b.held_;
+  }
 
  private:
   std::unique_ptr<T> held_;
@@ -93,7 +111,9 @@ struct Range {
   Int lo;
   Int hi;
   bool inclusive = true;
-  constexpr bool has(Int n) const { return n >= lo && (inclusive ? n <= hi : n < hi); }
+  constexpr bool has(Int n) const {
+    return n >= lo && (inclusive ? n <= hi : n < hi);
+  }
   friend constexpr std::strong_ordering operator<=>(const Range&, const Range&) = default;
   friend constexpr bool operator==(const Range&, const Range&) = default;
 };
@@ -177,7 +197,9 @@ class Shown {
     text_ += str(value);
     return *this;
   }
-  Text done() { return count_ == 0 ? text_ : text_ + ")"; }
+  Text done() {
+    return count_ == 0 ? text_ : text_ + ")";
+  }
 
  private:
   Text text_;
@@ -199,9 +221,15 @@ class Dyn {
     throw Stop{"E-TYPE-MISMATCH", "a value of another type than the one asked for: " + held_->show()};
   }
 
-  friend std::strong_ordering operator<=>(const Dyn& a, const Dyn& b) { return a.held_->compare(*b.held_); }
-  friend bool operator==(const Dyn& a, const Dyn& b) { return (a <=> b) == std::strong_ordering::equal; }
-  friend Text show(const Dyn& value) { return value.held_->show(); }
+  friend std::strong_ordering operator<=>(const Dyn& a, const Dyn& b) {
+    return a.held_->compare(*b.held_);
+  }
+  friend bool operator==(const Dyn& a, const Dyn& b) {
+    return (a <=> b) == std::strong_ordering::equal;
+  }
+  friend Text show(const Dyn& value) {
+    return value.held_->show();
+  }
 
  private:
   struct Base {
@@ -216,7 +244,9 @@ class Dyn {
       if (const auto* same = dynamic_cast<const Holder*>(&other)) return value <=> same->value;
       return typeid(*this).before(typeid(other)) ? std::strong_ordering::less : std::strong_ordering::greater;
     }
-    Text show() const override { return str(value); }
+    Text show() const override {
+      return str(value);
+    }
     T value;
   };
   std::shared_ptr<const Base> held_;
@@ -230,7 +260,8 @@ struct Failure {
   friend std::strong_ordering operator<=>(const Failure&, const Failure&) = default;
   friend bool operator==(const Failure&, const Failure&) = default;
   friend Text show(const Failure& f) {
-    return "fail " + f.name + (f.data.empty() ? Text{} : detail::joined("(", f.data, ")", [](const Dyn& d) { return show(d); }));
+    return "fail " + f.name +
+           (f.data.empty() ? Text{} : detail::joined("(", f.data, ")", [](const Dyn& d) { return show(d); }));
   }
 };
 
@@ -344,15 +375,25 @@ class Reply {
  public:
   explicit Reply(Dyn value) : ok_(true), value_(std::move(value)) {}
   explicit Reply(Failure failure) : ok_(false), value_(Dyn{unit}), failure_(std::move(failure)) {}
-  bool ok() const { return ok_; }
-  const Dyn& value() const { return value_; }
-  const Failure& failure() const { return failure_; }
+  bool ok() const {
+    return ok_;
+  }
+  const Dyn& value() const {
+    return value_;
+  }
+  const Failure& failure() const {
+    return failure_;
+  }
   friend std::strong_ordering operator<=>(const Reply& a, const Reply& b) {
     if (a.ok_ != b.ok_) return b.ok_ <=> a.ok_;
     return a.ok_ ? a.value_ <=> b.value_ : a.failure_ <=> b.failure_;
   }
-  friend bool operator==(const Reply& a, const Reply& b) { return (a <=> b) == std::strong_ordering::equal; }
-  friend Text show(const Reply& r) { return r.ok_ ? "Ok(" + show(r.value_) + ")" : "Err(" + show(r.failure_) + ")"; }
+  friend bool operator==(const Reply& a, const Reply& b) {
+    return (a <=> b) == std::strong_ordering::equal;
+  }
+  friend Text show(const Reply& r) {
+    return r.ok_ ? "Ok(" + show(r.value_) + ")" : "Err(" + show(r.failure_) + ")";
+  }
 
  private:
   bool ok_;
@@ -383,7 +424,9 @@ struct Step {
   World after;
   friend std::strong_ordering operator<=>(const Step&, const Step&) = default;
   friend bool operator==(const Step&, const Step&) = default;
-  friend Text show(const Step& s) { return show(s.event) + " -> " + show(s.reply); }
+  friend Text show(const Step& s) {
+    return show(s.event) + " -> " + show(s.reply);
+  }
 };
 
 template <class World>
@@ -393,7 +436,9 @@ struct Trace {
   std::vector<World> states;
   friend std::strong_ordering operator<=>(const Trace&, const Trace&) = default;
   friend bool operator==(const Trace&, const Trace&) = default;
-  friend Text show(const Trace& t) { return "<trace of " + std::to_string(t.steps.size()) + " steps>"; }
+  friend Text show(const Trace& t) {
+    return "<trace of " + std::to_string(t.steps.size()) + " steps>";
+  }
 };
 
 }  // namespace rt

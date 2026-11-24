@@ -54,15 +54,29 @@ const std::vector<Data>& Data::values() const {
   wrong("a record or a variant");
 }
 
-Data to_data(Unit) { return Data{unit}; }
-Data to_data(bool value) { return Data{value}; }
-Data to_data(Int value) { return Data{value}; }
-Data to_data(const Text& value) { return Data{value}; }
+Data to_data(Unit) {
+  return Data{unit};
+}
+Data to_data(bool value) {
+  return Data{value};
+}
+Data to_data(Int value) {
+  return Data{value};
+}
+Data to_data(const Text& value) {
+  return Data{value};
+}
 
 void from_data(const Data&, Unit&) {}
-void from_data(const Data& data, bool& value) { value = data.boolean(); }
-void from_data(const Data& data, Int& value) { value = data.integer(); }
-void from_data(const Data& data, Text& value) { value = data.text(); }
+void from_data(const Data& data, bool& value) {
+  value = data.boolean();
+}
+void from_data(const Data& data, Int& value) {
+  value = data.integer();
+}
+void from_data(const Data& data, Text& value) {
+  value = data.text();
+}
 
 namespace meta {
 
@@ -105,8 +119,12 @@ std::string Type::shown() const {
   return "value";
 }
 
-const NoteValue* NoteValue::arg(std::string_view param) const { return arg_of(args, param); }
-const NoteValue* Note::arg(std::string_view param) const { return arg_of(args, param); }
+const NoteValue* NoteValue::arg(std::string_view param) const {
+  return arg_of(args, param);
+}
+const NoteValue* Note::arg(std::string_view param) const {
+  return arg_of(args, param);
+}
 
 const Note* Callable::trigger(std::string_view library, std::string_view trigger_name) const {
   for (const Note& t : triggers) {

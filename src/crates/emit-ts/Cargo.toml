@@ -11,6 +11,11 @@ spec-lang-syntax.workspace = true
 spec-lang-ir.workspace = true
 spec-lang-diag.workspace = true
 spec-lang-lir.workspace = true
+# Biome as a library lays the text out, so a generated project passes its own `biome check` as built.
+biome_formatter = "=0.7.3"
+biome_js_formatter = "=0.7.3"
+biome_js_parser = "=0.7.3"
+biome_languages = "=0.7.3"
 
 [dev-dependencies]
 spec-lang-check.workspace = true

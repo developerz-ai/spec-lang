@@ -4,7 +4,7 @@ import * as rt from "../runtime/index.ts";
 
 /** type Sub (hop/geom.slg:3): 4096 m either way from the origin, so every coordinate is exact as an f32 at the C edge */
 export type Sub = bigint;
-export const Sub = rt.alias<bigint>("hop.geom.Sub", () => rt.inRange(-1048576n, 1048576n, true));
+export const Sub: rt.AliasType<bigint> = rt.alias<bigint>("hop.geom.Sub", () => rt.inRange(-1048576n, 1048576n, true));
 
 /** type Vec3 (hop/geom.slg:9) */
 export interface Vec3 {
@@ -13,7 +13,7 @@ export interface Vec3 {
   readonly z: bigint;
 }
 
-export const Vec3 = rt.record<Vec3>("hop.geom.Vec3", () => [
+export const Vec3: rt.RecordType<Vec3> = rt.record<Vec3>("hop.geom.Vec3", () => [
   rt.field("x", "x", Sub),
   rt.field("y", "y", Sub),
   rt.field("z", "z", Sub),
@@ -25,7 +25,7 @@ export interface Box {
   readonly hi: Vec3;
 }
 
-export const Box = rt.record<Box>("hop.geom.Box", () => [
+export const Box: rt.RecordType<Box> = rt.record<Box>("hop.geom.Box", () => [
   rt.field("lo", "lo", Vec3),
   rt.field("hi", "hi", Vec3),
 ]);
@@ -37,40 +37,43 @@ export const unit: bigint = 256n;
 export function plus(a: Vec3, b: Vec3): Vec3 {
   rt.check(Vec3, a, "argument `a`");
   rt.check(Vec3, b, "argument `b`");
-  return rt.check(Vec3, Vec3.make([a.x + b.x, a.y + b.y, a.z + b.z]));
+  return Vec3.make([a.x + b.x, a.y + b.y, a.z + b.z]);
 }
 
 /** fn minus (hop/geom.slg:17) */
 export function minus(a: Vec3, b: Vec3): Vec3 {
   rt.check(Vec3, a, "argument `a`");
   rt.check(Vec3, b, "argument `b`");
-  return rt.check(Vec3, Vec3.make([a.x - b.x, a.y - b.y, a.z - b.z]));
+  return Vec3.make([a.x - b.x, a.y - b.y, a.z - b.z]);
 }
 
 /** fn scaled (hop/geom.slg:19) */
 export function scaled(v: Vec3, k: bigint): Vec3 {
   rt.check(Vec3, v, "argument `v`");
-  return rt.check(Vec3, Vec3.make([v.x * k, v.y * k, v.z * k]));
+  return Vec3.make([v.x * k, v.y * k, v.z * k]);
 }
 
 /** fn shifted (hop/geom.slg:21) */
 export function shifted(b: Box, by: Vec3): Box {
   rt.check(Box, b, "argument `b`");
   rt.check(Vec3, by, "argument `by`");
-  return rt.check(Box, Box.make([plus(b.lo, by), plus(b.hi, by)]));
+  return Box.make([plus(b.lo, by), plus(b.hi, by)]);
 }
 
 /** fn around_feet (hop/geom.slg:23): a body is placed by the centre of its base: its feet */
 export function aroundFeet(feet: Vec3, half: Vec3): Box {
   rt.check(Vec3, feet, "argument `feet`");
   rt.check(Vec3, half, "argument `half`");
-  return rt.check(Box, Box.make([Vec3.make([feet.x - half.x, feet.y, feet.z - half.z]), Vec3.make([feet.x + half.x, feet.y + half.y, feet.z + half.z])]));
+  return Box.make([
+    Vec3.make([feet.x - half.x, feet.y, feet.z - half.z]),
+    Vec3.make([feet.x + half.x, feet.y + half.y, feet.z + half.z]),
+  ]);
 }
 
 /** fn around_centre (hop/geom.slg:28): a gem is placed by its centre */
 export function aroundCentre(c: Vec3, half: bigint): Box {
   rt.check(Vec3, c, "argument `c`");
-  return rt.check(Box, Box.make([Vec3.make([c.x - half, c.y - half, c.z - half]), Vec3.make([c.x + half, c.y + half, c.z + half])]));
+  return Box.make([Vec3.make([c.x - half, c.y - half, c.z - half]), Vec3.make([c.x + half, c.y + half, c.z + half])]);
 }
 
 /** fn overlaps (hop/geom.slg:32): solids block only when they share volume: a body standing on a floor touches it and is not inside it */
@@ -84,7 +87,9 @@ export function overlaps(a: Box, b: Box): boolean {
 export function touches(a: Box, b: Box): boolean {
   rt.check(Box, a, "argument `a`");
   rt.check(Box, b, "argument `b`");
-  return a.lo.x <= b.hi.x && b.lo.x <= a.hi.x && a.lo.y <= b.hi.y && b.lo.y <= a.hi.y && a.lo.z <= b.hi.z && b.lo.z <= a.hi.z;
+  return (
+    a.lo.x <= b.hi.x && b.lo.x <= a.hi.x && a.lo.y <= b.hi.y && b.lo.y <= a.hi.y && a.lo.z <= b.hi.z && b.lo.z <= a.hi.z
+  );
 }
 
 /** fn over (hop/geom.slg:48): the footprints meet strictly: standing needs some floor under the feet, not an edge */

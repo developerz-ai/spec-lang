@@ -13,7 +13,7 @@ export type Asset =
   | { readonly kind: "CrawlerMesh" }
   | { readonly kind: "GemMesh" }
   | { readonly kind: "FlagMesh" };
-export const Asset = rt.oneOf<Asset>("hop.render.Asset", () => [
+export const Asset: rt.SumType<Asset> = rt.oneOf<Asset>("hop.render.Asset", () => [
   rt.variant("PipMesh"),
   rt.variant("CrawlerMesh"),
   rt.variant("GemMesh"),
@@ -25,10 +25,14 @@ export type Draw =
   | { readonly kind: "Cube"; readonly box: geom.Box; readonly color: model.Rgb }
   | { readonly kind: "Wires"; readonly box: geom.Box; readonly color: model.Rgb }
   | { readonly kind: "Mesh"; readonly asset: Asset; readonly at: geom.Vec3; readonly yaw: bigint };
-export const Draw = rt.oneOf<Draw>("hop.render.Draw", () => [
+export const Draw: rt.SumType<Draw> = rt.oneOf<Draw>("hop.render.Draw", () => [
   rt.variant("Cube", [rt.field("box", "box", geom.Box), rt.field("color", "color", model.Rgb)]),
   rt.variant("Wires", [rt.field("box", "box", geom.Box), rt.field("color", "color", model.Rgb)]),
-  rt.variant("Mesh", [rt.field("asset", "asset", Asset), rt.field("at", "at", geom.Vec3), rt.field("yaw", "yaw", rt.inRange(0n, 359n, true))]),
+  rt.variant("Mesh", [
+    rt.field("asset", "asset", Asset),
+    rt.field("at", "at", geom.Vec3),
+    rt.field("yaw", "yaw", rt.inRange(0n, 359n, true)),
+  ]),
 ]);
 
 /** type Label (hop/render.slg:17) */
@@ -40,7 +44,7 @@ export interface Label {
   readonly color: model.Rgb;
 }
 
-export const Label = rt.record<Label>("hop.render.Label", () => [
+export const Label: rt.RecordType<Label> = rt.record<Label>("hop.render.Label", () => [
   rt.field("x", "x", rt.int),
   rt.field("y", "y", rt.int),
   rt.field("size", "size", rt.int),
@@ -58,7 +62,7 @@ export interface Frame {
   readonly labels: readonly Label[];
 }
 
-export const Frame = rt.record<Frame>("hop.render.Frame", () => [
+export const Frame: rt.RecordType<Frame> = rt.record<Frame>("hop.render.Frame", () => [
   rt.field("sky", "sky", model.Rgb),
   rt.field("eye", "eye", geom.Vec3),
   rt.field("target", "target", geom.Vec3),
@@ -136,16 +140,26 @@ export function scene(v: world.View): Frame {
   for (const m of v.stage.movers) {
     draws = [...draws, ...block(physics.moverBox(m, v.ticks), m.color)];
   }
-  for (const g2 of v.stage.gems.filter((g: model.Gem) => !v.taken.has(g.no))) {
-    draws = [...draws, Draw.make("Mesh", [Asset.make("GemMesh"), geom.Vec3.with(g2.at, { y: g2.at.y + bob(v.ticks) }), rt.mod(v.ticks * 3n, 360n)])];
+  for (const g of v.stage.gems.filter((g: model.Gem) => !v.taken.has(g.no))) {
+    draws = [
+      ...draws,
+      Draw.make("Mesh", [
+        Asset.make("GemMesh"),
+        geom.Vec3.with(g.at, { y: g.at.y + bob(v.ticks) }),
+        rt.mod(v.ticks * 3n, 360n),
+      ]),
+    ];
   }
   for (const c of v.crawlers) {
     draws = [...draws, Draw.make("Mesh", [Asset.make("CrawlerMesh"), c.at, c.dir < 0n ? 180n : 0n])];
   }
   draws = [...draws, Draw.make("Mesh", [Asset.make("FlagMesh"), v.stage.goal, 0n])];
   draws = [...draws, Draw.make("Mesh", [Asset.make("PipMesh"), v.player.at, v.player.yaw])];
-  const hud = [Label.make([16n, 12n, 20n, `gems ${v.taken.size}/${BigInt(v.stage.gems.length)}`, ink()]), Label.make([16n, 38n, 20n, `lives ${v.lives}`, ink()])];
-  return rt.check(Frame, Frame.make([sky(), geom.plus(target, eyeOffset()), target, v.ticks, draws, [...hud, ...banner(v.mode)]]));
+  const hud = [
+    Label.make([16n, 12n, 20n, `gems ${v.taken.size}/${BigInt(v.stage.gems.length)}`, ink()]),
+    Label.make([16n, 38n, 20n, `lives ${v.lives}`, ink()]),
+  ];
+  return Frame.make([sky(), geom.plus(target, eyeOffset()), target, v.ticks, draws, [...hud, ...banner(v.mode)]]);
 }
 
 /** fn rgb_text (hop/render.slg:69) */
@@ -163,9 +177,9 @@ export function drawText(d: Draw): string {
     return `cube ${geom.vecText(b.lo)} ${geom.vecText(b.hi)} ${rgbText(color)}`;
   }
   if (d.kind === "Wires") {
-    const b2 = d.box;
-    const color2 = d.color;
-    return `wires ${geom.vecText(b2.lo)} ${geom.vecText(b2.hi)} ${rgbText(color2)}`;
+    const b = d.box;
+    const color = d.color;
+    return `wires ${geom.vecText(b.lo)} ${geom.vecText(b.hi)} ${rgbText(color)}`;
   }
   if (d.kind === "Mesh") {
     const asset = d.asset;
@@ -179,7 +193,13 @@ export function drawText(d: Draw): string {
 /** fn frame_lines (hop/render.slg:81): a frame as text, one line per call the screen will make, so four backends can be compared without a GPU */
 export function frameLines(f: Frame): readonly string[] {
   rt.check(Frame, f, "argument `f`");
-  return [...[...[`sky ${rgbText(f.sky)}`, `camera ${geom.vecText(f.eye)} ${geom.vecText(f.target)}`, `time ${f.time}`], ...f.world.map((d: Draw) => drawText(d))], ...f.labels.map((l: Label) => `label ${l.x} ${l.y} ${l.size} ${rgbText(l.color)} ${l.text}`)];
+  return [
+    ...[
+      ...[`sky ${rgbText(f.sky)}`, `camera ${geom.vecText(f.eye)} ${geom.vecText(f.target)}`, `time ${f.time}`],
+      ...f.world.map((d: Draw) => drawText(d)),
+    ],
+    ...f.labels.map((l: Label) => `label ${l.x} ${l.y} ${l.size} ${rgbText(l.color)} ${l.text}`),
+  ];
 }
 
 /** fn dump (hop/render.slg:87) */

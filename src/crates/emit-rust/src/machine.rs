@@ -2,7 +2,7 @@
 //! each handler operation, and what traces are made of (events, replies, pools of drawn values).
 
 use crate::code::{Code, Fx};
-use crate::cx::{Cx, Mode};
+use crate::cx::Cx;
 use crate::dty::{gen_fn, pool_types};
 use crate::names::{camel, ident, local};
 use spec_lang_ir::HandlerId;
@@ -18,7 +18,11 @@ pub fn op_fn(lir: &Lir, h: HandlerId, op: u32) -> String {
 
 fn handler_field(lir: &Lir, h: usize) -> String {
     let name = &lir.handlers[h].name;
-    if lir.handlers.iter().filter(|x| x.name == *name).count() > 1 { ident(&format!("{name}_{h}")) } else { ident(name) }
+    if lir.handlers.iter().filter(|x| x.name == *name).count() > 1 {
+        ident(&format!("{name}_{h}"))
+    } else {
+        ident(name)
+    }
 }
 
 fn handler_state(lir: &Lir, h: usize) -> Option<String> {
@@ -37,7 +41,12 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         .iter()
         .enumerate()
         .map(|(i, s)| {
-            format!("/// `{}`\npub {}: {},", s.info.qualified, cx.names.state(spec_lang_ir::StateId(i as u32)), cx.ty(&s.ty, None))
+            format!(
+                "/// `{}`\npub {}: {},",
+                s.info.qualified,
+                cx.names.state(spec_lang_ir::StateId(i as u32)),
+                cx.ty(&s.ty, None)
+            )
         })
         .collect();
     out.push(format!(
@@ -48,7 +57,13 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         .states
         .iter()
         .enumerate()
-        .map(|(i, s)| format!("format!(\"{}: {{}}\", self.{}.show())", s.info.qualified, cx.names.state(spec_lang_ir::StateId(i as u32))))
+        .map(|(i, s)| {
+            format!(
+                "format!(\"{}: {{}}\", self.{}.show())",
+                s.info.qualified,
+                cx.names.state(spec_lang_ir::StateId(i as u32))
+            )
+        })
         .collect();
     out.push(format!(
         "impl Show for World {{ fn show(&self) -> String {{ rt::show::seq(\"World(\", [{}].into_iter(), \")\") }} }}",
@@ -60,7 +75,8 @@ pub fn file(cx: &mut Cx<'_>) -> String {
     let mut hinits = Vec::new();
     for (i, h) in lir.handlers.iter().enumerate() {
         let (Some(p), Some(sname)) = (&h.pretend, handler_state(lir, i)) else { continue };
-        let fs: Vec<String> = p.state.iter().map(|s| format!("pub {}: {},", ident(&s.name), cx.ty(&s.ty, None))).collect();
+        let fs: Vec<String> =
+            p.state.iter().map(|s| format!("pub {}: {},", ident(&s.name), cx.ty(&s.ty, None))).collect();
         out.push(format!(
             "/// The state of `{}`, what tests run for `{}`.\n#[derive(Clone, Debug)]\npub struct {sname} {{ {} }}",
             p.name,
@@ -72,14 +88,17 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         for s in &p.state {
             let v = match &s.default {
                 Some(e) => fx.value(e).seal(),
-                None => empty_of(&mut fx, &s.ty).unwrap_or_else(|| "Default::default()".into()),
+                None => empty_of(&s.ty).unwrap_or_else(|| "Default::default()".into()),
             };
             inits.push(format!("{}: {v}", ident(&s.name)));
         }
         hfields.push(format!("pub {}: {sname},", handler_field(lir, i)));
         hinits.push(format!("{}: {sname} {{ {} }}", handler_field(lir, i), inits.join(", ")));
     }
-    out.push(format!("/// Every handler's pretend state.\n#[derive(Clone, Debug)]\npub struct Handlers {{ {} }}", hfields.join(" ")));
+    out.push(format!(
+        "/// Every handler's pretend state.\n#[derive(Clone, Debug)]\npub struct Handlers {{ {} }}",
+        hfields.join(" ")
+    ));
 
     // The machine.
     let mut fx = Fx::new(cx, None, false);
@@ -91,14 +110,20 @@ pub fn file(cx: &mut Cx<'_>) -> String {
             Some(e) => {
                 let c = fx.value(e);
                 if c.m {
-                    fx.cx.unsupported(s.info.span, "an initial state value that needs the machine (a rule, a state or an effect)");
+                    fx.cx.unsupported(
+                        s.info.span,
+                        "an initial state value that needs the machine (a rule, a state or an effect)",
+                    );
                 }
                 c.seal()
             }
-            None => match empty_of(&mut fx, &s.ty) {
+            None => match empty_of(&s.ty) {
                 Some(v) => v,
                 None => {
-                    fx.cx.unsupported(s.info.span, "a state that is not a collection or an Option needs an initial value");
+                    fx.cx.unsupported(
+                        s.info.span,
+                        "a state that is not a collection or an Option needs an initial value",
+                    );
                     "Default::default()".into()
                 }
             },
@@ -154,7 +179,13 @@ pub fn file(cx: &mut Cx<'_>) -> String {
             .params
             .iter()
             .enumerate()
-            .map(|(k, p)| if k == 0 { format!("{}.show()", ident(&p.name)) } else { format!("format!(\"{}: {{}}\", {}.show())", p.name, ident(&p.name)) })
+            .map(|(k, p)| {
+                if k == 0 {
+                    format!("{}.show()", ident(&p.name))
+                } else {
+                    format!("format!(\"{}: {{}}\", {}.show())", p.name, ident(&p.name))
+                }
+            })
             .collect();
         shows.push(format!(
             "Event::{v} {{ {} }} => rt::show::seq(\"{module}.{}(\", [{}].into_iter(), \")\"),",
@@ -166,7 +197,8 @@ pub fn file(cx: &mut Cx<'_>) -> String {
             .params
             .iter()
             .map(|p| {
-                let a = if cx.copy(&p.ty) { format!("*{}", ident(&p.name)) } else { format!("{}.clone()", ident(&p.name)) };
+                let a =
+                    if cx.copy(&p.ty) { format!("*{}", ident(&p.name)) } else { format!("{}.clone()", ident(&p.name)) };
                 if p.default.is_some() { format!("Some({a})") } else { a }
             })
             .collect();
@@ -181,14 +213,17 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         ));
     }
     if variants.is_empty() {
-        out.push("/// A call of a rule, as a trace records it: this program has no rules.\n#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]\npub enum Event {}".into());
-        out.push("impl Show for Event { fn show(&self) -> String { match *self {} } }".into());
+        out.push("/// A call of a rule, as a trace records it: this program has no rules, so none is ever made.\n#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]\npub enum Event { None }".into());
+        out.push("impl Show for Event { fn show(&self) -> String { \"no rule\".into() } }".into());
     } else {
         out.push(format!(
             "/// A call of a rule with its arguments, as a trace records it.\n#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]\npub enum Event {{ {} }}",
             variants.join(" ")
         ));
-        out.push(format!("impl Show for Event {{ fn show(&self) -> String {{ match self {{ {} }} }} }}", shows.join(" ")));
+        out.push(format!(
+            "impl Show for Event {{ fn show(&self) -> String {{ match self {{ {} }} }} }}",
+            shows.join(" ")
+        ));
     }
     // Random events, for the rules laws trace.
     let mut drawn: BTreeSet<usize> = BTreeSet::new();
@@ -208,15 +243,25 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         arms.push(format!("{i} => Event::{v} {{ {} }},", fs.join(", ")));
     }
     arms.push("_ => return Err(rt::stop(\"E-GEN\", \"no such rule\")),".into());
-    let call_body = if calls.is_empty() { "match *self {}".to_string() } else { format!("Ok(match self {{ {} }})", calls.join(" ")) };
+    let none = arms.len() == 1;
+    let random = if none {
+        "let _ = rule; Err(rt::stop(\"E-GEN\", \"no law draws a rule\"))".to_string()
+    } else {
+        format!("Ok(match rule {{ {} }})", arms.join(" "))
+    };
+    let call_body = if calls.is_empty() {
+        "Err(rt::stop(\"E-GEN\", \"this program has no rules\"))".to_string()
+    } else {
+        format!("Ok(match self {{ {} }})", calls.join(" "))
+    };
     out.push(format!(
         "impl Event {{\n\
          /// A call of rule number `rule` with arguments drawn from its parameters' types.\n\
-         #[allow(unused_variables)]\n\
-         pub fn random(m: &mut Machine, rng: &mut Rng, pools: &Pools, rule: usize) -> R<Event> {{ Ok(match rule {{ {} }}) }}\n\n\
+         pub fn random({}, rule: usize) -> R<Event> {{ {random} }}\n\n\
          /// The call as one step from outside: its value or its refusal.\n\
-         pub fn call(&self, m: &mut Machine) -> R<Reply> {{ {call_body} }}\n}}",
-        arms.join(" ")
+         pub fn call(&self, {}) -> R<Reply> {{ {call_body} }}\n}}",
+        crate::code::params(&crate::dty::draw_params(), &random),
+        crate::code::params(&["m: &mut Machine".to_string()], &call_body)
     ));
     let outs: Vec<(String, String)> = cx.names.outs().map(|(t, n)| (n.clone(), cx.ty(t, None))).collect();
     let ovars: Vec<String> = outs.iter().map(|(n, t)| format!("{n}({t}),")).collect();
@@ -229,7 +274,10 @@ pub fn file(cx: &mut Cx<'_>) -> String {
             "/// What a rule gives, one variant per result type.\n#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]\npub enum Out {{ {} }}",
             ovars.join(" ")
         ));
-        out.push(format!("impl Show for Out {{ fn show(&self) -> String {{ match self {{ {} }} }} }}", oshow.join(" ")));
+        out.push(format!(
+            "impl Show for Out {{ fn show(&self) -> String {{ match self {{ {} }} }} }}",
+            oshow.join(" ")
+        ));
     }
     out.push(
         "/// A step's reply: the rule's value or its refusal.\n#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]\npub enum Reply { Ok(Out), Err(Failure) }".into(),
@@ -238,7 +286,8 @@ pub fn file(cx: &mut Cx<'_>) -> String {
 
     // Pools.
     let pools = pool_types(cx);
-    let pfields: Vec<String> = pools.iter().enumerate().map(|(i, d)| format!("pub p{i}: Vec<{}>,", cx.ty(&cx.lty(d), None))).collect();
+    let pfields: Vec<String> =
+        pools.iter().enumerate().map(|(i, d)| format!("pub p{i}: Vec<{}>,", cx.ty(&cx.lty(d), None))).collect();
     let mut fills = Vec::new();
     for (si, s) in lir.states.iter().enumerate() {
         let f = cx.names.state(spec_lang_ir::StateId(si as u32));
@@ -256,14 +305,17 @@ pub fn file(cx: &mut Cx<'_>) -> String {
     }
     let decls: Vec<String> = (0..pools.len()).map(|i| format!("let mut p{i} = BTreeSet::new();")).collect();
     let builds: Vec<String> = (0..pools.len()).map(|i| format!("p{i}: p{i}.into_iter().collect()")).collect();
+    let of = if pools.is_empty() {
+        "Pools {}".to_string()
+    } else {
+        format!("{} for w in worlds {{ {} }} Pools {{ {} }}", decls.join(" "), fills.join(" "), builds.join(", "))
+    };
     out.push(format!(
         "/// Values already in a world, by declared type: the keys of each state declared `Map[K, V]` and the elements of each `Set[K]`.\n\
          #[derive(Clone, Debug, Default)]\npub struct Pools {{ {} }}\n\n\
-         impl Pools {{\n#[allow(unused_variables)]\npub fn of(worlds: &[World]) -> Pools {{ {} for w in worlds {{ {} }} Pools {{ {} }} }}\n}}",
+         impl Pools {{\npub fn of({}: &[World]) -> Pools {{ {of} }}\n}}",
         pfields.join(" "),
-        decls.join(" "),
-        fills.join(" "),
-        builds.join(", ")
+        crate::code::declared("worlds", &of)
     ));
     let wf: Vec<String> = lir
         .states
@@ -286,16 +338,13 @@ pub fn file(cx: &mut Cx<'_>) -> String {
 }
 
 /// The value a state or handler state starts with when none is written.
-fn empty_of(fx: &mut Fx<'_, '_>, t: &LTy) -> Option<String> {
+fn empty_of(t: &LTy) -> Option<String> {
     match t {
         LTy::Map(..) => Some("BTreeMap::new()".into()),
         LTy::Set(_) => Some("BTreeSet::new()".into()),
         LTy::List(_) => Some("Vec::new()".into()),
         LTy::Option(_) => Some("Opt::None".into()),
-        _ => {
-            let _ = fx;
-            None
-        }
+        _ => None,
     }
 }
 
@@ -308,12 +357,8 @@ fn op_item(cx: &mut Cx<'_>, hi: usize, oi: usize, name: &str) -> String {
     let arm = h.pretend.as_ref().and_then(|p| p.arms.get(oi).and_then(Option::as_ref).map(|a| (p, a)));
     let doc = format!("/// `{}.{name}` of library `{}`: in checks, its pretend runs.", h.name, h.library);
     let Some((pretend, arm)) = arm else {
-        let params: Vec<String> = op
-            .params
-            .iter()
-            .flatten()
-            .map(|p| format!("_{}: {}", ident(&p.name), cx.ty(&p.ty, None)))
-            .collect();
+        let params: Vec<String> =
+            op.params.iter().flatten().map(|p| format!("_{}: {}", ident(&p.name), cx.ty(&p.ty, None))).collect();
         return format!(
             "{doc}\npub fn {f}(_m: &mut Machine, {}) -> R<{ret}> {{ Err(rt::stop(\"E-UNSUPPORTED\", \"`{}.{name}`: library `{}` has no pretend for it\")) }}",
             params.join(", "),
@@ -352,6 +397,8 @@ fn op_item(cx: &mut Cx<'_>, hi: usize, oi: usize, name: &str) -> String {
         }
     }
     lines.push("Ok(reply)".into());
-    let _ = Mode::Tests;
-    format!("{doc}\npub fn {f}(m: &mut Machine, {}) -> R<{ret}> {{ {} }}", params.join(", "), lines.join(" "))
+    let mut list = vec!["m: &mut Machine".to_string()];
+    list.extend(params);
+    let text = lines.join(" ");
+    format!("{doc}\npub fn {f}({}) -> R<{ret}> {{ {text} }}", crate::code::params(&list, &text))
 }

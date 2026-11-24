@@ -31,7 +31,8 @@ const Span kIgnorable[] = {
 
 template <std::size_t N>
 bool within(const Span (&spans)[N], char32_t c) {
-  const auto* it = std::upper_bound(std::begin(spans), std::end(spans), c, [](char32_t x, const Span& s) { return x < s.first; });
+  const auto* it =
+      std::upper_bound(std::begin(spans), std::end(spans), c, [](char32_t x, const Span& s) { return x < s.first; });
   return it != std::begin(spans) && c <= std::prev(it)->last;
 }
 
@@ -54,12 +55,15 @@ Text lower(const Text& text) {
     const char32_t c = points[i];
     if (c == 0x3A3) {
       // Sigma is final after a cased letter and not before one.
-      const bool final_form = cased_after_ignorable(std::make_reverse_iterator(points.begin() + static_cast<std::ptrdiff_t>(i)), points.rend()) &&
-                              !cased_after_ignorable(points.begin() + static_cast<std::ptrdiff_t>(i) + 1, points.end());
+      const bool final_form =
+          cased_after_ignorable(std::make_reverse_iterator(points.begin() + static_cast<std::ptrdiff_t>(i)),
+                                points.rend()) &&
+          !cased_after_ignorable(points.begin() + static_cast<std::ptrdiff_t>(i) + 1, points.end());
       unicode::append(out, final_form ? 0x3C2 : 0x3C3);
       continue;
     }
-    const auto* hit = std::lower_bound(std::begin(kLowered), std::end(kLowered), c, [](const Lowered& l, char32_t x) { return l.from < x; });
+    const auto* hit = std::lower_bound(std::begin(kLowered), std::end(kLowered), c,
+                                       [](const Lowered& l, char32_t x) { return l.from < x; });
     if (hit == std::end(kLowered) || hit->from != c) {
       unicode::append(out, c);
       continue;

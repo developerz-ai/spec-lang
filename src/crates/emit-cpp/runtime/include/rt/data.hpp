@@ -32,24 +32,38 @@ class Data {
   };
 
   Data() = default;
-  Data(Unit) {}                                        // NOLINT
-  Data(bool value) : held_(value) {}                   // NOLINT
-  Data(Int value) : held_(value) {}                    // NOLINT
-  Data(Text value) : held_(std::move(value)) {}        // NOLINT
-  Data(const char* value) : held_(Text{value}) {}      // NOLINT
-  static Data none() { return Data{Held{None{}}}; }
+  Data(Unit) {}                                    // NOLINT
+  Data(bool value) : held_(value) {}               // NOLINT
+  Data(Int value) : held_(value) {}                // NOLINT
+  Data(Text value) : held_(std::move(value)) {}    // NOLINT
+  Data(const char* value) : held_(Text{value}) {}  // NOLINT
+  static Data none() {
+    return Data{Held{None{}}};
+  }
   static Data some(Data value);
-  static Data items(std::vector<Data> items) { return Data{Held{Items{std::move(items)}}}; }
+  static Data items(std::vector<Data> items) {
+    return Data{Held{Items{std::move(items)}}};
+  }
   static Data entries(std::vector<std::pair<Data, Data>> entries);
   static Data fields(std::size_t variant, std::vector<Data> values) {
     return Data{Held{Fields{variant, std::move(values)}}};
   }
 
-  bool is_bool() const { return std::holds_alternative<bool>(held_); }
-  bool is_int() const { return std::holds_alternative<Int>(held_); }
-  bool is_text() const { return std::holds_alternative<Text>(held_); }
-  bool is_none() const { return std::holds_alternative<None>(held_); }
-  bool is_some() const { return std::holds_alternative<Some>(held_); }
+  bool is_bool() const {
+    return std::holds_alternative<bool>(held_);
+  }
+  bool is_int() const {
+    return std::holds_alternative<Int>(held_);
+  }
+  bool is_text() const {
+    return std::holds_alternative<Text>(held_);
+  }
+  bool is_none() const {
+    return std::holds_alternative<None>(held_);
+  }
+  bool is_some() const {
+    return std::holds_alternative<Some>(held_);
+  }
 
   // Each stops E-TYPE-MISMATCH when the value has another shape.
   bool boolean() const;

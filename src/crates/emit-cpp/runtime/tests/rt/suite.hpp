@@ -109,6 +109,8 @@ bool refuses(F&& call, const char* name) {
 }
 
 void report(const std::string& check, const char* status, const std::optional<Diag>& diag);
+// 1 when a check failed, else 0: what the checks' executable exits with.
+int exit_code();
 
 // How one run of a test ended.
 template <class World>
@@ -185,7 +187,9 @@ class Suite {
     const RunT& r = found->second;
     if (r.kind == RunT::Kind::Pass) return r.world;
     if (r.kind == RunT::Kind::Blocked && r.diag.code == "B-FOREIGN") {
-      throw GivenEnd{RunT{RunT::Kind::Blocked, {}, Diag{"B-FOREIGN", std::string{"blocked by "} + name + ", which reached a foreign body"}}};
+      throw GivenEnd{RunT{RunT::Kind::Blocked,
+                          {},
+                          Diag{"B-FOREIGN", std::string{"blocked by "} + name + ", which reached a foreign body"}}};
     }
     throw GivenEnd{RunT{RunT::Kind::Blocked, {}, Diag{"F-BLOCKED", std::string{"blocked by "} + name}}};
   }
@@ -357,7 +361,8 @@ class Suite {
     return rules.at(rule).draw(g);
   }
 
-  Walk generate(Rng& rng, const std::vector<int>& traced, const std::vector<int>& start_rules, std::optional<World> start) {
+  Walk generate(Rng& rng, const std::vector<int>& traced, const std::vector<int>& start_rules,
+                std::optional<World> start) {
     Machine m;
     std::uint64_t prefix = 0;
     if (start) {

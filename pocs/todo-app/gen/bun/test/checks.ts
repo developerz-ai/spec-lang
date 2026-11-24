@@ -14,7 +14,31 @@ const tests: Readonly<Record<string, check.Test<World>>> = {
   "todo.board.three_open_one_done": {
     id: "todo.board.three_open_one_done",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => rt.OrdMap.of<bigint, model.Task>(rt.int, [[1n, model.Task.make([1n, "low one", undefined, model.Priority.make("Low")])], [2n, model.Task.make([2n, "plain"])], [3n, model.Task.make([3n, "urgent", undefined, model.Priority.make("High"), rt.OrdSet.of(rt.text, ["work"])])], [4n, model.Task.make([4n, "finished", model.Status.make("Done"), undefined, rt.OrdSet.of(rt.text, ["work", "home"])])]]) }, { state: states[1] as check.State<World>, value: (_w) => 5n }],
+    given: [
+      {
+        state: states[0] as check.State<World>,
+        value: (_w) =>
+          rt.OrdMap.of<bigint, model.Task>(rt.int, [
+            [1n, model.Task.make([1n, "low one", undefined, model.Priority.make("Low")])],
+            [2n, model.Task.make([2n, "plain"])],
+            [
+              3n,
+              model.Task.make([3n, "urgent", undefined, model.Priority.make("High"), rt.OrdSet.of(rt.text, ["work"])]),
+            ],
+            [
+              4n,
+              model.Task.make([
+                4n,
+                "finished",
+                model.Status.make("Done"),
+                undefined,
+                rt.OrdSet.of(rt.text, ["work", "home"]),
+              ]),
+            ],
+          ]),
+      },
+      { state: states[1] as check.State<World>, value: (_w) => 5n },
+    ],
     body: (w, _a) => boardTests.threeOpenOneDone(w),
   },
   "todo.tests.scenarios.numbers_start_at_one": {
@@ -91,31 +115,190 @@ export const checks: readonly check.Check<World, WorldValue>[] = [
   { name: "todo.laws.reads_change_nothing", run: (r) => r.law("todo.laws.reads_change_nothing") },
   { name: "todo.laws.refusal_changes_nothing", run: (r) => r.law("todo.laws.refusal_changes_nothing") },
   { name: "todo.laws.stored_under_its_number", run: (r) => r.law("todo.laws.stored_under_its_number") },
-  { name: "todo.model.is_title case[0]", run: (r) => r.fnCase((_w) => model.isTitle("milk"), (_w) => true) },
-  { name: "todo.model.is_title case[1]", run: (r) => r.fnCase((_w) => model.isTitle(""), (_w) => false) },
-  { name: "todo.model.is_title case[2]", run: (r) => r.fnCase((_w) => model.isTitle("   "), (_w) => false) },
-  { name: "todo.model.is_title case[3]", run: (r) => r.fnCase((_w) => model.isTitle("a\tb"), (_w) => false) },
-  { name: "todo.model.is_title case[4]", run: (r) => r.fnCase((_w) => model.isTitle("　"), (_w) => false) },
-  { name: "todo.model.is_title case[5]", run: (r) => r.fnCase((_w) => model.isTitle("a\u2028b"), (_w) => false) },
-  { name: "todo.model.is_title case[6]", run: (r) => r.fnCase((_w) => model.isTitle("ab"), (_w) => false) },
-  { name: "todo.model.is_tag case[0]", run: (r) => r.fnCase((_w) => model.isTag("home"), (_w) => true) },
-  { name: "todo.model.is_tag case[1]", run: (r) => r.fnCase((_w) => model.isTag("deep-work"), (_w) => true) },
-  { name: "todo.model.is_tag case[2]", run: (r) => r.fnCase((_w) => model.isTag("Home"), (_w) => false) },
-  { name: "todo.model.is_tag case[3]", run: (r) => r.fnCase((_w) => model.isTag(""), (_w) => false) },
-  { name: "todo.model.is_tag case[4]", run: (r) => r.fnCase((_w) => model.isTag("a b"), (_w) => false) },
-  { name: "todo.model.is_tag case[5]", run: (r) => r.fnCase((_w) => model.isTag("-x"), (_w) => false) },
-  { name: "todo.model.is_tag case[6]", run: (r) => r.fnCase((_w) => model.isTag("--all"), (_w) => false) },
-  { name: "todo.render.tag_text case[0]", run: (r) => r.fnCase((_w) => render.tagText(rt.OrdSet.empty(rt.text)), (_w) => "") },
-  { name: "todo.render.tag_text case[1]", run: (r) => r.fnCase((_w) => render.tagText(rt.OrdSet.of(rt.text, ["work", "home"])), (_w) => " #home #work") },
-  { name: "todo.render.line case[0]", run: (r) => r.fnCase((_w) => render.line(model.Task.make([1n, "milk"])), (_w) => "1 [ ] milk") },
-  { name: "todo.render.line case[1]", run: (r) => r.fnCase((_w) => render.line(model.Task.make([2n, "ship", model.Status.make("Done"), model.Priority.make("High"), rt.OrdSet.of(rt.text, ["work"])])), (_w) => "2 [x] ship !high #work") },
-  { name: "todo.tests.scenarios.numbers_start_at_one", run: (r) => r.test("todo.tests.scenarios.numbers_start_at_one") },
-  { name: "todo.tests.scenarios.numbers_are_never_reused", run: (r) => r.test("todo.tests.scenarios.numbers_are_never_reused") },
+  {
+    name: "todo.model.is_title case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("milk"),
+        (_w) => true,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle(""),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("   "),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("a\tb"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[4]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("　"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[5]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("a\u2028b"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_title case[6]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTitle("ab"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("home"),
+        (_w) => true,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("deep-work"),
+        (_w) => true,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("Home"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag(""),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[4]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("a b"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[5]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("-x"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.model.is_tag case[6]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => model.isTag("--all"),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "todo.render.tag_text case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.tagText(rt.OrdSet.empty(rt.text)),
+        (_w) => "",
+      ),
+  },
+  {
+    name: "todo.render.tag_text case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.tagText(rt.OrdSet.of(rt.text, ["work", "home"])),
+        (_w) => " #home #work",
+      ),
+  },
+  {
+    name: "todo.render.line case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Task.make([1n, "milk"]);
+          return () => render.line(a0);
+        },
+        (_w) => "1 [ ] milk",
+      ),
+  },
+  {
+    name: "todo.render.line case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          render.line(
+            model.Task.make([
+              2n,
+              "ship",
+              model.Status.make("Done"),
+              model.Priority.make("High"),
+              rt.OrdSet.of(rt.text, ["work"]),
+            ]),
+          ),
+        (_w) => "2 [x] ship !high #work",
+      ),
+  },
+  {
+    name: "todo.tests.scenarios.numbers_start_at_one",
+    run: (r) => r.test("todo.tests.scenarios.numbers_start_at_one"),
+  },
+  {
+    name: "todo.tests.scenarios.numbers_are_never_reused",
+    run: (r) => r.test("todo.tests.scenarios.numbers_are_never_reused"),
+  },
   { name: "todo.tests.scenarios.empty_board_says_so", run: (r) => r.test("todo.tests.scenarios.empty_board_says_so") },
-  { name: "todo.tests.scenarios.list_ranks_urgent_first", run: (r) => r.test("todo.tests.scenarios.list_ranks_urgent_first") },
+  {
+    name: "todo.tests.scenarios.list_ranks_urgent_first",
+    run: (r) => r.test("todo.tests.scenarios.list_ranks_urgent_first"),
+  },
   { name: "todo.tests.scenarios.list_all_and_by_tag", run: (r) => r.test("todo.tests.scenarios.list_all_and_by_tag") },
-  { name: "todo.tests.scenarios.done_and_reopen_move_once", run: (r) => r.test("todo.tests.scenarios.done_and_reopen_move_once") },
-  { name: "todo.tests.scenarios.rename_keeps_the_rest", run: (r) => r.test("todo.tests.scenarios.rename_keeps_the_rest") },
-  { name: "todo.tests.scenarios.clear_removes_only_done", run: (r) => r.test("todo.tests.scenarios.clear_removes_only_done") },
-  { name: "todo.tests.scenarios.unknown_numbers_are_refused", run: (r) => r.property("todo.tests.scenarios.unknown_numbers_are_refused") },
+  {
+    name: "todo.tests.scenarios.done_and_reopen_move_once",
+    run: (r) => r.test("todo.tests.scenarios.done_and_reopen_move_once"),
+  },
+  {
+    name: "todo.tests.scenarios.rename_keeps_the_rest",
+    run: (r) => r.test("todo.tests.scenarios.rename_keeps_the_rest"),
+  },
+  {
+    name: "todo.tests.scenarios.clear_removes_only_done",
+    run: (r) => r.test("todo.tests.scenarios.clear_removes_only_done"),
+  },
+  {
+    name: "todo.tests.scenarios.unknown_numbers_are_refused",
+    run: (r) => r.property("todo.tests.scenarios.unknown_numbers_are_refused"),
+  },
 ];

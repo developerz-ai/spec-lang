@@ -2,7 +2,7 @@
 
 import type { WorldValue } from "../machine.ts";
 import * as rt from "../runtime/index.ts";
-import * as model from "./model.ts";
+import type * as model from "./model.ts";
 
 /** law numbers_below_next (todo/laws.slg:9): a number is never reused */
 export function numbersBelowNext(t: rt.Trace<WorldValue>): boolean {
@@ -16,12 +16,28 @@ export function nextOnlyGrows(t: rt.Trace<WorldValue>): boolean {
 
 /** law others_untouched (todo/laws.slg:17): a command that names a task touches no other task */
 export function othersUntouched(t: rt.Trace<WorldValue>, k: bigint): boolean {
-  return t.steps.every((s: rt.Step<WorldValue>) => !((rt.eventArg(s.event, "no", { "todo.board.done": 0, "todo.board.reopen": 0, "todo.board.rename": 0, "todo.board.remove": 0 }) as bigint) !== k) || rt.equal(s.after.tasks.get(k), s.before.tasks.get(k)));
+  return t.steps.every(
+    (s: rt.Step<WorldValue>) =>
+      !(
+        (rt.eventArg(s.event, "no", {
+          "todo.board.done": 0,
+          "todo.board.reopen": 0,
+          "todo.board.rename": 0,
+          "todo.board.remove": 0,
+        }) as bigint) !== k
+      ) || rt.equal(s.after.tasks.get(k), s.before.tasks.get(k)),
+  );
 }
 
 /** law clear_keeps_every_open_task (todo/laws.slg:21) */
 export function clearKeepsEveryOpenTask(t: rt.Trace<WorldValue>): boolean {
-  return t.steps.every((s: rt.Step<WorldValue>) => !((subject: rt.Event) => subject.rule.id === "todo.board.clear")(s.event) || (s.after.tasks.values().every((it: model.Task) => rt.equal(it.status, model.Status.make("Open"))) && s.after.tasks.size === BigInt(s.before.tasks.values().filter((it2: model.Task) => rt.equal(it2.status, model.Status.make("Open"))).length)));
+  return t.steps.every(
+    (s: rt.Step<WorldValue>) =>
+      !((subject: rt.Event) => subject.rule.id === "todo.board.clear")(s.event) ||
+      (s.after.tasks.values().every((it: model.Task) => it.status.kind === "Open") &&
+        s.after.tasks.size ===
+          BigInt(s.before.tasks.values().filter((it: model.Task) => it.status.kind === "Open").length)),
+  );
 }
 
 /** law reads_change_nothing (todo/laws.slg:26) */
@@ -31,7 +47,10 @@ export function readsChangeNothing(t: rt.Trace<WorldValue>): boolean {
 
 /** law refusal_changes_nothing (todo/laws.slg:29): a refused command leaves the board as it was */
 export function refusalChangesNothing(t: rt.Trace<WorldValue>): boolean {
-  return t.steps.every((s: rt.Step<WorldValue>) => !((subject: rt.Reply) => subject.kind === "Err")(s.reply) || rt.equal(s.after, s.before));
+  return t.steps.every(
+    (s: rt.Step<WorldValue>) =>
+      !((subject: rt.Reply) => subject.kind === "Err")(s.reply) || rt.equal(s.after, s.before),
+  );
 }
 
 /** law stored_under_its_number (todo/laws.slg:33): a task is stored under its own number */

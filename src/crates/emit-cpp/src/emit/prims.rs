@@ -10,7 +10,8 @@ pub fn apply(op: Prim, a: &[Code]) -> Code {
         let (left, right) = if p == 8 || p == 9 { (10, 10) } else { (p, p + 1) };
         Code::new(format!("{} {sym} {}", a[0].at(left), a[1].at(right)), p)
     };
-    let call = |name: &str| Code::atom(format!("rt::{name}({})", a.iter().map(|x| x.at(2)).collect::<Vec<_>>().join(", ")));
+    let call =
+        |name: &str| Code::atom(format!("rt::{name}({})", a.iter().map(|x| x.at(2)).collect::<Vec<_>>().join(", ")));
     let member = |name: &str| Code::atom(format!("{}.{name}", a[0].at(16)));
     match op {
         Prim::Eq => bin("==", 8),

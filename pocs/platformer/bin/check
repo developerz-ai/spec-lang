@@ -12,6 +12,9 @@ step "spec checks, lints and tests (spec-lang test)"
 (cd ../../src && cargo build --release -q -p spec-lang-cli)
 ../../src/target/release/spec-lang test src --deny warnings
 
+step "generated code is current (spec-lang build)"
+bin/regen --check
+
 step "scripts: lint, types, tests"
 (cd scripts && bunx biome check . && bunx tsc -p . && bun test)
 
@@ -19,8 +22,13 @@ step "assets: models and shaders rebuild byte for byte and load in raylib"
 assets/bin/check
 
 for b in rust bun ruby cpp; do
-  step "backend $b"
+  step "hand-written backend $b"
   "out/$b/bin/check"
+done
+
+for b in rust bun ruby cpp; do
+  step "generated backend $b"
+  "gen/$b/bin/check"
 done
 
 step "parity: every backend, fixed bytes and pixel agreement"

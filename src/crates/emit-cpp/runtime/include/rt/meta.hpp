@@ -72,7 +72,8 @@ struct Note {
 struct Param {
   std::string name;
   TypeRef type;
-  // The default, when the parameter has one that reads no other parameter.
+  bool has_default = false;
+  // The default's value, when it reads no other parameter.
   std::optional<Data> fallback = {};
 };
 
@@ -80,7 +81,14 @@ struct Param {
 struct Callable {
   std::string qualified;
   std::string name;
+  // Its `@why`, or empty.
+  std::string why = {};
+  // `foreign <lang> "<library>#<symbol>"`: the library and the symbol; empty for a body of the program's own.
+  std::string foreign_library = {};
+  std::string foreign_symbol = {};
   bool rule = false;
+  // It may write a state (`@uses(x.write)`); false: it only reads.
+  bool writes = false;
   std::vector<Note> triggers = {};
   std::vector<Param> params = {};
   TypeRef result = nullptr;

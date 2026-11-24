@@ -1,104 +1,71 @@
-# emit-ruby: the Ruby backend
+# emit-ruby: the Ruby printer
 
-> **State `As of 2026-11-24`.** Runs for one program: the todo POC (`pocs/todo-app/src`). `emit` turns its `@target(ruby)` app into a Ruby project whose own gate passes and which reproduces the POC's 68 parity transcripts. Any form outside the subset is an `E-UNSUPPORTED` diagnostic, never a guess.
+> **State `As of 2026-11-24`.** A printer over the LIR ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)), `spec_lang_lir::Printer` for `@target(ruby)`. On the 40 programs of `src/bin/corpus` its printed checks report what the engine reports, check by check. The two POC apps build with it: `pocs/todo-app/gen/ruby` (parity 68 of 68) and `pocs/platformer/gen/ruby` (parity 46 of 46, the four `shot` lines alike with `out/ruby`). It names no program and no library.
 
-`pub fn emit(program: &ir::Program, app: &ir::AppDecl) -> Result<Vec<OutFile>, EmitError>`. Same input, same bytes.
-
-```text
-emit-ruby <spec dir> <out dir> [--without strategy,...]
+```bash
+spec-lang build <project> --target ruby --tests --out <dir>   # then <dir>/bin/test: one JSON line per check
+spec-lang build <project> --app <name> --out <dir>            # then <dir>/bin/build, bin/check, exe/<bin>
 ```
 
-## Pipeline
+## What it writes
 
-```text
-ir::Program
-  -> emit_ts::sem   typed tree and the plan of the app, shared with emit-ts
-  -> rb::lower      typed tree to rb::ast, a small typed Ruby tree
-  -> rb::print      two spaces, double quotes, a long list one item per line
-```
-
-| Module | Holds |
+| File | From |
 |---|---|
-| `rb/ast.rs` `rb/print.rs` | the Ruby tree (module, class, def, `Data.define`, blocks, lambdas, `case`) and its printer |
-| `rb/file.rs` | one file: namespace, `require_relative` lines derived from what it references, provenance |
-| `rb/lower.rs` | expressions and statements, with the representation choices at the top of the file |
-| `rb/product.rs` `rb/tests.rs` | one generator per kind of file |
-| `rb/project.rs` | runtime shims (`include_str!` of `runtime/`), `Gemfile`, `exe/<bin>`, scripts |
+| `lib/<module path>.rb` | one per module: its types, constants, states, `fn`s, rules and laws in source order, each under `# rule add (todo/board.slg:21)` and its `@why` |
+| `lib/program.rb` | the program as data (`PROGRAM`): every state, rule, `fn`, law, handler with its pretend arms, and each app's manifest |
+| `test/checks/<module path>.rb`, `test/checks.rb`, `bin/test` | every test, `@cases` row, property and law, under the names `spec-lang test` gives |
+| `lib/spec.rb`, `lib/spec/` | the runtime, `prelude/` here, the same in every project |
+| app only: `lib/libs/<library>/`, `test/libs/<library>/` | copied from `libs/<library>/real/ruby/` for each library the app uses |
+| app only: `lib/app.rb`, `exe/<bin>`, `bin/build`, `bin/check`, `Gemfile` | the glue: `PROGRAM.apps`' manifest handed to the first library's `run` |
 
-Every Ruby file the tests emit passes `ruby -wc` and parses with Prism (`tests/todo.rs`).
-
-## Generated from the IR, and what is a shim
-
-| Generated per program | From |
-|---|---|
-| `lib/<module>/<decl>.rb`, one file per `type`, `fn` and `rule`, in `Module::Path` | the declaration |
-| `lib/app/world.rb`, `refusals.rb` | every `state` of the modules that own the app's rules; every error name |
-| `lib/app/commands.rb` | rule signatures, by the derivation table of the `cli` vocabulary |
-| `lib/app/store.rb` | the types of the states, and each law of the form `t.states.all(w => p)` |
-| `lib/app/cli.rb`, `exe/<bin>`, `bin/*`, `Gemfile` | `@bin`, `@store`, `@target` |
-| `test/**/<fn>_cases_test.rb`, `test/<module>_steps.rb` and `_test.rb`, `test/support/events.rb` | `@cases`, `test`, `law` |
-
-| Runtime shim, the same in every project (`runtime/`) | Lifted from |
-|---|---|
-| `lib/runtime/store/`: strict JSON reader, `File#flock` with a bounded wait, atomic replace, file store | `pocs/todo-app/out/ruby/lib/todo/store`, made generic over the world |
-| `lib/runtime/store/codec.rb`: schema-directed reader and canonical writer, with the fast reader | written for this backend; replaces the reference's `decoder.rb` and `encoder.rb` |
-| `lib/runtime/cli.rb`, `cli/`: table rows, argument types, parser, dispatch, exit codes | `out/ruby/lib/todo/cli` |
-| `lib/runtime/values.rb`, `text.rb` | claims, refusals, outcomes, Map order, stable sort, Text |
-| `test/support/testing.rb`, `test/runtime/failure_paths_test.rb` | test board, seeded generators, traces; failure paths of the store |
+A library's `real/ruby/runtime.conf` says what the printer needs of it: `entry` (the file to require), `module`, `executable = <note>.<param>` when it can run an app, `gem = <name> <version>` per run-time gem.
 
 ## Representation
 
 | spec-lang | Ruby |
 |---|---|
-| `Int`, `Text` | `Integer`; a frozen UTF-8 `String` |
-| `T where claim` | the base value; a module `Name` with `valid?`, used at every edge and by every constructor that holds one |
-| sum with no data | the symbol of the variant; `Name::ALL` |
-| record | `Data.define` whose `initialize` applies the defaults and checks every claim, so `with` checks them again |
-| `Option[T]`, `Set[T]`, `Map[K, V]` | `T` or `nil`; a frozen `Set`, sorted where order shows; a `Hash` kept in ascending key order |
-| rule | `Module.rule(world, **params) -> Runtime::Outcome`; a refusal is an exception raised before any new world exists |
+| `Int` | `Integer`: exact at any size, so nothing wraps and nothing stops for width (the corpus reaches 2^127 - 1) |
+| `Text`, `Bool`, `()` | a UTF-8 `String`, `true`/`false`, `nil` |
+| `List`, `Set`, `Map`, tuple | `Array`; `::Set` and `Hash` built in ascending value order; `Spec::Tuple` |
+| `Option[T]` | `Spec::Some` or `Spec::NONE`, never `nil` |
+| record, sum | `Data.define` extended with `Spec::Record`; a module of variants (`Spec::Sum`): one frozen value, or a `Data` class when it has fields |
+| declared type | a `Spec::Type` value: `check` (E-CLAIM), and what generators and libraries read |
+| rule | a module method in `Spec.rule do ... end`: the world and handler state are restored on any way out but a value |
+| failure, stop, blocked | exceptions `Spec::Failure`, `Spec::Stop(code)`, `Spec::Blocked(code)` |
 
-## Strategies
+`mod` is `Integer#%` (floored); `trim` uses the 25 code points; `lower` is `String#downcase` plus the final-sigma rule; sorting is the value order (`Spec.compare`), stable. Generation is the engine's SplitMix64 and bands (`lib/spec/testing/`), so a seed draws the engine's inputs.
 
-Named in `provenance.json` with the licensing fact; each switchable with `--without`. With all of them off the project still passes its gate and parity; that was run once on 2026-11-24.
+## Measured
 
-| Strategy | Licensed by | Does |
-|---|---|---|
-| `rule.pure-read` (not switchable) | the body assigns no state | shared lock; the store is never written; the atomic writer is never loaded |
-| `draft.take-or-copy` | a rule is atomic and the process commits once | the Hash the store read for this one call is written in place; any other caller's is `dup`ed |
-| `store.canonical-fast-path` | the canonical bytes are fixed and this program writes them | a `StringScanner` reads those bytes straight into values; anything else goes to the strict reader |
-| `store.law-on-read` (not switchable) | a law `t.states.all(w => p)` | a store that breaks it is `unreadable` |
-| `match.table`, `sort.identity` | as in `emit-ts` | a frozen Hash; `set.sort` |
-| start-up: `--disable-gems`, lazy requires | no gem at run time; parsing is derived from a rule's parameters, not its body | help and usage errors load the parameter table only; a command loads its own rule file, and the store only when it runs |
+Method: `wc -l`; `time` of one `spec-lang build`, release build, one loaded machine, one run each.
 
-Guarantees of the shims, tested in `test/runtime/failure_paths_test.rb`: a failed replace leaves the old store and no tmp file (`ensure`); an interrupt is deferred from the first byte of the tmp file to the rename (`Thread.handle_interrupt`); a lock is released on every way out; the write buffer is sized once from the bytes read.
+| | Lines |
+|---|---|
+| this printer, `src/*.rs` | 3010 |
+| its runtime, `prelude/` | 1846 |
+| the emitter it replaces (Rust, then its embedded Ruby runtime) | 2732, 1116; it also used `emit-ts`'s typer and plan |
+| `libs/cli/real/ruby` (lib, tests) | 1010, 171 |
+| `libs/game/real/ruby` | 479, 93 |
+| `libs/raylib/real/ruby` | 431, 79 |
 
-### Measured
-
-Same machine, day and store as in `emit-ts/README.md`; `hyperfine -N -w 1 -r 6`, mean wall time in ms, through the version manager's `ruby` on `PATH`. One run; the machine was busy.
-
-| Command | Plain translation | All strategies | Hand-written `out/ruby` |
-|---|---|---|---|
-| `stats` | 2093 ± 380 | 1467 ± 44 | 1013 ± 69 |
-| `list` | 2254 ± 22 | 1825 ± 54 | 1607 ± 99 |
-
-`stats` is 1.45 times the hand-written program, which reads counts without building tasks; this backend has no such projection. `list` is 1.14 times.
+`spec-lang build` of either POC app: below 0.02 s. Parity median per run on that machine: gen-ruby 41 ms against 36 ms for the hand-written todo program; 44 ms against 34 ms for the platformer.
 
 ## Open choices
 
-Those of `emit-ts/README.md`, and:
-
 | Question | Chosen |
 |---|---|
-| Namespaces | a spec module `a.b` is `A::B`; `App` and `Runtime` are the backend's, so a spec module under `app` or `runtime` is refused |
-| Arguments | a `fn` takes parameters without a default by position and the others by keyword; a rule and a record take all by keyword |
-| Linting | none. The reference ran rubocop; the printer does not keep lines under a limit, so the gate is `ruby -wc`, minitest under `-w`, build |
+| Arguments | by position up to the first parameter with a default, by keyword from there |
+| Names Ruby cannot take | a trailing underscore (`end_`, `hash_`); `self` in a claim is `this`; a top-level module named like a Ruby or runtime constant gets one too |
+| A written place whose key calls a rule | `E-UNSUPPORTED`; no corpus program has one |
+| A check a parameter already met | not repeated on a write of that parameter to a place of the same type; a removal from a collection is not re-checked |
+| The store's shape (`libs/cli`) | from the states' types: scalars, then collections; a `Map` of records whose first field has the key's type is an array of the records |
+| The store's environment variable, raylib's and the assets' | `<BIN>_STORE`, `<BIN>_RAYLIB`, `<BIN>_ASSETS`, from `@bin` |
 
 ## Limits
 
-- One program has been built. The subset is the one in `emit-ts/README.md`.
-- No projection pushdown, no interned tags, no symbols-as-integers; the representation is the plain one above.
-- `map[k]` on a missing key raises `KeyError` instead of refusing with `Missing`.
-- No `Gemfile.lock` is emitted. `bundle check` resolves against the gems installed on the machine; minitest 6.0.0 ships with Ruby 4.0, and its dependency `prism` is installed by `bundle install` if missing.
-- Steps of tests are instance methods of `<Module>Steps`; two modules with a test of the same name included in one class would collide.
-- This crate depends on `emit-ts` for the shared plan; that code should move (see `emit-ts/IR-NEEDS.md`).
-- The numbers above come from one loaded machine and one run.
+- Agreement is of statuses on 40 programs; messages differ, and there is no evaluation budget: a loop that does not end does not stop.
+- No overflow stop exists, since `Integer` has no width. A program that the engine stops with `E-RUNTIME` past 128 bits gives a value here.
+- Lines are broken at lists, chains of `and`/`or` and blocks only; a long interpolated string stays long. No rubocop in the gate: `ruby -wc` on every file, the program's checks, the runtimes' minitest.
+- The app starts slower than the hand-written one (the whole program and its type table load on every run); no lazy loading, no fast store reader.
+- `libs/raylib`'s asset loading (one model per variant of the sum `raylib#DrawModelEx` takes, the `lit` shader) is the platformer's shape, written generically; a second game will find what it assumes.
+- Timings are one run on a busy machine.

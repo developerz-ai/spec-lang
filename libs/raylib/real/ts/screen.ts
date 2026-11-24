@@ -65,10 +65,13 @@ function modelNames(program: rt.ProgramView): readonly string[] {
   const asset = draw?.params[0]?.type;
   const sum = asset === undefined ? undefined : unalias(asset);
   if (asset === undefined || !(sum instanceof rt.SumType)) return [];
-  const namer = program.fns.find(
+  const namers = program.fns.filter(
     (f) => f.params.length === 1 && f.params[0]?.type.key === asset.key && f.result instanceof rt.TextType,
   );
-  if (namer === undefined) return rt.stop("E-UNSUPPORTED", `no function names the models of ${asset.key}`);
+  const [namer] = namers;
+  if (namer === undefined || namers.length > 1) {
+    return rt.stop("E-UNSUPPORTED", `${namers.length} functions name the models of ${sum.name}: one is needed`);
+  }
   return sum.variants.map((v) => namer.call(undefined as never, [sum.make(v.name)]) as string);
 }
 

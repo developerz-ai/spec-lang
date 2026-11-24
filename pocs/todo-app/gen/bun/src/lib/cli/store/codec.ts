@@ -178,12 +178,17 @@ export function layout<W>(states: readonly rt.StateInfo<W>[]): readonly Stored<W
     const b = base(s.type);
     return b instanceof rt.ListType || b instanceof rt.SetType || b instanceof rt.MapType;
   };
-  return [...states.filter((s) => !collection(s)), ...states.filter(collection)].map((s) => ({ key: key(s), state: s }));
+  return [...states.filter((s) => !collection(s)), ...states.filter(collection)].map((s) => ({
+    key: key(s),
+    state: s,
+  }));
 }
 
 /** The world's bytes. Throws `Full` when a value does not fit. */
 export function encodeWorld<W, V>(layout: readonly Stored<W>[], world: V): string {
-  const parts = layout.map((s) => `${quote(s.key)}:${encode(s.state.type, (world as Record<string, unknown>)[s.state.prop])}`);
+  const parts = layout.map(
+    (s) => `${quote(s.key)}:${encode(s.state.type, (world as Record<string, unknown>)[s.state.prop])}`,
+  );
   return `{"version":1,${parts.join(",")}}\n`;
 }
 

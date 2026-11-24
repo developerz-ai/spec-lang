@@ -2,7 +2,7 @@
 // native array methods do not already mean.
 
 import { OrdMap, OrdSet, Range } from "./collections.ts";
-import { fail, Failure, missing, stop } from "./failure.ts";
+import { Failure, fail, missing, stop } from "./failure.ts";
 import type { Int } from "./int.ts";
 import type { Type } from "./types.ts";
 
@@ -89,6 +89,13 @@ export function find<T>(xs: readonly T[], holds: (x: T) => boolean): Option<T> {
 export function position<T>(xs: readonly T[], holds: (x: T) => boolean): Option<Int> {
   for (let i = 0; i < xs.length; i++) if (holds(xs[i] as T)) return some(BigInt(i));
   return none;
+}
+
+/** Left to right from the start value. */
+export function fold<T, A>(xs: readonly T[], start: A, f: (acc: A, x: T) => A): A {
+  let acc = start;
+  for (const x of xs) acc = f(acc, x);
+  return acc;
 }
 
 export function sum(xs: readonly Int[]): Int {

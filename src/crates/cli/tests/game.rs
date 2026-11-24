@@ -47,7 +47,7 @@ fn test_is_green_with_the_foreign_check_blocked() {
 }
 
 #[test]
-fn build_refuses_a_game_app_by_name() {
+fn build_prints_a_game_app_with_its_libraries_runtimes() {
     let dir = project("build");
     let out_dir = dir.join("out");
     let out = Command::new(env!("CARGO_BIN_EXE_spec-lang"))
@@ -58,9 +58,10 @@ fn build_refuses_a_game_app_by_name() {
         .output()
         .unwrap();
     let err = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{err}");
-    assert!(err.contains("error[E-UNSUPPORTED]: app G uses the `game` vocabulary"), "{err}");
-    assert!(!out_dir.exists());
+    assert_eq!(out.status.code(), Some(0), "{err}");
+    for file in ["Cargo.toml", "src/manifest.rs", "src/libs/game/mod.rs", "src/libs/raylib/mod.rs"] {
+        assert!(out_dir.join("G").join(file).is_file(), "{file}");
+    }
     std::fs::remove_dir_all(&dir).unwrap();
 }
 

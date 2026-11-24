@@ -19,6 +19,7 @@ mod names;
 mod pat;
 mod prim;
 mod project;
+mod provenance;
 mod stmt;
 
 use spec_lang_diag::Diag;

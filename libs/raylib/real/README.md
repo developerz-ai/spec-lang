@@ -1,6 +1,6 @@
 # `raylib` runtimes
 
-Empty: one directory per language goes here, `real/<lang>/` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)).
+One directory per language: `rust`, `ts`, `ruby`, `cpp` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)).
 
 ## What a runtime implements
 
@@ -10,5 +10,5 @@ It reads no manifest: the program's code calls it directly, and an app reaches i
 
 ## Limits
 
-- No adapter exists; the platformer's backends each bind raylib by hand today.
+- Model and shader loading follows the platformer's asset layout, because the card has no form for a resource: a second game with other assets needs a change here.
 - The library's own tests, run against the real library in its CI as [decision 008](../../../docs/decisions/008-libraries-ship-their-spec.md) asks, do not exist: there is nothing yet to compare a pretend with.

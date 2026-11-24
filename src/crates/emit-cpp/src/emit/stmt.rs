@@ -61,8 +61,14 @@ impl<'g, 'a> Fx<'g, 'a> {
             && code.p == 1
         {
             let _ = writeln!(out, "{call};");
-        } else if matches!(e.kind, ExprKind::CallFn { .. } | ExprKind::CallRule { .. } | ExprKind::Effect { .. } | ExprKind::Fail { .. } | ExprKind::Hole(_))
-        {
+        } else if matches!(
+            e.kind,
+            ExprKind::CallFn { .. }
+                | ExprKind::CallRule { .. }
+                | ExprKind::Effect { .. }
+                | ExprKind::Fail { .. }
+                | ExprKind::Hole(_)
+        ) {
             let _ = writeln!(out, "{};", code.s);
         } else {
             let _ = writeln!(out, "static_cast<void>({});", code.s);
@@ -232,7 +238,7 @@ impl<'g, 'a> Fx<'g, 'a> {
         (at, None)
     }
 
-    fn key_exprs<'p>(p: &'p Place) -> Vec<&'p Expr> {
+    fn key_exprs(p: &Place) -> Vec<&Expr> {
         p.path
             .iter()
             .filter_map(|s| match s {
@@ -346,7 +352,9 @@ pub fn contains_return(stmts: &[Stmt]) -> bool {
     stmts.iter().any(|s| match &s.kind {
         StmtKind::Return(_) => true,
         StmtKind::For { body, .. } | StmtKind::While { body, .. } => contains_return(&body.stmts),
-        StmtKind::If { then, els, .. } => contains_return(&then.stmts) || els.as_ref().is_some_and(|b| contains_return(&b.stmts)),
+        StmtKind::If { then, els, .. } => {
+            contains_return(&then.stmts) || els.as_ref().is_some_and(|b| contains_return(&b.stmts))
+        }
         _ => false,
     })
 }

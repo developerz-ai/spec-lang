@@ -1,7 +1,7 @@
 // The spec-lang runtime of the TypeScript printer: the world a rule changes, and what a trace records of it.
 
 import { type Failure, outcome } from "./failure.ts";
-import { anyType, compareAny, type Field, showAny, Type } from "./types.ts";
+import { anyType, compareAny, type Field, ListType, TupleType, Type } from "./types.ts";
 
 /** Everything a rule may change: the states, and what each effect handler keeps. */
 export interface Machine {
@@ -36,6 +36,8 @@ export interface ParamInfo {
   /** Its declared type: ranges and claims included. */
   readonly type: Type;
   readonly hasDefault: boolean;
+  /** The default, when it reads nothing: no earlier parameter, no state. */
+  readonly default?: () => unknown;
 }
 
 /** A library's note or trigger: `cli("add")`, `tick(60Hz)`. */
@@ -80,7 +82,9 @@ export interface FailureValue {
   readonly data: readonly unknown[];
 }
 
-export type Reply = { readonly kind: "Ok"; readonly value: unknown } | { readonly kind: "Err"; readonly error: FailureValue };
+export type Reply =
+  | { readonly kind: "Ok"; readonly value: unknown }
+  | { readonly kind: "Err"; readonly error: FailureValue };
 
 export interface Step<V> {
   readonly event: Event;
@@ -95,13 +99,23 @@ export interface Trace<V> {
   readonly states: readonly V[];
 }
 
+/** What a reply's `Ok` holds: its rule's result. */
+const okTypes = new WeakMap<Reply, Type>();
+
 /** A rule called from outside: its reply, `Err` for a refusal. A stop is not a reply: it propagates. */
-export function reply(call: () => unknown): Reply {
-  const r = outcome(call);
-  return r.ok ? { kind: "Ok", value: r.value } : { kind: "Err", error: failureValue(r.failure) };
+export function reply<W>(rule: RuleInfo<W>, w: W, args: readonly unknown[]): Reply {
+  const r = outcome(() => rule.call(w, args));
+  if (!r.ok) return { kind: "Err", error: failureValue(r.failure) };
+  const value: Reply = { kind: "Ok", value: r.value };
+  okTypes.set(value, rule.result);
+  return value;
 }
 
+/** The types of a failure's data, by the data. */
+const dataTypes = new WeakMap<readonly unknown[], readonly Type[]>();
+
 export function failureValue(f: Failure): FailureValue {
+  dataTypes.set(f.data, f.types as readonly Type[]);
   return { name: f.failure, data: f.data };
 }
 
@@ -112,10 +126,13 @@ function sign(n: number): number {
 export class FailureType extends Type<FailureValue> {
   readonly key = "Failure";
   compare(a: FailureValue, b: FailureValue): number {
-    return compareAny([a.name, a.data], [b.name, b.data]);
+    const d = compareAny(a.name, b.name);
+    return d !== 0 ? d : new TupleType(dataTypes.get(a.data) ?? []).compare(a.data, b.data);
   }
   show(v: FailureValue): string {
-    return v.data.length === 0 ? `fail ${v.name}` : `fail ${v.name}(${v.data.map(showAny).join(", ")})`;
+    const types = dataTypes.get(v.data) ?? [];
+    const shown = v.data.map((x, i) => (types[i] ?? anyType).show(x));
+    return shown.length === 0 ? `fail ${v.name}` : `fail ${v.name}(${shown.join(", ")})`;
   }
 }
 
@@ -141,17 +158,13 @@ export class EventType extends Type<Event> {
 
 export class ReplyType extends Type<Reply> {
   readonly key = "Reply";
-  constructor(private readonly value: Type = anyType) {
-    super();
-  }
   compare(a: Reply, b: Reply): number {
-    if (a.kind !== b.kind) return a.kind === "Ok" ? -1 : 1;
-    if (a.kind === "Ok" && b.kind === "Ok") return this.value.compare(a.value, b.value);
+    if (a.kind === "Ok" && b.kind === "Ok") return (okTypes.get(a) ?? anyType).compare(a.value, b.value);
     if (a.kind === "Err" && b.kind === "Err") return failure.compare(a.error, b.error);
-    return 0;
+    return a.kind === "Ok" ? -1 : 1;
   }
   show(v: Reply): string {
-    return v.kind === "Ok" ? `Ok(${this.value.show(v.value)})` : `Err(${failure.show(v.error)})`;
+    return v.kind === "Ok" ? `Ok(${(okTypes.get(v) ?? anyType).show(v.value)})` : `Err(${failure.show(v.error)})`;
   }
 }
 
@@ -187,13 +200,13 @@ export class StepType<V> extends Type<Step<V>> {
   compare(a: Step<V>, b: Step<V>): number {
     return (
       event.compare(a.event, b.event) ||
-      new ReplyType(a.event.rule.result).compare(a.reply, b.reply) ||
+      replies.compare(a.reply, b.reply) ||
       this.world.compare(a.before, b.before) ||
       this.world.compare(a.after, b.after)
     );
   }
   show(v: Step<V>): string {
-    return `${event.show(v.event)} -> ${new ReplyType(v.event.rule.result).show(v.reply)}`;
+    return `${event.show(v.event)} -> ${replies.show(v.reply)}`;
   }
 }
 
@@ -209,7 +222,8 @@ export class TraceType<V> extends Type<Trace<V>> {
       const d = steps.compare(a.steps[i] as Step<V>, b.steps[i] as Step<V>);
       if (d !== 0) return d;
     }
-    return sign(a.steps.length - b.steps.length);
+    if (a.steps.length !== b.steps.length) return sign(a.steps.length - b.steps.length);
+    return new ListType(this.world).compare(a.states, b.states);
   }
   show(v: Trace<V>): string {
     return `<trace of ${v.steps.length} steps>`;

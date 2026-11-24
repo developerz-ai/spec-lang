@@ -18,5 +18,5 @@ A fixed-tick, single-player game with a window. The form is in [`vocab.slg`](voc
 
 - One POC wrote it. Sound, several players, menus and saving are not here.
 - `1000Hz` and `16384` are bounds chosen here, not measured needs; the platformer uses `60Hz` and `960 x 540`.
-- What `play`, `run`, `draw` and `shot` do with the six fields is the runtime's, and no runtime exists: `spec-lang build` refuses a `game` app.
+- What `play`, `run`, `draw` and `shot` do with the six fields is the runtime's (`real/<lang>/`), not stated here.
 - `@bin` is declared here and in `cli` with the same form; a module that uses both cannot write it (`E-NOTE-AMBIG`).

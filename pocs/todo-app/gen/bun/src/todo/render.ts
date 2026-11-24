@@ -31,7 +31,10 @@ export function badge(p: model.Priority): string {
 /** fn tag_text (todo/render.slg:19) */
 export function tagText(tags: rt.OrdSet<string>): string {
   rt.check(rt.set(model.Tag), tags, "argument `tags`");
-  return tags.list().map((t: string) => ` #${t}`).join("");
+  return tags
+    .list()
+    .map((t: string) => ` #${t}`)
+    .join("");
 }
 
 /** fn urgency (todo/render.slg:22) */

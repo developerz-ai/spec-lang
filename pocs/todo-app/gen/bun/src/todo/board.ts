@@ -30,7 +30,7 @@ export function add(
     rt.check(model.Title, title, "argument `title`");
     rt.check(rt.set(model.Tag), tags, "argument `tags`");
     const no = w.nextNo;
-    w.tasks = w.tasks.set(no, rt.check(model.Task, model.Task.make([no, title, undefined, priority, tags])));
+    w.tasks = w.tasks.set(no, model.Task.make([no, title, undefined, priority, tags]));
     w.nextNo = rt.check(model.TaskNo, no + 1n);
     w.fx.out.line(`added ${no}`);
     return rt.check(model.TaskNo, no);
@@ -41,13 +41,17 @@ export function add(
 export function list(w: World, all: boolean = false, tag: rt.Option<string> = rt.none): null {
   return rt.atomic(w, () => {
     rt.check(rt.option(model.Tag), tag, "argument `tag`");
-    const shown = rt.sortBy(w.tasks.values().filter((t: model.Task) => (all || rt.equal(t.status, model.Status.make("Open"))) && hasTag(t, tag)), (t2: model.Task) => render.rank(t2), rt.tuple(rt.int, rt.int));
+    const shown = rt.sortBy(
+      w.tasks.values().filter((t: model.Task) => (all || t.status.kind === "Open") && hasTag(t, tag)),
+      (t: model.Task) => render.rank(t),
+      rt.tuple(rt.int, rt.int),
+    );
     if (BigInt(shown.length) === 0n) {
       w.fx.out.line("nothing to do");
       return null;
     }
-    for (const t3 of shown) {
-      w.fx.out.line(render.line(t3));
+    for (const t of shown) {
+      w.fx.out.line(render.line(t));
     }
     return null;
   });
@@ -58,7 +62,7 @@ export function done(w: World, no: bigint): null {
   return rt.atomic(w, () => {
     rt.check(model.TaskNo, no, "argument `no`");
     if (!w.tasks.has(no)) rt.fail("NoTask");
-    if (!rt.holds(() => rt.equal(w.tasks.at(no).status, model.Status.make("Open")))) rt.fail("AlreadyDone");
+    if (!rt.holds(() => w.tasks.at(no).status.kind === "Open")) rt.fail("AlreadyDone");
     w.tasks = w.tasks.set(no, { ...w.tasks.at(no), status: model.Status.make("Done") });
     w.fx.out.line(render.line(w.tasks.at(no)));
     return null;
@@ -70,7 +74,7 @@ export function reopen(w: World, no: bigint): null {
   return rt.atomic(w, () => {
     rt.check(model.TaskNo, no, "argument `no`");
     if (!w.tasks.has(no)) rt.fail("NoTask");
-    if (!rt.holds(() => rt.equal(w.tasks.at(no).status, model.Status.make("Done")))) rt.fail("NotDone");
+    if (!rt.holds(() => w.tasks.at(no).status.kind === "Done")) rt.fail("NotDone");
     w.tasks = w.tasks.set(no, { ...w.tasks.at(no), status: model.Status.make("Open") });
     w.fx.out.line(render.line(w.tasks.at(no)));
     return null;
@@ -83,7 +87,8 @@ export function rename(w: World, no: bigint, title: string): null {
     rt.check(model.TaskNo, no, "argument `no`");
     rt.check(model.Title, title, "argument `title`");
     if (!w.tasks.has(no)) rt.fail("NoTask");
-    w.tasks = w.tasks.set(no, { ...w.tasks.at(no), title: rt.check(model.Title, title) });
+    rt.check(model.Title, title);
+    w.tasks = w.tasks.set(no, { ...w.tasks.at(no), title: title });
     w.fx.out.line(render.line(w.tasks.at(no)));
     return null;
   });
@@ -103,7 +108,7 @@ export function remove(w: World, no: bigint): null {
 /** rule clear (todo/board.slg:80): finished work leaves the list in one step */
 export function clear(w: World): bigint {
   return rt.atomic(w, () => {
-    const gone = w.tasks.values().filter((it: model.Task) => rt.equal(it.status, model.Status.make("Done")));
+    const gone = w.tasks.values().filter((it: model.Task) => it.status.kind === "Done");
     for (const t of gone) {
       w.tasks = rt.check(rt.map(model.TaskNo, model.Task), w.tasks.remove(t.no));
     }
@@ -115,7 +120,7 @@ export function clear(w: World): bigint {
 /** rule stats (todo/board.slg:90): a count at a glance, without listing */
 export function stats(w: World): null {
   return rt.atomic(w, () => {
-    const open = BigInt(w.tasks.values().filter((it: model.Task) => rt.equal(it.status, model.Status.make("Open"))).length);
+    const open = BigInt(w.tasks.values().filter((it: model.Task) => it.status.kind === "Open").length);
     w.fx.out.line(`${open} open, ${w.tasks.size - open} done`);
     return null;
   });

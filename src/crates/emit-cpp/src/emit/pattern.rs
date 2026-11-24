@@ -24,7 +24,9 @@ impl<'g, 'a> Fx<'g, 'a> {
         let mut at = At::Known(ty.clone());
         for step in path {
             (cur, at) = match (step, &at) {
-                (PathStep::VariantField { .. }, At::Known(LTy::Option(t))) => (format!("(*{cur})"), At::Known((**t).clone())),
+                (PathStep::VariantField { .. }, At::Known(LTy::Option(t))) => {
+                    (format!("(*{cur})"), At::Known((**t).clone()))
+                }
                 (PathStep::VariantField { tag, .. }, At::Known(LTy::Reply(rules))) => {
                     if *tag == spec_lang_ir::ERR_TAG {
                         (format!("{cur}.failure()"), At::Known(LTy::Failure))
@@ -70,9 +72,12 @@ impl<'g, 'a> Fx<'g, 'a> {
                         At::Known(LTy::Option(_)) => format!("{}{cur}.has_value()", if first { "" } else { "!" }),
                         At::Known(LTy::Reply(_)) => format!("{}{cur}.ok()", if first { "" } else { "!" }),
                         At::Known(_) if self.g.is_enum(*sum) => format!("{cur} == {}", self.g.variant_name(*sum, *tag)),
-                        At::Known(_) => format!("std::holds_alternative<{}>({cur}.alt)", self.g.variant_name(*sum, *tag)),
+                        At::Known(_) => {
+                            format!("std::holds_alternative<{}>({cur}.alt)", self.g.variant_name(*sum, *tag))
+                        }
                         At::Dyn => {
-                            self.g.unsupported(self.span, "a variant pattern on a reply of rules with different results");
+                            self.g
+                                .unsupported(self.span, "a variant pattern on a reply of rules with different results");
                             "false".into()
                         }
                     }));
@@ -343,4 +348,3 @@ pub fn is_place(e: &Expr) -> bool {
         _ => false,
     }
 }
-

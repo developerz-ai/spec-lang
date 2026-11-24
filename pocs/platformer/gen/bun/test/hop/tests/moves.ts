@@ -10,7 +10,7 @@ import * as check from "../../support/checks.ts";
 /** test standing_still_stays_put (hop/tests/moves.slg:11) */
 export function standingStillStaysPut(w: World): null {
   world.start(w, 1n);
-  for (const i of rt.range(1n, 30n, true).list()) {
+  for (const _i of rt.range(1n, 30n, true).list()) {
     world.step(w, moves.rest());
   }
   check.assert(rt.equal(w.player.at, geom.Vec3.make([0n, 0n, 0n])));
@@ -22,7 +22,7 @@ export function standingStillStaysPut(w: World): null {
 /** test running_reaches_full_speed (hop/tests/moves.slg:19): the first tick starts in the air, so it gains 1; then 2 a tick up to 16 */
 export function runningReachesFullSpeed(w: World): null {
   world.start(w, 1n);
-  for (const i of rt.range(1n, 10n, true).list()) {
+  for (const _i of rt.range(1n, 10n, true).list()) {
     world.step(w, moves.right());
   }
   check.assert(w.player.vel.x === 16n);
@@ -36,7 +36,7 @@ export function aHeldJumpPeaksAt380(w: World): null {
   world.start(w, 1n);
   world.step(w, moves.rest());
   let top: bigint = 0n;
-  for (const i of rt.range(1n, 50n, true).list()) {
+  for (const _i of rt.range(1n, 50n, true).list()) {
     world.step(w, moves.jump());
     top = rt.maxInt(top, w.player.at.y);
   }
@@ -51,7 +51,7 @@ export function aShortHopPeaksAt94(w: World): null {
   world.step(w, moves.rest());
   world.step(w, moves.jump());
   let top: bigint = 0n;
-  for (const i of rt.range(1n, 30n, true).list()) {
+  for (const _i of rt.range(1n, 30n, true).list()) {
     world.step(w, moves.rest());
     top = rt.maxInt(top, w.player.at.y);
   }
@@ -63,7 +63,7 @@ export function aShortHopPeaksAt94(w: World): null {
 export function aJumpNeedsAFreshPress(w: World): null {
   world.start(w, 1n);
   world.step(w, moves.rest());
-  for (const i of rt.range(1n, 60n, true).list()) {
+  for (const _i of rt.range(1n, 60n, true).list()) {
     world.step(w, moves.jump());
   }
   check.assert(w.player.grounded);
@@ -82,7 +82,7 @@ export function aJumpJustAfterTheEdgeStillCounts(w: World): null {
 
 /** test a_jump_long_after_the_edge_does_not (hop/tests/moves.slg:71) */
 export function aJumpLongAfterTheEdgeDoesNot(w: World): null {
-  for (const i of rt.range(1n, 7n, true).list()) {
+  for (const _i of rt.range(1n, 7n, true).list()) {
     world.step(w, moves.rest());
   }
   world.step(w, moves.jump());
@@ -92,7 +92,7 @@ export function aJumpLongAfterTheEdgeDoesNot(w: World): null {
 
 /** test a_wall_stops_the_body_flush (hop/tests/moves.slg:78) */
 export function aWallStopsTheBodyFlush(w: World): null {
-  for (const i of rt.range(1n, 10n, true).list()) {
+  for (const _i of rt.range(1n, 10n, true).list()) {
     world.step(w, moves.right());
   }
   check.assert(w.player.at.x === 2496n);
@@ -103,7 +103,7 @@ export function aWallStopsTheBodyFlush(w: World): null {
 /** test a_ceiling_stops_a_jump (hop/tests/moves.slg:85) */
 export function aCeilingStopsAJump(w: World): null {
   let top: bigint = 0n;
-  for (const i of rt.range(1n, 40n, true).list()) {
+  for (const _i of rt.range(1n, 40n, true).list()) {
     world.step(w, moves.jump());
     top = rt.maxInt(top, w.player.at.y);
   }
@@ -113,7 +113,7 @@ export function aCeilingStopsAJump(w: World): null {
 
 /** test a_rider_moves_with_the_mover (hop/tests/moves.slg:95) */
 export function aRiderMovesWithTheMover(w: World): null {
-  for (const i of rt.range(1n, 10n, true).list()) {
+  for (const _i of rt.range(1n, 10n, true).list()) {
     world.step(w, moves.rest());
   }
   check.assert(rt.equal(w.player.at, geom.Vec3.make([1680n, 0n, 0n])));
@@ -123,7 +123,7 @@ export function aRiderMovesWithTheMover(w: World): null {
 
 /** test a_mover_catches_a_falling_body (hop/tests/moves.slg:102) */
 export function aMoverCatchesAFallingBody(w: World): null {
-  for (const i of rt.range(1n, 40n, true).list()) {
+  for (const _i of rt.range(1n, 40n, true).list()) {
     world.step(w, moves.rest());
   }
   check.assert(rt.equal(w.player.riding, rt.some(1n)));
@@ -135,13 +135,13 @@ export function aMoverCatchesAFallingBody(w: World): null {
 export function aMoverNeverCatchesFromBelow(w: World): null {
   world.step(w, moves.rest());
   check.assert(w.player.at.y < -200n);
-  check.assert(rt.equal(w.player.riding, rt.none));
+  check.assert(w.player.riding.kind === "none");
   return null;
 }
 
 /** test a_fast_fall_lands (hop/tests/moves.slg:117): the fastest fall still stops on a floor */
 export function aFastFallLands(w: World): null {
-  for (const i of rt.range(1n, 12n, true).list()) {
+  for (const _i of rt.range(1n, 12n, true).list()) {
     world.step(w, moves.rest());
   }
   check.assert(w.player.at.y === 0n);

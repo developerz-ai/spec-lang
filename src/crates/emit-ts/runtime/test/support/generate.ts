@@ -47,7 +47,7 @@ const empty = new Pools();
 export function value(rng: Rng, type: rt.Type, pools: Pools = empty): unknown {
   for (let i = 0; i < TRIES; i++) {
     const pool = pools.get(type);
-    const v = pool !== undefined && rng.chance(1n, 2n) ? rng.pick(pool) : base(rng, type, pools);
+    const v = pool !== undefined && rng.chance(1, 2) ? rng.pick(pool) : base(rng, type, pools);
     if (type.conform(v) === undefined) return v;
   }
   throw new Exhausted(`no value of \`${type.key}\` found in ${TRIES} tries`);
@@ -55,31 +55,31 @@ export function value(rng: Rng, type: rt.Type, pools: Pools = empty): unknown {
 
 function base(rng: Rng, type: rt.Type, pools: Pools): unknown {
   if (type instanceof rt.UnitType) return null;
-  if (type instanceof rt.BoolType) return rng.chance(1n, 2n);
+  if (type instanceof rt.BoolType) return rng.chance(1, 2);
   if (type instanceof rt.RangeType) {
     const hi = type.inclusive ? type.hi : type.hi - 1n;
-    if (rng.chance(1n, 5n)) return rng.chance(1n, 2n) ? type.lo : hi;
+    if (rng.chance(1, 5)) return rng.chance(1, 2) ? type.lo : hi;
     return rng.between(type.lo, hi);
   }
   if (type instanceof rt.IntType) return int(rng);
   if (type instanceof rt.TextType) return text(rng);
-  if (type instanceof rt.OptionType) return rng.chance(1n, 3n) ? rt.none : rt.some(value(rng, type.of, pools));
+  if (type instanceof rt.OptionType) return rng.chance(1, 3) ? rt.none : rt.some(value(rng, type.of, pools));
   if (type instanceof rt.ListType) {
-    const n = rng.below(4n);
+    const n = rng.below(4);
     const xs: unknown[] = [];
-    for (let i = 0n; i < n; i++) xs.push(value(rng, type.of, pools));
+    for (let i = 0; i < n; i++) xs.push(value(rng, type.of, pools));
     return xs;
   }
   if (type instanceof rt.SetType) {
-    const n = rng.below(4n);
+    const n = rng.below(4);
     let s = rt.OrdSet.empty(type.of);
-    for (let i = 0n; i < n; i++) s = s.insert(value(rng, type.of, pools));
+    for (let i = 0; i < n; i++) s = s.insert(value(rng, type.of, pools));
     return s;
   }
   if (type instanceof rt.MapType) {
-    const n = rng.below(4n);
+    const n = rng.below(4);
     let m = rt.OrdMap.empty<unknown, unknown>(type.keys);
-    for (let i = 0n; i < n; i++) {
+    for (let i = 0; i < n; i++) {
       const k = value(rng, type.keys, pools);
       m = m.set(k, value(rng, type.values, pools));
     }
@@ -94,7 +94,7 @@ function base(rng: Rng, type: rt.Type, pools: Pools): unknown {
     return out;
   }
   if (type instanceof rt.SumType && !type.builtin) {
-    const v = type.variants[Number(rng.below(BigInt(type.variants.length)))];
+    const v = type.variants[rng.below(type.variants.length)];
     const out: Record<string, unknown> = { kind: v?.name ?? "" };
     for (const f of v?.fields ?? []) out[f.prop] = value(rng, f.type, pools);
     return out;
@@ -119,12 +119,12 @@ const EDGES: readonly bigint[] = [
 
 /** Small numbers most of the time, then boundaries a machine word breaks at. */
 function int(rng: Rng): bigint {
-  const band = rng.below(100n);
-  if (band < 35n) return rng.between(0n, 10n);
-  if (band < 55n) return rng.between(11n, 100n);
-  if (band < 70n) return rng.between(-10n, -1n);
-  if (band < 80n) return rng.pick(EDGES) ?? 0n;
-  if (band < 90n) return rng.between(101n, 1n << 62n);
+  const band = rng.below(100);
+  if (band < 35) return rng.between(0n, 10n);
+  if (band < 55) return rng.between(11n, 100n);
+  if (band < 70) return rng.between(-10n, -1n);
+  if (band < 80) return rng.pick(EDGES) ?? 0n;
+  if (band < 90) return rng.between(101n, 1n << 62n);
   return -rng.between(11n, 1n << 62n);
 }
 
@@ -142,8 +142,8 @@ const MIX = [
   "　",
   "\u0085",
   " ",
-  "​",
-  "﻿",
+  "�",
+  "�",
   "\u007f",
   "\u0001",
   '"',
@@ -156,18 +156,18 @@ const MIX = [
 
 /** Shell-safe words, printable ASCII, a mix with Unicode space, controls and astral characters, or empty. */
 function text(rng: Rng): string {
-  const draw = (n: bigint, one: () => string): string => {
+  const draw = (n: number, one: () => string): string => {
     let s = "";
-    for (let i = 0n; i < n; i++) s += one();
+    for (let i = 0; i < n; i++) s += one();
     return s;
   };
-  switch (rng.below(4n)) {
-    case 0n:
-      return draw(1n + rng.below(8n), () => rng.pick([...WORD]) ?? "a");
-    case 1n:
-      return draw(rng.below(13n), () => String.fromCharCode(32 + Number(rng.below(95n))));
-    case 2n:
-      return draw(rng.below(9n), () => rng.pick(MIX) ?? "a");
+  switch (rng.below(4)) {
+    case 0:
+      return draw(1 + rng.below(8), () => rng.pick([...WORD]) ?? "a");
+    case 1:
+      return draw(rng.below(13), () => String.fromCharCode(32 + rng.below(95)));
+    case 2:
+      return draw(rng.below(9), () => rng.pick(MIX) ?? "a");
     default:
       return "";
   }

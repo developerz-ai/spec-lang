@@ -2,6 +2,7 @@
 //! the runtime, `Cargo.toml`, `bin/test`. Every Rust file is parsed and printed by `prettyplease`, so a printer
 //! bug is an error here and not in rustc.
 
+use crate::code::uses;
 use crate::cx::{Cx, Mode};
 use crate::names::ident;
 use spec_lang_diag::Diag;
@@ -30,37 +31,25 @@ const IMPORTS: &[(&str, &[&str])] = &[
     ("crate::rt::runner", &["Body", "Check", "Given", "LawBody", "LawDecl", "TestDecl", "Trace", "What"]),
     ("crate::machine", &["Machine", "Pools", "World"]),
     ("crate::rt::data", &["AsData", "Data", "Shape", "Ty"]),
-    ("crate::rt::app", &["App", "AppParam", "Decl", "Func", "Note", "NoteArg", "NoteValue", "Param", "Read", "Rule", "State"]),
+    (
+        "crate::rt::app",
+        &[
+            "App",
+            "AppParam",
+            "Decl",
+            "Extern",
+            "Func",
+            "Note",
+            "NoteArg",
+            "NoteValue",
+            "Param",
+            "Read",
+            "Rule",
+            "State",
+        ],
+    ),
     ("std::collections", &["BTreeMap", "BTreeSet"]),
 ];
-
-/// Lints the printed code allows, crate-wide, each for a shape the printer writes on purpose.
-const ALLOWS: &[&str] = &[
-    "unused_variables",
-    "unused_mut",
-    "unreachable_code",
-    "irrefutable_let_patterns",
-    "unused_parens",
-    "unused_braces",
-    "clippy::all",
-];
-
-fn uses(body: &str, name: &str) -> bool {
-    let b = body.as_bytes();
-    let mut from = 0;
-    while let Some(i) = body[from..].find(name) {
-        let at = from + i;
-        let end = at + name.len();
-        let before = at.checked_sub(1).map(|j| b[j]);
-        let after = b.get(end).copied();
-        let ident_char = |c: u8| c.is_ascii_alphanumeric() || c == b'_';
-        if !before.is_some_and(|c| ident_char(c) || c == b':') && !after.is_some_and(ident_char) {
-            return true;
-        }
-        from = end;
-    }
-    false
-}
 
 /// `use` lines for the names a body uses that `own` does not define.
 fn imports(body: &str, own: &str) -> String {
@@ -68,10 +57,14 @@ fn imports(body: &str, own: &str) -> String {
     let body = code.as_str();
     let mut out = Vec::new();
     for (path, names) in IMPORTS {
-        if *path == own || (path.starts_with("crate::rt::app") || path.starts_with("crate::rt::data")) && own != "crate::manifest" {
+        if *path == own
+            || (path.starts_with("crate::rt::app") || path.starts_with("crate::rt::data")) && own != "crate::manifest"
+        {
             continue;
         }
-        let defines = |n: &str| ["struct", "enum", "type", "fn", "const", "static"].iter().any(|k| uses(body, &format!("{k} {n}")));
+        let defines = |n: &str| {
+            ["struct", "enum", "type", "fn", "const", "static"].iter().any(|k| uses(body, &format!("{k} {n}")))
+        };
         let used: Vec<&str> = names
             .iter()
             .copied()
@@ -92,6 +85,31 @@ fn imports(body: &str, own: &str) -> String {
     out.join("\n")
 }
 
+/// A blank line between items: prettyplease prints none.
+fn spaced(text: &str) -> String {
+    let grouped = |l: &str| l.starts_with("use ") || l.starts_with("pub mod ") || l.starts_with("//!");
+    let mut out: Vec<&str> = Vec::new();
+    for line in text.lines() {
+        let starts = !line.is_empty() && !line.starts_with([' ', '}', ')', ']']);
+        if starts && let Some(prev) = out.last().copied() {
+            let ends = prev.starts_with('}')
+                || prev.starts_with("//!")
+                || (!prev.starts_with(' ') && prev.ends_with(';'))
+                || prev.ends_with("];")
+                || prev.ends_with("};");
+            let together = (grouped(prev) && grouped(line) && prev.starts_with("//!") == line.starts_with("//!"))
+                || (prev.starts_with("///") || prev.starts_with("#["));
+            if ends && !together {
+                out.push("");
+            }
+        }
+        out.push(line);
+    }
+    let mut text = out.join("\n");
+    text.push('\n');
+    text
+}
+
 /// A Rust file, parsed and printed.
 fn rust(path: &str, header: &str, own: &str, body: &str) -> Result<OutFile, Diag> {
     let text = format!("{header}\n{}\n\n{body}\n", imports(body, own));
@@ -100,9 +118,12 @@ fn rust(path: &str, header: &str, own: &str, body: &str) -> Result<OutFile, Diag
         let line = text.lines().nth(at.line.saturating_sub(1)).unwrap_or("");
         let lo = at.column.saturating_sub(120);
         let snippet: String = line.chars().skip(lo).take(240).collect();
-        Diag::load(format!("the Rust printer wrote {path}, which does not parse: {e} at {}:{}: {snippet}", at.line, at.column))
+        Diag::load(format!(
+            "the Rust printer wrote {path}, which does not parse: {e} at {}:{}: {snippet}",
+            at.line, at.column
+        ))
     })?;
-    Ok(OutFile { path: path.to_string(), bytes: prettyplease::unparse(&file).into_bytes(), executable: false })
+    Ok(OutFile { path: path.to_string(), bytes: spaced(&prettyplease::unparse(&file)).into_bytes(), executable: false })
 }
 
 fn plain(path: &str, text: String, executable: bool) -> OutFile {
@@ -163,27 +184,44 @@ pub fn program(cx: &mut Cx<'_>, extra_mods: &[&str]) -> Result<Vec<OutFile>, Vec
     }
     let machine = crate::machine::file(cx);
     push(
-        rust("src/machine.rs", "//! The world, the machine, each handler operation, events and replies of traces.", "crate::machine", &machine),
+        rust(
+            "src/machine.rs",
+            "//! The world, the machine, each handler operation, events and replies of traces.",
+            "crate::machine",
+            &machine,
+        ),
         &mut errors,
     );
     let checks = crate::checks::file(cx);
-    push(rust("src/checks.rs", "//! Every check of the program, as `spec-lang test` names and runs it.", "", &checks), &mut errors);
+    push(
+        rust("src/checks.rs", "//! Every check of the program, as `spec-lang test` names and runs it.", "", &checks),
+        &mut errors,
+    );
     let pools = crate::dty::pool_types(cx);
     let gens = crate::dty::gen_file(cx, &pools);
-    push(rust("src/draw.rs", "//! A generator per declared type a property, law or trace draws from: the engine's draws.", "", &gens), &mut errors);
+    push(
+        rust(
+            "src/draw.rs",
+            "//! A generator per declared type a property, law or trace draws from: the engine's draws.",
+            "",
+            &gens,
+        ),
+        &mut errors,
+    );
     let conforms = crate::dty::conform_file(cx);
     push(
-        rust("src/conform.rs", "//! Whether a value is of a declared type: ranges and `where` claims, field by field.", "", &conforms),
+        rust(
+            "src/conform.rs",
+            "//! Whether a value is of a declared type: ranges and `where` claims, field by field.",
+            "",
+            &conforms,
+        ),
         &mut errors,
     );
     let mut mods: Vec<String> = ["checks", "conform", "draw", "machine", "rt"].iter().map(|s| s.to_string()).collect();
     mods.extend(extra_mods.iter().map(|s| s.to_string()));
     mods.extend(top);
-    let lib = format!(
-        "#![allow({})]\n\n{}",
-        ALLOWS.join(", "),
-        mods.iter().map(|m| format!("pub mod {m};")).collect::<Vec<_>>().join("\n")
-    );
+    let lib = mods.iter().map(|m| format!("pub mod {m};")).collect::<Vec<_>>().join("\n");
     push(
         rust(
             "src/lib.rs",
@@ -227,11 +265,12 @@ pub fn tests(lir: &Lir) -> Result<Vec<OutFile>, Vec<Diag>> {
     files.push(plain("Cargo.toml", cargo_toml("spec-program", &[("checks", "src/bin/checks.rs")]), false));
     files.push(plain("src/bin/checks.rs", checks_main().to_string(), false));
     files.push(plain("bin/test", TEST_SCRIPT.to_string(), true));
+    files.push(crate::provenance::file(&files));
     files.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(files)
 }
 
-const CHECK_SCRIPT: &str = "#!/usr/bin/env bash\n# The gate of this printed app: clippy with warnings denied, its checks, the release build. The printer lays the\n# code out with prettyplease, not rustfmt, so `cargo fmt --check` is not part of it.\nset -euo pipefail\ncd \"$(dirname \"$0\")/..\"\ncargo clippy --release --all-targets --quiet -- -D warnings\nbin/test >/dev/null\ncargo build --release --quiet\n";
+const CHECK_SCRIPT: &str = "#!/usr/bin/env bash\n# The gate of this printed app: clippy with warnings denied, the runtimes' own tests, the program's checks, the release\n# build. The printer lays the\n# code out with prettyplease, not rustfmt, so `cargo fmt --check` is not part of it.\nset -euo pipefail\ncd \"$(dirname \"$0\")/..\"\ncargo clippy --release --all-targets --quiet -- -D warnings\ncargo test --release --quiet\nbin/test >/dev/null\ncargo build --release --quiet\n";
 
 const BUILD_SCRIPT: &str = "#!/usr/bin/env bash\n# Builds the app's executable into target/release/.\nset -euo pipefail\ncd \"$(dirname \"$0\")/..\"\ncargo build --release --quiet\n";
 
@@ -243,10 +282,13 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     let mut cx = Cx::new(lir, Mode::App);
     let libs = crate::app::libraries(&cx, m).map_err(|d| vec![d])?;
     let Some(entry) = crate::app::entry(m, &libs) else {
-        return Err(vec![Diag::load(format!(
-            "E-UNSUPPORTED: app {} names no library whose Rust runtime runs an app (`entry = true` in runtime.conf)",
-            m.qualified
-        ))]);
+        return Err(vec![crate::app::unsupported(
+            m,
+            format!(
+                "app {} names no library whose Rust runtime runs an app (`entry = true` in its runtime.conf)",
+                m.name
+            ),
+        )]);
     };
     let exe = crate::app::executable(m, Some(entry));
     let mut files = program(&mut cx, &["libs", "manifest"])?;
@@ -255,8 +297,18 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     let conforms = crate::dty::conform_file(&mut cx);
     let mut errors = std::mem::take(&mut cx.diags);
     for (path, header, own, body) in [
-        ("src/manifest.rs", "//! The app's manifest: its notes, parameters and rules as data, with calls from plain data.", "crate::manifest", manifest),
-        ("src/conform.rs", "//! Whether a value is of a declared type: ranges and `where` claims, field by field.", "", conforms),
+        (
+            "src/manifest.rs",
+            "//! The app's manifest: its notes, parameters and rules as data, with calls from plain data.",
+            "crate::manifest",
+            manifest,
+        ),
+        (
+            "src/conform.rs",
+            "//! Whether a value is of a declared type: ranges and `where` claims, field by field.",
+            "",
+            conforms,
+        ),
     ] {
         match rust(path, header, own, &body) {
             Ok(f) => {
@@ -269,26 +321,22 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     if !errors.is_empty() {
         return Err(errors);
     }
-    let mut mods = Vec::new();
     let mut links = Vec::new();
     for l in &libs {
         let dir = ident(&l.name);
-        mods.push(format!("pub mod {dir};"));
+        let link = l.conf.get("link");
         for (rel, bytes) in crate::app::runtime_files(&l.dir) {
             if rel == "runtime.conf" || rel == "README.md" {
                 continue;
             }
-            files.push(OutFile { path: format!("src/libs/{dir}/{rel}"), bytes, executable: false });
+            let path = if link == Some(&rel) { format!("build/{dir}.rs") } else { format!("src/libs/{dir}/{rel}") };
+            files.push(OutFile { path, bytes, executable: false });
         }
-        if let Some(link) = l.conf.get("link") {
-            links.push(link.clone());
+        if link.is_some() {
+            links.push(dir);
         }
     }
-    files.push(plain(
-        "src/libs/mod.rs",
-        format!("//! The runtimes of the libraries the app uses, copied from `libs/<name>/real/rust/`.\n\n{}\n", mods.join("\n")),
-        false,
-    ));
+    files.push(plain("src/libs/mod.rs", crate::app::libs_file(m, &libs).map_err(|d| vec![d])?, false));
     files.push(plain(
         "src/main.rs",
         format!(
@@ -303,10 +351,11 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     let mut toml = cargo_toml(&exe, &[(&exe, "src/main.rs"), ("checks", "src/bin/checks.rs")]);
     if !links.is_empty() {
         toml = toml.replace("publish = false\n", "publish = false\nbuild = \"build.rs\"\n");
-        let lines: Vec<String> = links.iter().map(|l| format!("    {l}")).collect();
+        let mods: Vec<String> = links.iter().map(|l| format!("#[path = \"build/{l}.rs\"]\nmod {l};\n")).collect();
+        let calls: Vec<String> = links.iter().map(|l| format!("    {l}::link();\n")).collect();
         files.push(plain(
             "build.rs",
-            format!("//! Linking the C libraries the app's runtimes call, as their `runtime.conf` says.\n\nfn main() {{\n{}\n}}\n", lines.join("\n")),
+            format!("//! Links the C libraries the app's runtimes call, each as its runtime says.\n\n{}\nfn main() {{\n{}}}\n", mods.concat(), calls.concat()),
             false,
         ));
     }
@@ -314,6 +363,7 @@ pub fn app(lir: &Lir, name: &str) -> Result<Vec<OutFile>, Vec<Diag>> {
     files.push(plain("bin/test", TEST_SCRIPT.to_string(), true));
     files.push(plain("bin/check", CHECK_SCRIPT.to_string(), true));
     files.push(plain("bin/build", BUILD_SCRIPT.to_string(), true));
+    files.push(crate::provenance::file(&files));
     files.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(files)
 }

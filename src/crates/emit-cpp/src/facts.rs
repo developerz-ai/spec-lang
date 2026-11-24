@@ -114,7 +114,8 @@ impl Facts {
                     Body::Expr(e) => (f.needs_ctx(e), f.effects(e)),
                     Body::Extern(_) => (false, Effects { hard: true, writes_state: true, ..Effects::default() }),
                 };
-                fx.hard |= d.params.iter().any(|p| f.checks(&p.check)) || d.result_check.as_ref().is_some_and(|c| f.checks(c));
+                fx.hard |=
+                    d.params.iter().any(|p| f.checks(&p.check)) || d.result_check.as_ref().is_some_and(|c| f.checks(c));
                 fx.reads_local = false;
                 fx.writes_local = false;
                 let ctx = ctx || d.params.iter().filter_map(|p| p.default.as_ref()).any(|e| f.needs_ctx(e));
@@ -135,7 +136,8 @@ impl Facts {
                     fx.add(&c);
                     fx.fail(&g.error);
                 }
-                fx.hard |= d.params.iter().any(|p| f.checks(&p.check)) || d.result_check.as_ref().is_some_and(|c| f.checks(c));
+                fx.hard |=
+                    d.params.iter().any(|p| f.checks(&p.check)) || d.result_check.as_ref().is_some_and(|c| f.checks(c));
                 fx.reads_state = true;
                 fx.writes_state = true;
                 fx.reads_local = false;
@@ -389,7 +391,9 @@ impl Facts {
 fn block_writes_state(e: &Expr) -> bool {
     fn block(b: &Block) -> bool {
         b.stmts.iter().any(|s| match &s.kind {
-            StmtKind::Assign { place, .. } | StmtKind::Mutate { place, .. } => matches!(place.root, PlaceRoot::State(_)),
+            StmtKind::Assign { place, .. } | StmtKind::Mutate { place, .. } => {
+                matches!(place.root, PlaceRoot::State(_))
+            }
             StmtKind::For { body, .. } | StmtKind::While { body, .. } => block(body),
             StmtKind::If { then, els, .. } => block(then) || els.as_ref().is_some_and(block),
             _ => false,

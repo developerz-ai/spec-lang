@@ -3,12 +3,14 @@
 //! A library's `runtime.conf` says what the printer needs to know of it, as data.
 
 use crate::code::Fx;
-use crate::cx::{Cx, RECORD};
+use crate::cx::Cx;
 use crate::dty::{conform_fn, describe, snake};
+use crate::expr::int_lit;
 use crate::names::{camel, ident};
-use spec_lang_diag::Diag;
+use spec_lang_diag::{Diag, Severity};
+use spec_lang_ir::FnId;
 use spec_lang_lir::manifest::{Manifest, Named, Note, NoteArg, NoteValue};
-use spec_lang_lir::{DTy, Extern, LTy, TypeDef};
+use spec_lang_lir::{Body, DTy, Extern, LTy, TypeDef};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -17,12 +19,7 @@ pub fn extern_call(fx: &mut Fx<'_, '_>, x: &Extern, result: &LTy, params: &[Stri
     let args: Vec<String> = params.iter().map(|p| format!("rt::data::AsData::to_data(&{p})")).collect();
     let ty = fx.ty(result);
     vec![
-        format!(
-            "let reply = crate::libs::{}::call({:?}, &[{}])?;",
-            ident(&x.library),
-            x.symbol,
-            args.join(", ")
-        ),
+        format!("let reply = crate::libs::{}::call({:?}, &[{}])?;", ident(&x.library), x.symbol, args.join(", ")),
         format!(
             "<{ty} as rt::data::AsData>::from_data(&reply).ok_or_else(|| rt::stop(\"E-TYPE-MISMATCH\", \"`{}#{}` gave a value of another type\"))",
             x.library, x.symbol
@@ -53,7 +50,8 @@ fn read_conf(dir: &Path) -> BTreeMap<String, String> {
 
 /// Where library `name`'s Rust runtime is: beside the loaded library of that name, else beside any loaded one.
 fn find_runtime(cx: &Cx<'_>, name: &str) -> Option<Runtime> {
-    let mut dirs: Vec<PathBuf> = cx.lir.libraries.iter().filter(|l| l.name == name).map(|l| PathBuf::from(&l.dir)).collect();
+    let mut dirs: Vec<PathBuf> =
+        cx.lir.libraries.iter().filter(|l| l.name == name).map(|l| PathBuf::from(&l.dir)).collect();
     dirs.extend(cx.lir.libraries.iter().filter_map(|l| Path::new(&l.dir).parent().map(|p| p.join(name))));
     dirs.into_iter().map(|d| d.join("real").join("rust")).find(|d| d.is_dir()).map(|dir| Runtime {
         name: name.to_string(),
@@ -62,8 +60,33 @@ fn find_runtime(cx: &Cx<'_>, name: &str) -> Option<Runtime> {
     })
 }
 
-/// The libraries an app needs a runtime of, in first-use order: its shape, its notes' and triggers', its
-/// handlers', the ones its foreign bodies name, and what their `runtime.conf` says they need.
+/// An app this printer cannot build, and why.
+pub fn unsupported(m: &Manifest, message: String) -> Diag {
+    Diag::new(Severity::Error, "E-UNSUPPORTED", message).with_decl(m.qualified.clone())
+}
+
+/// `src/libs/mod.rs`: the runtimes, and under the name a runtime requires the one that provides it.
+pub fn libs_file(m: &Manifest, libs: &[Runtime]) -> Result<String, Diag> {
+    let mut out: Vec<String> = libs.iter().map(|l| format!("pub mod {};", ident(&l.name))).collect();
+    for need in libs.iter().filter_map(|l| l.conf.get("requires")) {
+        let Some(p) = libs.iter().find(|l| l.conf.get("provides") == Some(need)) else {
+            return Err(unsupported(m, format!("app {}: none of its libraries provides a `{need}` for Rust", m.name)));
+        };
+        out.push(format!(
+            "\n/// The `{need}` the app's runtimes require: `{}` provides it.\npub use {} as {};",
+            p.name,
+            ident(&p.name),
+            ident(need)
+        ));
+    }
+    Ok(format!(
+        "//! The runtimes of the libraries the app uses, copied from `libs/<name>/real/rust/`.\n\n{}\n",
+        out.join("\n")
+    ))
+}
+
+/// The libraries an app needs a runtime of, in first-use order: its shape, its notes' and triggers',
+/// and the ones its foreign bodies name.
 pub fn libraries(cx: &Cx<'_>, m: &Manifest) -> Result<Vec<Runtime>, Diag> {
     let lir = cx.lir;
     let mut names: Vec<String> = Vec::new();
@@ -82,12 +105,12 @@ pub fn libraries(cx: &Cx<'_>, m: &Manifest) -> Result<Vec<Runtime>, Diag> {
         for t in &lir.rule(*r).triggers {
             add(&t.library);
         }
-        if let spec_lang_lir::Body::Extern(x) = &lir.rule(*r).body {
+        if let Body::Extern(x) = &lir.rule(*r).body {
             add(&x.library);
         }
     }
     for f in &lir.fns {
-        if let spec_lang_lir::Body::Extern(x) = &f.body {
+        if let Body::Extern(x) = &f.body {
             add(&x.library);
         }
     }
@@ -97,16 +120,11 @@ pub fn libraries(cx: &Cx<'_>, m: &Manifest) -> Result<Vec<Runtime>, Diag> {
         let name = names[i].clone();
         i += 1;
         let Some(rt) = find_runtime(cx, &name) else {
-            return Err(Diag::load(format!(
-                "E-UNSUPPORTED: app {} uses library `{name}`, which has no Rust runtime (libs/{name}/real/rust/)",
-                m.qualified
-            )));
+            return Err(unsupported(
+                m,
+                format!("app {} uses library `{name}`, which has no Rust runtime (libs/{name}/real/rust/)", m.name),
+            ));
         };
-        for need in rt.conf.get("needs").map(|s| s.split_whitespace().map(str::to_string).collect::<Vec<_>>()).unwrap_or_default() {
-            if !names.contains(&need) {
-                names.push(need);
-            }
-        }
         out.push(rt);
     }
     Ok(out)
@@ -187,7 +205,9 @@ fn word(cx: &Cx<'_>, d: &DTy) -> String {
         DTy::Set(x) => format!("set_{}", word(cx, x)),
         DTy::Map(k, v) => format!("map_{}_{}", word(cx, k), word(cx, v)),
         DTy::Tuple(xs) => format!("tuple_{}", xs.iter().map(|x| word(cx, x)).collect::<Vec<_>>().join("_")),
-        DTy::Range { lo, hi, .. } => format!("range_{}_{}", lo.to_string().replace('-', "m"), hi.to_string().replace('-', "m")),
+        DTy::Range { lo, hi, .. } => {
+            format!("range_{}_{}", lo.to_string().replace('-', "m"), hi.to_string().replace('-', "m"))
+        }
         DTy::Where(b, c) => format!("{}_where{}", word(cx, b), c.index()),
         other => format!("{other:?}").to_lowercase(),
     }
@@ -233,10 +253,28 @@ fn ty_items(cx: &mut Cx<'_>, tys: &mut Tys) -> Vec<String> {
             }
         };
         let opaque = matches!(shape.as_str(), "Shape::Opaque");
-        let admits = if opaque { "|_| false".to_string() } else { format!("|d| rt::data::admits::<{rust}>(d, {check})") };
-        out.push(format!("/// `{}`.\npub static {name}: Ty = Ty {{ name: {shown:?}, shape: {shape}, admits: {admits} }};", describe(cx, &d)));
+        let admits =
+            if opaque { "|_| false".to_string() } else { format!("|d| rt::data::admits::<{rust}>(d, {check})") };
+        let range = match bounds(cx, &d) {
+            Some((lo, hi)) => format!("Some(({}, {}))", int_lit(lo).text, int_lit(hi).text),
+            None => "None".into(),
+        };
+        out.push(format!("/// `{}`.\npub static {name}: Ty = Ty {{ name: {shown:?}, shape: {shape}, range: {range}, admits: {admits} }};", describe(cx, &d)));
     }
     out
+}
+
+/// The least and greatest value of a range type, through aliases and claims.
+fn bounds(cx: &Cx<'_>, d: &DTy) -> Option<(i128, i128)> {
+    match d {
+        DTy::Range { lo, hi, inclusive } => Some((*lo, if *inclusive { *hi } else { hi - 1 })),
+        DTy::Where(b, _) => bounds(cx, b),
+        DTy::Named(t) => match &cx.lir.ty(*t).def {
+            TypeDef::Alias { of } => bounds(cx, of),
+            _ => None,
+        },
+        _ => None,
+    }
 }
 
 fn shape(cx: &Cx<'_>, tys: &mut Tys, d: &DTy) -> String {
@@ -269,7 +307,8 @@ fn shape(cx: &Cx<'_>, tys: &mut Tys, d: &DTy) -> String {
                     let vs: Vec<String> = variants
                         .iter()
                         .map(|v| {
-                            let fs: Vec<String> = v.fields.iter().map(|f| format!("({:?}, {})", f.name, r(&f.check))).collect();
+                            let fs: Vec<String> =
+                                v.fields.iter().map(|f| format!("({:?}, {})", f.name, r(&f.check))).collect();
                             format!("({:?}, &[{}])", v.name, fs.join(", "))
                         })
                         .collect();
@@ -293,15 +332,17 @@ fn as_data_items(cx: &Cx<'_>, names: &[String]) -> Vec<String> {
         let path = cx.type_path(id, None);
         match &decl.def {
             TypeDef::Record { fields } => {
-                let to: Vec<String> = fields.iter().map(|f| format!("({:?}, self.{}.to_data())", f.name, ident(&f.name))).collect();
-                let from: Vec<String> =
-                    fields.iter().map(|f| format!("{}: AsData::from_data(d.field({:?})?)?", ident(&f.name), f.name)).collect();
+                let to: Vec<String> =
+                    fields.iter().map(|f| format!("({:?}, self.{}.to_data())", f.name, ident(&f.name))).collect();
+                let from: Vec<String> = fields
+                    .iter()
+                    .map(|f| format!("{}: AsData::from_data(d.field({:?})?)?", ident(&f.name), f.name))
+                    .collect();
                 out.push(format!(
                     "impl AsData for {path} {{ fn to_data(&self) -> Data {{ Data::Record(vec![{}]) }} fn from_data(d: &Data) -> Option<Self> {{ if !matches!(d, Data::Record(_)) {{ return None; }} Some({path} {{ {} }}) }} }}",
                     to.join(", "),
                     from.join(", ")
                 ));
-                let _ = RECORD;
             }
             TypeDef::Sum { variants } => {
                 let mut to = Vec::new();
@@ -309,14 +350,23 @@ fn as_data_items(cx: &Cx<'_>, names: &[String]) -> Vec<String> {
                 for v in variants {
                     let vn = ident(&camel(&v.name));
                     let fs: Vec<String> = v.fields.iter().map(|f| ident(&f.name)).collect();
-                    let pairs: Vec<String> = v.fields.iter().map(|f| format!("({:?}, {}.to_data())", f.name, ident(&f.name))).collect();
-                    let inits: Vec<String> =
-                        v.fields.iter().map(|f| format!("{}: AsData::from_data(d.field({:?})?)?", ident(&f.name), f.name)).collect();
+                    let pairs: Vec<String> =
+                        v.fields.iter().map(|f| format!("({:?}, {}.to_data())", f.name, ident(&f.name))).collect();
+                    let inits: Vec<String> = v
+                        .fields
+                        .iter()
+                        .map(|f| format!("{}: AsData::from_data(d.field({:?})?)?", ident(&f.name), f.name))
+                        .collect();
                     if v.fields.is_empty() {
                         to.push(format!("{path}::{vn} => Data::Variant({:?}, Vec::new()),", v.name));
                         from.push(format!("{:?} => Some({path}::{vn}),", v.name));
                     } else {
-                        to.push(format!("{path}::{vn} {{ {} }} => Data::Variant({:?}, vec![{}]),", fs.join(", "), v.name, pairs.join(", ")));
+                        to.push(format!(
+                            "{path}::{vn} {{ {} }} => Data::Variant({:?}, vec![{}]),",
+                            fs.join(", "),
+                            v.name,
+                            pairs.join(", ")
+                        ));
                         from.push(format!("{:?} => Some({path}::{vn} {{ {} }}),", v.name, inits.join(", ")));
                     }
                 }
@@ -339,9 +389,14 @@ fn as_data_items(cx: &Cx<'_>, names: &[String]) -> Vec<String> {
         .states
         .iter()
         .enumerate()
-        .map(|(i, _)| format!("{}: AsData::from_data(d.field({:?})?)?", cx.names.state(spec_lang_ir::StateId(i as u32)), names[i]))
+        .map(|(i, _)| {
+            format!("{}: AsData::from_data(d.field({:?})?)?", cx.names.state(spec_lang_ir::StateId(i as u32)), names[i])
+        })
         .collect();
-    out.push(format!("/// The world as data: every state by name.\nfn world_data(w: &World) -> Data {{ Data::Record(vec![{}]) }}", to.join(", ")));
+    out.push(format!(
+        "/// The world as data: every state by name.\nfn world_data(w: &World) -> Data {{ Data::Record(vec![{}]) }}",
+        to.join(", ")
+    ));
     out.push(format!(
         "/// A world from data, when every state is of its Rust type (claims are checked apart).\nfn data_world(d: &Data) -> Option<World> {{ Some(World {{ {} }}) }}",
         from.join(", ")
@@ -350,7 +405,12 @@ fn as_data_items(cx: &Cx<'_>, names: &[String]) -> Vec<String> {
 }
 
 fn note_text(n: &Note) -> String {
-    format!("Note {{ library: {:?}, name: {:?}, args: &[{}] }}", n.library, n.name, n.args.iter().map(arg_text).collect::<Vec<_>>().join(", "))
+    format!(
+        "Note {{ library: {:?}, name: {:?}, args: &[{}] }}",
+        n.library,
+        n.name,
+        n.args.iter().map(arg_text).collect::<Vec<_>>().join(", ")
+    )
 }
 
 fn arg_text(a: &NoteArg) -> String {
@@ -373,12 +433,19 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
     let state_names: Vec<String> = lir
         .states
         .iter()
-        .map(|s| if lir.states.iter().filter(|x| x.info.name == s.info.name).count() > 1 { s.info.qualified.clone() } else { s.info.name.clone() })
+        .map(|s| {
+            if lir.states.iter().filter(|x| x.info.name == s.info.name).count() > 1 {
+                s.info.qualified.clone()
+            } else {
+                s.info.name.clone()
+            }
+        })
         .collect();
 
     // Calls from data.
     let glue = |cx: &mut Cx<'_>, tys: &mut Tys, params: &[spec_lang_lir::Param], path: &str, m_arg: bool, f: &str| {
-        let mut lines = vec!["let mut args = args.into_iter();".to_string()];
+        let mut lines =
+            if params.is_empty() { Vec::new() } else { vec!["let mut args = args.into_iter();".to_string()] };
         let mut call = Vec::new();
         if m_arg {
             call.push("m".to_string());
@@ -389,14 +456,24 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
             let getter = if p.default.is_some() { "arg_or_default" } else { "arg" };
             lines.push(format!("let a{i} = rt::app::{getter}::<{t}>(&mut args, {:?})?;", p.name));
             call.push(format!("a{i}"));
-            infos.push(format!("Param {{ name: {:?}, ty: &{}, has_default: {} }}", p.name, tys.name(cx, &p.check), p.default.is_some()));
+            infos.push(format!(
+                "Param {{ name: {:?}, ty: &{}, has_default: {} }}",
+                p.name,
+                tys.name(cx, &p.check),
+                p.default.is_some()
+            ));
         }
         lines.push(format!("Ok({path}({})?.to_data())", call.join(", ")));
-        (format!("fn {f}(m: &mut Machine, args: Vec<Option<Data>>) -> R<Data> {{ {} }}", lines.join(" ")), infos)
+        let text = lines.join(" ");
+        let list = ["m: &mut Machine", "args: Vec<Option<Data>>"].map(str::to_string);
+        (format!("fn {f}({}) -> R<Data> {{ {text} }}", crate::code::params(&list, &text)), infos)
     };
 
-    let state_labels: Vec<String> =
-        lir.states.iter().flat_map(|s| [format!("{}.write", s.info.name), format!("{}.write", s.info.qualified)]).collect();
+    let state_labels: Vec<String> = lir
+        .states
+        .iter()
+        .flat_map(|s| [format!("{}.write", s.info.name), format!("{}.write", s.info.qualified)])
+        .collect();
     let mut rules = Vec::new();
     let mut rule_index = BTreeMap::new();
     for (k, r) in m.rules.iter().enumerate() {
@@ -421,32 +498,67 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
             uses.join(", ")
         ));
     }
-    let mut fns = Vec::new();
-    let mut fn_index = BTreeMap::new();
-    for p in &m.params {
-        for d in &p.decls {
-            if let Named::Fn(id) = d {
-                if fn_index.contains_key(id) {
-                    continue;
-                }
-                fn_index.insert(*id, fns.len());
-                let func = lir.func(*id);
-                let path = cx.names.path(None, func.info.module, &ident(&func.info.name));
-                let f = format!("fn_{}_{}", ident(&snake(&func.info.name)).trim_start_matches("r#"), fns.len());
-                let m_arg = cx.fn_m[id.index()];
-                let (item, params) = glue(cx, &mut tys, &func.params, &path, m_arg, &f);
-                items.push(item);
-                let result = func.result_check.clone().unwrap_or_else(|| dty_of(&func.result));
-                let result = tys.name(cx, &result);
-                fns.push(format!(
-                    "Func {{ name: {:?}, qualified: {:?}, params: &[{}], result: &{result}, call: {f} }}",
-                    func.info.name,
-                    func.info.qualified,
-                    params.join(", ")
-                ));
-            }
+    let externs: Vec<(&Extern, &[spec_lang_lir::Param])> = lir
+        .rules
+        .iter()
+        .map(|r| (&r.body, r.params.as_slice()))
+        .chain(lir.fns.iter().map(|f| (&f.body, f.params.as_slice())))
+        .filter_map(|(b, ps)| match b {
+            Body::Extern(x) => Some((x, ps)),
+            Body::Expr(_) => None,
+        })
+        .collect();
+    let mut listed: Vec<FnId> = Vec::new();
+    let named = m.params.iter().flat_map(|p| &p.decls).filter_map(|d| match d {
+        Named::Fn(id) => Some(*id),
+        Named::Rule(_) => None,
+    });
+    let foreign: Vec<&DTy> =
+        externs.iter().flat_map(|(_, ps)| ps.iter().map(|p| &p.check)).filter(|d| matches!(d, DTy::Named(_))).collect();
+    let of_foreign = lir.fns.iter().enumerate().filter_map(|(i, f)| match (&f.body, f.params.as_slice()) {
+        (Body::Expr(_), [p]) if foreign.contains(&&p.check) => Some(FnId(i as u32)),
+        _ => None,
+    });
+    for id in named.chain(of_foreign) {
+        if !listed.contains(&id) {
+            listed.push(id);
         }
     }
+    let mut fns = Vec::new();
+    for (k, id) in listed.iter().enumerate() {
+        let func = lir.func(*id);
+        let path = cx.names.path(None, func.info.module, &ident(&func.info.name));
+        let f = format!("fn_{}_{k}", ident(&snake(&func.info.name)).trim_start_matches("r#"));
+        let m_arg = cx.fn_m[id.index()];
+        let (item, params) = glue(cx, &mut tys, &func.params, &path, m_arg, &f);
+        items.push(item);
+        let result = func.result_check.clone().unwrap_or_else(|| dty_of(&func.result));
+        let result = tys.name(cx, &result);
+        fns.push(format!(
+            "Func {{ name: {:?}, qualified: {:?}, why: {:?}, params: &[{}], result: &{result}, call: {f} }}",
+            func.info.name,
+            func.info.qualified,
+            func.info.why,
+            params.join(", ")
+        ));
+    }
+    let foreign: Vec<String> = externs
+        .iter()
+        .map(|(x, ps)| {
+            let ps: Vec<String> = ps
+                .iter()
+                .map(|p| {
+                    format!(
+                        "Param {{ name: {:?}, ty: &{}, has_default: {} }}",
+                        p.name,
+                        tys.name(cx, &p.check),
+                        p.default.is_some()
+                    )
+                })
+                .collect();
+            format!("Extern {{ library: {:?}, symbol: {:?}, params: &[{}] }}", x.library, x.symbol, ps.join(", "))
+        })
+        .collect();
     let params: Vec<String> = m
         .params
         .iter()
@@ -456,7 +568,7 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
                 .iter()
                 .map(|d| match d {
                     Named::Rule(r) => format!("Decl::Rule({})", rule_index.get(r).copied().unwrap_or(usize::MAX)),
-                    Named::Fn(f) => format!("Decl::Fn({})", fn_index.get(f).copied().unwrap_or(usize::MAX)),
+                    Named::Fn(f) => format!("Decl::Fn({})", listed.iter().position(|x| x == f).unwrap_or(usize::MAX)),
                 })
                 .collect();
             format!("AppParam {{ name: {:?}, decls: &[{}] }}", p.name, ds.join(", "))
@@ -466,7 +578,14 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
         .states
         .iter()
         .enumerate()
-        .map(|(i, s)| format!("State {{ name: {:?}, qualified: {:?}, ty: &{} }}", state_names[i], s.info.qualified, tys.name(cx, &s.check)))
+        .map(|(i, s)| {
+            format!(
+                "State {{ name: {:?}, qualified: {:?}, ty: &{} }}",
+                state_names[i],
+                s.info.qualified,
+                tys.name(cx, &s.check)
+            )
+        })
         .collect();
     let mut reads = Vec::new();
     for (hi, h) in lir.handlers.iter().enumerate() {
@@ -483,7 +602,7 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
     }
     items.extend(as_data_items(cx, &state_names));
     items.push(format!(
-        "/// The app `{}`: what its libraries' runtimes read.\npub static APP: App = App {{ name: {:?}, qualified: {:?}, module: {:?}, target: {}, shape: {}, notes: &[{}], params: &[{}], rules: &[{}], fns: &[{}], states: &[{}], reads: &[{}], world_data, data_world, lawful: rt::runner::lawful }};",
+        "/// The app `{}`: what its libraries' runtimes read.\npub static APP: App = App {{ name: {:?}, qualified: {:?}, module: {:?}, target: {}, shape: {}, notes: &[{}], params: &[{}], rules: &[{}], fns: &[{}], externs: &[{}], states: &[{}], reads: &[{}], world_data, data_world, lawful: rt::runner::lawful }};",
         m.qualified,
         m.name,
         m.qualified,
@@ -494,6 +613,7 @@ pub fn manifest_file(cx: &mut Cx<'_>, m: &Manifest) -> String {
         params.join(", "),
         rules.join(", "),
         fns.join(", "),
+        foreign.join(", "),
         states.join(", "),
         reads.join(", ")
     ));

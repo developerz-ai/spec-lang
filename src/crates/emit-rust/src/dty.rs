@@ -1,5 +1,5 @@
 //! Declared types as code: one `conform` function per checked type (`conform.rs`), and one generator per type a
-//! property, a law or a trace draws from (`gen.rs`), the engine's algorithm draw for draw.
+//! property, a law or a trace draws from (`draw.rs`), the engine's algorithm draw for draw.
 
 use crate::cx::{Cx, RECORD};
 use crate::expr::int_lit;
@@ -57,7 +57,7 @@ pub fn conform_fn(cx: &mut Cx<'_>, d: &DTy) -> String {
     cx.conforms.name(d, |taken| unique(w, taken))
 }
 
-/// The name of the generator in `gen.rs` for `d`.
+/// The name of the generator in `draw.rs` for `d`.
 pub fn gen_fn(cx: &mut Cx<'_>, d: &DTy) -> String {
     let w = word(cx, d);
     cx.gens.name(d, |taken| unique(w, taken))
@@ -138,7 +138,7 @@ fn conform_body(cx: &mut Cx<'_>, d: &DTy) -> Vec<String> {
             TypeDef::Sum { variants } => {
                 let path = cx.type_path(*t, None);
                 let mut arms = Vec::new();
-                for (vi, var) in variants.iter().enumerate() {
+                for var in variants {
                     let mut checks = Vec::new();
                     let mut names = Vec::new();
                     for (fi, f) in var.fields.iter().enumerate() {
@@ -149,11 +149,17 @@ fn conform_body(cx: &mut Cx<'_>, d: &DTy) -> Vec<String> {
                         }
                     }
                     if !checks.is_empty() {
-                        let _ = vi;
-                        arms.push(format!("{path}::{} {{ {}, .. }} => {{ {} }}", ident(&camel(&var.name)), names.join(", "), checks.join(" ")));
+                        arms.push(format!(
+                            "{path}::{} {{ {}, .. }} => {{ {} }}",
+                            ident(&camel(&var.name)),
+                            names.join(", "),
+                            checks.join(" ")
+                        ));
                     }
                 }
-                arms.push("_ => {}".into());
+                if arms.len() < variants.len() {
+                    arms.push("_ => {}".into());
+                }
                 out.push(format!("match v {{ {} }}", arms.join(" ")));
             }
             TypeDef::RuleSet { rules } => {
@@ -165,7 +171,15 @@ fn conform_body(cx: &mut Cx<'_>, d: &DTy) -> Vec<String> {
         },
         _ => {}
     }
-    out.push("Ok(true)".into());
+    // `if !c(..)? { return Ok(false); } Ok(true)` is `c(..)`.
+    match out.last().and_then(|l| l.strip_prefix("if !")).and_then(|l| l.strip_suffix("? { return Ok(false); }")) {
+        Some(call) => {
+            let call = call.to_string();
+            out.pop();
+            out.push(call);
+        }
+        None => out.push("Ok(true)".into()),
+    }
     out
 }
 
@@ -292,7 +306,8 @@ fn base(cx: &mut Cx<'_>, d: &DTy) -> String {
                                 .enumerate()
                                 .map(|(i, f)| {
                                     let v = call(cx, &f.check);
-                                    let v = if cx.is_boxed(*t, vi as u32, i as u32) { format!("Box::new({v})") } else { v };
+                                    let v =
+                                        if cx.is_boxed(*t, vi as u32, i as u32) { format!("Box::new({v})") } else { v };
                                     format!("{}: {v}", ident(&f.name))
                                 })
                                 .collect();
@@ -310,7 +325,12 @@ fn base(cx: &mut Cx<'_>, d: &DTy) -> String {
     }
 }
 
-/// `gen.rs`: every registered generator, and the pools of the world.
+/// What every generator takes.
+pub fn draw_params() -> Vec<String> {
+    ["m: &mut Machine", "rng: &mut Rng", "pools: &Pools"].map(str::to_string).to_vec()
+}
+
+/// `draw.rs`: every registered generator, and the pools of the world.
 pub fn gen_file(cx: &mut Cx<'_>, pools: &[DTy]) -> String {
     let mut out = Vec::new();
     let mut i = 0;
@@ -332,8 +352,9 @@ pub fn gen_file(cx: &mut Cx<'_>, pools: &[DTy]) -> String {
             )
         };
         out.push(format!(
-            "/// A value of `{}`.\n#[allow(unused_variables)]\npub fn {name}(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<{t}> {{ {body} }}",
-            describe(cx, &d)
+            "/// A value of `{}`.\npub fn {name}({}) -> R<{t}> {{ {body} }}",
+            describe(cx, &d),
+            crate::code::params(&draw_params(), &body)
         ));
         i += 1;
     }
@@ -352,4 +373,3 @@ pub fn pool_types(cx: &Cx<'_>) -> Vec<DTy> {
     }
     out
 }
-

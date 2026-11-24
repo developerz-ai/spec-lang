@@ -162,7 +162,11 @@ impl<'a> Gen<'a> {
     /// A constant whose value cannot fail is an `inline const`; any other is a function with a static.
     pub fn const_is_plain(&self, c: ConstId) -> bool {
         let fx = self.facts.effects(&self.lir.constant(c).value);
-        !fx.can_fail() && !fx.hard && !fx.reads_state && !fx.writes_state && !self.facts.needs_ctx(&self.lir.constant(c).value)
+        !fx.can_fail()
+            && !fx.hard
+            && !fx.reads_state
+            && !fx.writes_state
+            && !self.facts.needs_ctx(&self.lir.constant(c).value)
     }
 
     pub fn const_ref(&self, c: ConstId) -> String {
@@ -189,7 +193,11 @@ impl<'a> Gen<'a> {
             LTy::Tuple(ts) => format!("std::tuple<{}>", ts.iter().map(|t| self.ty(t)).collect::<Vec<_>>().join(", ")),
             LTy::Range => "rt::Range".into(),
             LTy::Func(ps, r) => {
-                format!("std::function<{}({})>", self.ty(r), ps.iter().map(|p| self.param_ty(p)).collect::<Vec<_>>().join(", "))
+                format!(
+                    "std::function<{}({})>",
+                    self.ty(r),
+                    ps.iter().map(|p| self.param_ty(p)).collect::<Vec<_>>().join(", ")
+                )
             }
             LTy::Event(_) => "rt::Event".into(),
             LTy::Reply(_) => "rt::Reply".into(),
@@ -257,7 +265,9 @@ impl<'a> Gen<'a> {
     pub fn fields(&self, t: TypeId, tag: Option<u32>) -> &'a [spec_lang_lir::Field] {
         match (&self.lir.ty(t).def, tag) {
             (TypeDef::Record { fields }, None) => fields,
-            (TypeDef::Sum { variants }, Some(tag)) => variants.get(tag as usize).map(|v| v.fields.as_slice()).unwrap_or(&[]),
+            (TypeDef::Sum { variants }, Some(tag)) => {
+                variants.get(tag as usize).map(|v| v.fields.as_slice()).unwrap_or(&[])
+            }
             _ => &[],
         }
     }

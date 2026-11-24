@@ -94,7 +94,12 @@ enum Failure {
 
 /// One command: the world from the store, the rule, the world back when it wrote and changed, and the text it
 /// printed (`out.text`), sent only after the store holds the new world.
-fn run(app: &'static App, rule: &crate::rt::app::Rule, values: Vec<Option<Data>>, store: Option<&store::Store>) -> Result<String, Failure> {
+fn run(
+    app: &'static App,
+    rule: &crate::rt::app::Rule,
+    values: Vec<Option<Data>>,
+    store: Option<&store::Store>,
+) -> Result<String, Failure> {
     let stopped = |h: Halt| Failure::Stopped(h.message());
     let mut m = Machine::new().map_err(stopped)?;
     let lock = store.map(|s| s.lock(rule.writes)).transpose().map_err(Failure::Store)?;

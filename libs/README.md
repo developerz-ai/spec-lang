@@ -15,7 +15,7 @@ What `use <name>;` loads when no module of the project has that name ([decision 
 | `vocab.slg` | `@allows(...) note` (an app note, or a trigger with `@allows(on)`), `type` for note parameters, `handler` with its operations, at most one `app` shape, `use other.handler;` to offer another library's handler | data: checked against, never run |
 | `contract.slg` | ordinary declarations, `foreign` ones for a C library | the module `<name>`, when it declares anything |
 | `pretend.slg` | `handler Name(state: mut T = start) = { handler.op(x) -> reply; }` | what the engine runs for each operation in tests |
-| `real/` | one runtime per language, over the app manifest ([`real/README.md`](cli/real/README.md)) | by a build; none exists yet |
+| `real/` | one runtime per language, over the app manifest ([`real/README.md`](cli/real/README.md)) | by a build |
 | `README.md` | what it adds, ending with Limits | people and agents |
 
 ## Where `use` looks
@@ -32,5 +32,5 @@ Nothing else is ever read: no install step, no code runs at load.
 
 - The search path is a stopgap. A lock file with a commit and a hash per library ([35](../docs/idea/35-packages.md)) replaces steps 1 to 3; until then, two checkouts can see different libraries under one name.
 - Three libraries, all written for two POCs. A second program of each kind will find what they lack.
-- No library has a runtime in `real/`. The todo printers in `src/crates/emit-*` still embed `cli`'s runtime, and no printer serves a `game` app.
+- Each library has a runtime for Rust, TypeScript, Ruby and C++, lifted from one POC's hand-written backends.
 - Notes of a library stand only on `app`, and triggers only in `@on` of a `rule`; the toolchain keeps nothing else as data yet.

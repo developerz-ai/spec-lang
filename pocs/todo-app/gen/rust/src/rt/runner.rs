@@ -3,7 +3,7 @@
 //! (random traces drawn as the engine draws them). Prints one JSON line per check.
 
 use super::rng::{Rng, seed_for};
-use super::{Halt, R};
+use super::{Halt, R, Show};
 use crate::checks::{CHECKS, LAWS, TESTS};
 use crate::machine::{Event, Machine, Pools, Reply, World, random_world};
 use std::collections::BTreeMap;
@@ -45,9 +45,15 @@ pub enum What {
     /// A `@cases` row of a `fn`: true when it gave what the row expects.
     Case(fn(&mut Machine) -> R<bool>),
     /// A `@cases` row of a test: its arguments, evaluated on the test's `@given` world.
-    TestCase { test: usize, args: fn(&mut Machine) -> R<Body> },
+    TestCase {
+        test: usize,
+        args: fn(&mut Machine) -> R<Body>,
+    },
     Test(usize),
-    Property { test: usize, draw: fn(&mut Machine, &mut Rng) -> R<Body> },
+    Property {
+        test: usize,
+        draw: fn(&mut Machine, &mut Rng) -> R<Body>,
+    },
     Law(usize),
 }
 
@@ -73,19 +79,17 @@ pub struct Trace {
     pub states: Vec<World>,
 }
 
-impl super::Show for Step {
+impl Show for Step {
     fn show(&self) -> String {
         format!("{} -> {}", self.event.show(), self.reply.show())
     }
 }
 
-impl super::Show for Trace {
+impl Show for Trace {
     fn show(&self) -> String {
         format!("<trace of {} steps>", self.steps.len())
     }
 }
-
-use super::Show;
 
 /// Counts and the base seed, as `spec-lang test` takes them.
 #[derive(Clone, Copy, Debug)]
@@ -138,7 +142,7 @@ impl Note {
 /// How one run of a test ended.
 #[derive(Clone, Debug)]
 enum Run {
-    Pass(World),
+    Pass(Box<World>),
     Fail(Note),
     Blocked(Note),
 }
@@ -165,35 +169,35 @@ impl Runner {
     }
 
     /// A fresh machine at a test's `@given` world.
-    fn given(&mut self, t: usize) -> Result<Machine, Run> {
-        let mut m = Machine::new().map_err(|h| Run::Fail(Note::of(&h)))?;
+    fn given(&mut self, t: usize) -> Result<Machine, Box<Run>> {
+        let mut m = Machine::new().map_err(|h| Box::new(Run::Fail(Note::of(&h))))?;
         for g in TESTS[t].given {
             match g {
-                Given::State(set) => set(&mut m).map_err(|h| Run::Fail(Note::of(&h)))?,
+                Given::State(set) => set(&mut m).map_err(|h| Box::new(Run::Fail(Note::of(&h))))?,
                 Given::Test(parent) => {
                     if self.running.contains(parent) || *parent == t {
-                        return Err(Run::Fail(Note::new("E-TYPE-MISMATCH", "`@given` tests form a cycle")));
+                        return Err(Box::new(Run::Fail(Note::new("E-TYPE-MISMATCH", "`@given` tests form a cycle"))));
                     }
                     if TESTS[*parent].has_params {
-                        return Err(Run::Fail(Note::new(
+                        return Err(Box::new(Run::Fail(Note::new(
                             "E-TYPE-MISMATCH",
                             "`@given` names a test with parameters; it has no one end world",
-                        )));
+                        ))));
                     }
                     self.running.push(t);
                     let r = self.end_of(*parent);
                     self.running.pop();
                     let name = TESTS[*parent].name;
                     match r {
-                        Run::Pass(w) => m.world = w,
+                        Run::Pass(w) => m.world = *w,
                         Run::Blocked(n) if n.code == "B-FOREIGN" => {
-                            return Err(Run::Blocked(Note::new(
+                            return Err(Box::new(Run::Blocked(Note::new(
                                 "B-FOREIGN",
                                 format!("blocked by {name}, which reached a foreign body"),
-                            )));
+                            ))));
                         }
                         Run::Fail(_) | Run::Blocked(_) => {
-                            return Err(Run::Blocked(Note::new("F-BLOCKED", format!("blocked by {name}"))));
+                            return Err(Box::new(Run::Blocked(Note::new("F-BLOCKED", format!("blocked by {name}")))));
                         }
                     }
                 }
@@ -205,10 +209,10 @@ impl Runner {
     fn run_test(&mut self, t: usize, body: Body) -> Run {
         let mut m = match self.given(t) {
             Ok(m) => m,
-            Err(r) => return r,
+            Err(r) => return *r,
         };
         match body(&mut m) {
-            Ok(()) => Run::Pass(m.world),
+            Ok(()) => Run::Pass(Box::new(m.world)),
             Err(h @ Halt::Blocked { .. }) => Run::Blocked(Note::of(&h)),
             Err(Halt::Fail(f)) => Run::Fail(Note::new("F-TEST", format!("this step was refused: {}", f.show()))),
             Err(h) => Run::Fail(Note::of(&h)),
@@ -228,8 +232,10 @@ impl Runner {
             What::TestCase { test, args } => {
                 let mut m = match self.given(*test) {
                     Ok(m) => m,
-                    Err(Run::Fail(n) | Run::Blocked(n)) => return Err(n),
-                    Err(Run::Pass(_)) => return Ok(()),
+                    Err(r) => match *r {
+                        Run::Fail(n) | Run::Blocked(n) => return Err(n),
+                        Run::Pass(_) => return Ok(()),
+                    },
                 };
                 let body = args(&mut m).map_err(|h| Note::of(&h))?;
                 match self.run_test(*test, body) {
@@ -245,7 +251,9 @@ impl Runner {
         let name = TESTS[t].name;
         for run in 0..self.cfg.runs {
             let mut rng = Rng::new(seed_for(self.cfg.seed, name, u64::from(run)));
-            let body = Machine::new().map_err(|h| Note::of(&h)).and_then(|mut m| draw(&mut m, &mut rng).map_err(|h| Note::of_gen(&h)));
+            let body = Machine::new()
+                .map_err(|h| Note::of(&h))
+                .and_then(|mut m| draw(&mut m, &mut rng).map_err(|h| Note::of_gen(&h)));
             let failure = match body {
                 Err(n) => Some((Status::Fail, n)),
                 Ok(body) => match Runner::new(self.cfg).run_test(t, body) {
@@ -360,7 +368,13 @@ impl Laws {
         Ok(None)
     }
 
-    fn generate(&self, rng: &mut Rng, traced: &[usize], prefix: &[usize], start: Option<World>) -> Result<TraceRun, Note> {
+    fn generate(
+        &self,
+        rng: &mut Rng,
+        traced: &[usize],
+        prefix: &[usize],
+        start: Option<World>,
+    ) -> Result<TraceRun, Note> {
         let mut m = Machine::new().map_err(|h| Note::of(&h))?;
         let n_prefix = match start {
             Some(w) => {

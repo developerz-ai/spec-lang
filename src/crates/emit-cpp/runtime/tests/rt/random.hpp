@@ -14,10 +14,14 @@ class Rng {
   explicit Rng(std::uint64_t seed) : state_(seed) {}
   std::uint64_t next();
   // Uniform in 0..n (0 when n is 0).
-  std::uint64_t below(std::uint64_t n) { return n == 0 ? 0 : next() % n; }
+  std::uint64_t below(std::uint64_t n) {
+    return n == 0 ? 0 : next() % n;
+  }
   // In lo..=hi: two draws make a 128-bit number, high first, modulo the span.
   Int between(Int lo, Int hi);
-  bool chance(std::uint64_t num, std::uint64_t den) { return below(den) < num; }
+  bool chance(std::uint64_t num, std::uint64_t den) {
+    return below(den) < num;
+  }
 
  private:
   std::uint64_t state_;

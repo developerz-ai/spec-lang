@@ -1,14 +1,16 @@
 //! Module `todo.laws`, printed by spec-lang from `src/todo/laws.slg`. Each item names its declaration and line; rebuild with `spec-lang build`, do not edit.
+
 use crate::rt::{self, Int, R};
 use crate::machine::Machine;
+
 /// Rule set `todo.laws.Change`, `src/todo/laws.slg:7`.
 /// The calls of `todo.board.add`, `todo.board.done`, `todo.board.reopen`, `todo.board.rename`, `todo.board.remove`, `todo.board.clear`: a value of it is a `crate::machine::Event` of one of them.
 pub type Change = crate::machine::Event;
+
 /// a number is never reused
 ///
 /// Law `todo.laws.numbers_below_next`, `src/todo/laws.slg:9`.
-#[allow(unused_variables)]
-pub fn numbers_below_next(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn numbers_below_next(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.states,
         |w: crate::machine::World| -> R<bool> {
@@ -19,21 +21,21 @@ pub fn numbers_below_next(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
         },
     )
 }
+
 /// only add moves the counter, and only up
 ///
 /// Law `todo.laws.next_only_grows`, `src/todo/laws.slg:13`.
-#[allow(unused_variables)]
-pub fn next_only_grows(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn next_only_grows(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.steps,
         |it: rt::runner::Step| -> R<bool> { Ok(it.after.next_no >= it.before.next_no) },
     )
 }
+
 /// a command that names a task touches no other task
 ///
 /// Law `todo.laws.others_untouched`, `src/todo/laws.slg:17`.
-#[allow(unused_variables)]
-pub fn others_untouched(m: &mut Machine, t: rt::runner::Trace, k: Int) -> R<bool> {
+pub fn others_untouched(_m: &mut Machine, t: rt::runner::Trace, k: Int) -> R<bool> {
     rt::list::all(
         &t.steps,
         |s: rt::runner::Step| -> R<bool> {
@@ -56,9 +58,9 @@ pub fn others_untouched(m: &mut Machine, t: rt::runner::Trace, k: Int) -> R<bool
         },
     )
 }
+
 /// Law `todo.laws.clear_keeps_every_open_task`, `src/todo/laws.slg:21`.
-#[allow(unused_variables)]
-pub fn clear_keeps_every_open_task(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn clear_keeps_every_open_task(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.steps,
         |s: rt::runner::Step| -> R<bool> {
@@ -84,19 +86,19 @@ pub fn clear_keeps_every_open_task(m: &mut Machine, t: rt::runner::Trace) -> R<b
         },
     )
 }
+
 /// Law `todo.laws.reads_change_nothing`, `src/todo/laws.slg:26`.
-#[allow(unused_variables)]
-pub fn reads_change_nothing(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn reads_change_nothing(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.steps,
         |it: rt::runner::Step| -> R<bool> { Ok(it.after == it.before) },
     )
 }
+
 /// a refused command leaves the board as it was
 ///
 /// Law `todo.laws.refusal_changes_nothing`, `src/todo/laws.slg:29`.
-#[allow(unused_variables)]
-pub fn refusal_changes_nothing(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn refusal_changes_nothing(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.steps,
         |s: rt::runner::Step| -> R<bool> {
@@ -107,11 +109,11 @@ pub fn refusal_changes_nothing(m: &mut Machine, t: rt::runner::Trace) -> R<bool>
         },
     )
 }
+
 /// a task is stored under its own number
 ///
 /// Law `todo.laws.stored_under_its_number`, `src/todo/laws.slg:33`.
-#[allow(unused_variables)]
-pub fn stored_under_its_number(m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
+pub fn stored_under_its_number(_m: &mut Machine, t: rt::runner::Trace) -> R<bool> {
     rt::list::all(
         &t.states,
         |w: crate::machine::World| -> R<bool> {

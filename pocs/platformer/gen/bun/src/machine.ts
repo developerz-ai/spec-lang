@@ -70,7 +70,15 @@ export class World implements rt.Machine {
   }
 
   value(): WorldValue {
-    return { stage: this.stage, ticks: this.ticks, player: this.player, taken: this.taken, crawlers: this.crawlers, lives: this.lives, mode: this.mode };
+    return {
+      stage: this.stage,
+      ticks: this.ticks,
+      player: this.player,
+      taken: this.taken,
+      crawlers: this.crawlers,
+      lives: this.lives,
+      mode: this.mode,
+    };
   }
 
   save(): unknown {
@@ -93,11 +101,60 @@ export class World implements rt.Machine {
 }
 
 export const states: readonly rt.StateInfo<World>[] = [
-  { name: "hop.world.stage", prop: "stage", type: model.Level, set: (w, v) => { w.stage = v as model.Level; } },
-  { name: "hop.world.ticks", prop: "ticks", type: rt.int, set: (w, v) => { w.ticks = v as bigint; } },
-  { name: "hop.world.player", prop: "player", type: model.Player, set: (w, v) => { w.player = v as model.Player; } },
-  { name: "hop.world.taken", prop: "taken", type: rt.set(rt.int), set: (w, v) => { w.taken = v as rt.OrdSet<bigint>; } },
-  { name: "hop.world.crawlers", prop: "crawlers", type: rt.map(rt.int, model.Crawler), set: (w, v) => { w.crawlers = v as rt.OrdMap<bigint, model.Crawler>; } },
-  { name: "hop.world.lives", prop: "lives", type: rt.inRange(0n, 3n, true), set: (w, v) => { w.lives = v as bigint; } },
-  { name: "hop.world.mode", prop: "mode", type: model.Mode, set: (w, v) => { w.mode = v as model.Mode; } },
+  {
+    name: "hop.world.stage",
+    prop: "stage",
+    type: model.Level,
+    set: (w, v) => {
+      w.stage = v as model.Level;
+    },
+  },
+  {
+    name: "hop.world.ticks",
+    prop: "ticks",
+    type: rt.int,
+    set: (w, v) => {
+      w.ticks = v as bigint;
+    },
+  },
+  {
+    name: "hop.world.player",
+    prop: "player",
+    type: model.Player,
+    set: (w, v) => {
+      w.player = v as model.Player;
+    },
+  },
+  {
+    name: "hop.world.taken",
+    prop: "taken",
+    type: rt.set(rt.int),
+    set: (w, v) => {
+      w.taken = v as rt.OrdSet<bigint>;
+    },
+  },
+  {
+    name: "hop.world.crawlers",
+    prop: "crawlers",
+    type: rt.map(rt.int, model.Crawler),
+    set: (w, v) => {
+      w.crawlers = v as rt.OrdMap<bigint, model.Crawler>;
+    },
+  },
+  {
+    name: "hop.world.lives",
+    prop: "lives",
+    type: rt.inRange(0n, 3n, true),
+    set: (w, v) => {
+      w.lives = v as bigint;
+    },
+  },
+  {
+    name: "hop.world.mode",
+    prop: "mode",
+    type: model.Mode,
+    set: (w, v) => {
+      w.mode = v as model.Mode;
+    },
+  },
 ];

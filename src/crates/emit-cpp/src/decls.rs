@@ -186,7 +186,9 @@ impl Needs<'_, '_> {
                     TypeDef::Sum { variants } => variants
                         .iter()
                         .enumerate()
-                        .flat_map(|(tag, v)| v.fields.iter().enumerate().map(move |(i, f)| (Some(tag as u32), i as u32, f)))
+                        .flat_map(|(tag, v)| {
+                            v.fields.iter().enumerate().map(move |(i, f)| (Some(tag as u32), i as u32, f))
+                        })
                         .collect(),
                     TypeDef::RuleSet { .. } => Vec::new(),
                 };
@@ -224,7 +226,15 @@ impl Needs<'_, '_> {
 
 /// A module's declarations in an order C++ accepts: each after what its header text names.
 fn header_order(g: &Gen<'_>, decls: &ModuleDecls) -> (Vec<Item>, Vec<TypeId>) {
-    fn visit(g: &Gen<'_>, item: Item, hard: bool, mine: &[Item], done: &mut Vec<Item>, open: &mut Vec<Item>, early: &mut Vec<TypeId>) {
+    fn visit(
+        g: &Gen<'_>,
+        item: Item,
+        hard: bool,
+        mine: &[Item],
+        done: &mut Vec<Item>,
+        open: &mut Vec<Item>,
+        early: &mut Vec<TypeId>,
+    ) {
         if done.contains(&item) || !mine.contains(&item) {
             return;
         }
@@ -325,7 +335,11 @@ fn type_decl(g: &Gen<'_>, lines: &Lines, t: TypeId, used: &BTreeSet<(u32, String
             let alts: Vec<String> = variants.iter().map(|v| ident(&v.name)).collect();
             let _ = writeln!(out, "std::variant<{}> alt;", alts.join(", "));
             for (field, ty) in accessors(g, t, used) {
-                let _ = writeln!(out, "// `value.{field}`: stops E-TYPE-MISMATCH on a variant without it.\nconst {ty}& {}() const;", ident(&field));
+                let _ = writeln!(
+                    out,
+                    "// `value.{field}`: stops E-TYPE-MISMATCH on a variant without it.\nconst {ty}& {}() const;",
+                    ident(&field)
+                );
             }
             out.push_str(&ORDER.replace("{T}", &name));
             let _ = writeln!(out, "friend rt::Text show(const {name}& value);\n}};");
@@ -364,10 +378,17 @@ fn type_impl(g: &Gen<'_>, t: TypeId, used: &BTreeSet<(u32, String)>, out: &mut S
             }
         }
         TypeDef::Record { fields } => {
-            let _ = writeln!(out, "rt::Text show(const {name}& value) {{\nreturn {};\n}}\n", shown(fields, &d.info.name, "value."));
+            let _ = writeln!(
+                out,
+                "rt::Text show(const {name}& value) {{\nreturn {};\n}}\n",
+                shown(fields, &d.info.name, "value.")
+            );
             if checks {
-                let parts: Vec<String> =
-                    fields.iter().enumerate().filter_map(|(i, f)| fx.conform(&f.check, &g.field("value", t, None, i as u32))).collect();
+                let parts: Vec<String> = fields
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, f)| fx.conform(&f.check, &g.field("value", t, None, i as u32)))
+                    .collect();
                 let _ = writeln!(out, "bool {valid}(const {name}& value) {{\nreturn {};\n}}\n", parts.join(" && "));
             }
         }
@@ -382,7 +403,12 @@ fn type_impl(g: &Gen<'_>, t: TypeId, used: &BTreeSet<(u32, String)>, out: &mut S
             let _ = writeln!(out, "rt::Text show(const {name}& value) {{");
             for v in variants {
                 let vn = ident(&v.name);
-                let _ = writeln!(out, "if ({}const auto* v = std::get_if<{name}::{vn}>(&value.alt)) {{\nreturn {};\n}}", if v.fields.is_empty() { "[[maybe_unused]] " } else { "" }, shown(&v.fields, &v.name, "v->"));
+                let _ = writeln!(
+                    out,
+                    "if ({}const auto* v = std::get_if<{name}::{vn}>(&value.alt)) {{\nreturn {};\n}}",
+                    if v.fields.is_empty() { "[[maybe_unused]] " } else { "" },
+                    shown(&v.fields, &v.name, "v->")
+                );
             }
             out.push_str("return \"?\";\n}\n\n");
             for (field, ty) in accessors(g, t, used) {
@@ -392,9 +418,19 @@ fn type_impl(g: &Gen<'_>, t: TypeId, used: &BTreeSet<(u32, String)>, out: &mut S
                     v.fields.iter().position(|f| f.name == field).is_some_and(|i| g.is_boxed(t, Some(tag), i as u32))
                 };
                 for v in variants.iter().filter(|v| v.fields.iter().any(|f| f.name == field)) {
-                    let _ = writeln!(out, "if (const auto* v = std::get_if<{}>(&alt)) {{\nreturn {}v->{};\n}}", ident(&v.name), if is_boxed(v, &field) { "*" } else { "" }, ident(&field));
+                    let _ = writeln!(
+                        out,
+                        "if (const auto* v = std::get_if<{}>(&alt)) {{\nreturn {}v->{};\n}}",
+                        ident(&v.name),
+                        if is_boxed(v, &field) { "*" } else { "" },
+                        ident(&field)
+                    );
                 }
-                let _ = writeln!(out, "rt::stop(\"E-TYPE-MISMATCH\", {});\n}}\n", string_literal(&format!("this variant has no `{field}`")));
+                let _ = writeln!(
+                    out,
+                    "rt::stop(\"E-TYPE-MISMATCH\", {});\n}}\n",
+                    string_literal(&format!("this variant has no `{field}`"))
+                );
             }
             if checks {
                 let _ = writeln!(out, "bool {valid}(const {name}& value) {{");
@@ -403,7 +439,12 @@ fn type_impl(g: &Gen<'_>, t: TypeId, used: &BTreeSet<(u32, String)>, out: &mut S
                         .filter_map(|i| fx.conform(&v.fields[i].check, &g.field("(*v)", t, Some(tag as u32), i as u32)))
                         .collect();
                     if !parts.is_empty() {
-                        let _ = writeln!(out, "if (const auto* v = std::get_if<{name}::{}>(&value.alt)) {{\nreturn {};\n}}", ident(&v.name), parts.join(" && "));
+                        let _ = writeln!(
+                            out,
+                            "if (const auto* v = std::get_if<{name}::{}>(&value.alt)) {{\nreturn {};\n}}",
+                            ident(&v.name),
+                            parts.join(" && ")
+                        );
                     }
                 }
                 out.push_str("return true;\n}\n\n");
@@ -504,7 +545,9 @@ fn print_rule(g: &Gen<'_>, lines: &Lines, i: usize) -> Printed {
     Printed {
         decl: fx.resolve(&format!("{head}{res} {name}({defaulted});\n")).replace("[[maybe_unused]] ", ""),
         // A rule is atomic: on any failure the world and the handlers go back to what they were.
-        def: fx.resolve(&format!("{head}{res} {name}({plain}) {{\n{give}ctx.atomic([&]{lambda_ret} {{\n{out}}});\n}}\n\n")),
+        def: fx.resolve(&format!(
+            "{head}{res} {name}({plain}) {{\n{give}ctx.atomic([&]{lambda_ret} {{\n{out}}});\n}}\n\n"
+        )),
     }
 }
 
@@ -566,7 +609,8 @@ pub fn module(g: &Gen<'_>, lines: &Lines, m: ModuleId, used: &BTreeSet<(u32, Str
                     all.expr(lir, &d.value);
                     // Evaluated once, on first use.
                     let _ = writeln!(h, "const {ty}& {name}();\n");
-                    let _ = writeln!(c, "const {ty}& {name}() {{\nstatic const {ty} value = {value};\nreturn value;\n}}\n");
+                    let _ =
+                        writeln!(c, "const {ty}& {name}() {{\nstatic const {ty} value = {value};\nreturn value;\n}}\n");
                 }
             }
             Item::Fn(i) => {

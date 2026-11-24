@@ -1,6 +1,6 @@
 # `game` runtimes
 
-Empty: one directory per language goes here, `real/<lang>/` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)). No printer serves a `game` app until one exists; `spec-lang build` refuses it with `E-UNSUPPORTED`.
+One directory per language: `rust`, `ts`, `ruby`, `cpp` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)).
 
 ## What a runtime implements
 
@@ -21,5 +21,4 @@ The commands and their bytes are the platformer's [contract](../../../pocs/platf
 
 ## Limits
 
-- The manifest's exact format is not fixed yet; it comes with the LIR (`src/crates/lir`).
-- Nothing here has been built from this description; the platformer's four hand-written backends predate it.
+- The four runtimes were lifted from one game's hand-written backends; a second game will find what they lack.

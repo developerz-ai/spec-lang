@@ -2,8 +2,8 @@
 // each one C call on the window open now. The argument structs are written into buffers allocated once.
 
 import * as rt from "../../runtime/index.ts";
-import { centreAndSize, cString, num, putBoundingBox, putCamera, putColor, putVector3 } from "./structs.ts";
 import { window } from "./screen.ts";
+import { centreAndSize, cString, num, putBoundingBox, putCamera, putColor, putVector3 } from "./structs.ts";
 
 const SHADER_UNIFORM_FLOAT = 0;
 

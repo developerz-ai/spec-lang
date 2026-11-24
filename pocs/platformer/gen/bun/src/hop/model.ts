@@ -12,7 +12,7 @@ export interface Pad {
   readonly jump: boolean;
 }
 
-export const Pad = rt.record<Pad>("hop.model.Pad", () => [
+export const Pad: rt.RecordType<Pad> = rt.record<Pad>("hop.model.Pad", () => [
   rt.field("left", "left", rt.bool, () => false),
   rt.field("right", "right", rt.bool, () => false),
   rt.field("forward", "forward", rt.bool, () => false),
@@ -27,7 +27,7 @@ export interface Rgb {
   readonly b: bigint;
 }
 
-export const Rgb = rt.record<Rgb>("hop.model.Rgb", () => [
+export const Rgb: rt.RecordType<Rgb> = rt.record<Rgb>("hop.model.Rgb", () => [
   rt.field("r", "r", rt.inRange(0n, 255n, true)),
   rt.field("g", "g", rt.inRange(0n, 255n, true)),
   rt.field("b", "b", rt.inRange(0n, 255n, true)),
@@ -39,7 +39,7 @@ export interface Solid {
   readonly color: Rgb;
 }
 
-export const Solid = rt.record<Solid>("hop.model.Solid", () => [
+export const Solid: rt.RecordType<Solid> = rt.record<Solid>("hop.model.Solid", () => [
   rt.field("box", "box", geom.Box),
   rt.field("color", "color", Rgb),
 ]);
@@ -53,7 +53,7 @@ export interface Mover {
   readonly color: Rgb;
 }
 
-export const Mover = rt.record<Mover>("hop.model.Mover", () => [
+export const Mover: rt.RecordType<Mover> = rt.record<Mover>("hop.model.Mover", () => [
   rt.field("no", "no", rt.int),
   rt.field("home", "home", geom.Box),
   rt.field("step", "step", geom.Vec3),
@@ -67,7 +67,7 @@ export interface Gem {
   readonly at: geom.Vec3;
 }
 
-export const Gem = rt.record<Gem>("hop.model.Gem", () => [
+export const Gem: rt.RecordType<Gem> = rt.record<Gem>("hop.model.Gem", () => [
   rt.field("no", "no", rt.int),
   rt.field("at", "at", geom.Vec3),
 ]);
@@ -82,7 +82,7 @@ export interface Crawler {
   readonly speed: bigint;
 }
 
-export const Crawler = rt.record<Crawler>("hop.model.Crawler", () => [
+export const Crawler: rt.RecordType<Crawler> = rt.record<Crawler>("hop.model.Crawler", () => [
   rt.field("no", "no", rt.int),
   rt.field("at", "at", geom.Vec3),
   rt.field("lo", "lo", rt.int),
@@ -102,7 +102,7 @@ export interface Level {
   readonly goal: geom.Vec3;
 }
 
-export const Level = rt.record<Level>("hop.model.Level", () => [
+export const Level: rt.RecordType<Level> = rt.record<Level>("hop.model.Level", () => [
   rt.field("name", "name", rt.text),
   rt.field("start", "start", geom.Vec3),
   rt.field("solids", "solids", rt.list(Solid)),
@@ -114,7 +114,7 @@ export const Level = rt.record<Level>("hop.model.Level", () => [
 
 /** type Mode (hop/model.slg:31) */
 export type Mode = { readonly kind: "Playing" } | { readonly kind: "Won" } | { readonly kind: "Lost" };
-export const Mode = rt.oneOf<Mode>("hop.model.Mode", () => [
+export const Mode: rt.SumType<Mode> = rt.oneOf<Mode>("hop.model.Mode", () => [
   rt.variant("Playing"),
   rt.variant("Won"),
   rt.variant("Lost"),
@@ -131,7 +131,7 @@ export interface Player {
   readonly yaw: bigint;
 }
 
-export const Player = rt.record<Player>("hop.model.Player", () => [
+export const Player: rt.RecordType<Player> = rt.record<Player>("hop.model.Player", () => [
   rt.field("at", "at", geom.Vec3),
   rt.field("vel", "vel", geom.Vec3, () => geom.Vec3.make([0n, 0n, 0n])),
   rt.field("grounded", "grounded", rt.bool, () => false),

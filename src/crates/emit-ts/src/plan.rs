@@ -86,7 +86,7 @@ impl<'l> Plan<'l> {
             state_prop: Vec::new(),
             field_prop: Vec::new(),
             handler_prop: lir.handlers.iter().map(|h| camel(&h.name)).collect(),
-            op_name: lir.handlers.iter().map(|h| h.ops.iter().map(|o| camel(&o.name)).collect()).collect(),
+            op_name: lir.handlers.iter().map(|h| h.ops.iter().map(|o| method(&o.name)).collect()).collect(),
             fn_world: vec![false; lir.fns.len()],
         };
         plan.names();
@@ -122,7 +122,11 @@ impl<'l> Plan<'l> {
     /// The last part of the module's path, longer where two modules would share one.
     fn aliases(&mut self) {
         let lir = self.lir;
-        let mut taken: BTreeSet<String> = BTreeSet::new();
+        // Names the generated files give their own values.
+        let mut taken: BTreeSet<String> =
+            ["a", "r", "v", "program", "states", "worldType", "pretend", "suite", "checks", "tests", "app"]
+                .map(String::from)
+                .into();
         for m in &lir.modules {
             let parts: Vec<&str> = m.name.split('.').collect();
             let mut alias = String::new();
@@ -279,6 +283,12 @@ fn assigned_in_expr_shallow(e: &Expr, out: &mut BTreeSet<String>) {
         }
         _ => {}
     }
+}
+
+/// An operation's method; `save` and `restore` are every handler's own.
+fn method(name: &str) -> String {
+    let m = camel(name);
+    if ["save", "restore", "constructor"].contains(&m.as_str()) { format!("{m}_") } else { m }
 }
 
 fn place_is_state(p: &Place) -> bool {

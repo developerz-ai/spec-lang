@@ -1,10 +1,10 @@
 //! Statements, blocks and places: a block at the end of a function prints as that function's statements, its
 //! `return`s the function's; a write to `state[k].f` prints as a new value of the state built around the change.
 
-use crate::expr::{Ex, Fx, P_ARROW, P_CALL, Sink};
+use crate::expr::{Ex, Fx, P_ARROW, P_CALL, Sink, quiet};
 use crate::types::trivial;
-use spec_lang_lir::LTy;
 use spec_lang_lir::node::*;
+use spec_lang_lir::{DTy, LTy};
 
 /// One step into a place, its key printed.
 enum Key {
@@ -18,7 +18,7 @@ impl Fx<'_, '_, '_> {
     pub fn tail_block(&mut self, b: &Block) {
         self.push_scope();
         self.stmts(&b.stmts);
-        self.pop_scope();
+        self.merge_scope();
         if !ends(&b.stmts) && matches!(b.ty, LTy::Unit) {
             self.line("return null;");
         }
@@ -31,7 +31,7 @@ impl Fx<'_, '_, '_> {
             (ExprKind::Block(b), Sink::Discard) if !returns(&b.stmts) => {
                 self.push_scope();
                 self.stmts(&b.stmts);
-                self.pop_scope();
+                self.merge_scope();
             }
             (ExprKind::If { cond, then, els }, _) if sink == Sink::Discard || complex(then) || complex(els) => {
                 let c = self.expr(cond).text;
@@ -62,7 +62,7 @@ impl Fx<'_, '_, '_> {
             }
             (_, Sink::Return) => {
                 let v = self.expr(e);
-                self.ret(Some(v), &e.ty);
+                self.ret(v, e);
             }
             (_, Sink::Discard) => {
                 if !is_nothing(e) {
@@ -80,33 +80,39 @@ impl Fx<'_, '_, '_> {
         self.drop_last_line();
     }
 
-    fn ret(&mut self, v: Option<Ex>, ty: &LTy) {
-        let rt = "rt";
-        let text = match v {
-            None => "null".to_string(),
-            Some(v) if matches!(ty, LTy::Never) => {
-                self.line(format!("{};", statement(&v)));
-                return;
-            }
-            Some(v) => match self.result.clone() {
-                Some(d) if self.at_top() => format!("{rt}.check({d}, {})", v.text),
-                _ => v.text,
-            },
+    fn ret(&mut self, v: Ex, e: &Expr) {
+        if matches!(e.ty, LTy::Never) {
+            self.line(format!("{};", statement(&v)));
+            return;
+        }
+        let text = match self.result.clone() {
+            Some(c) if self.at_top() => self.checked(&c, Some(e), v.text),
+            _ => v.text,
         };
         self.line(format!("return {text};"));
     }
 
+    /// The text of a value, checked against `check` unless it is known to conform: no claim and no range inside,
+    /// or a constructor of that very type, which checks itself.
+    fn checked(&mut self, check: &DTy, value: Option<&Expr>, text: String) -> String {
+        let built = matches!(
+            (check, value.map(|v| &v.kind)),
+            (DTy::Named(t), Some(ExprKind::Construct { ty, .. })) if t == ty
+        );
+        if built || trivial(self.out.plan, check) {
+            return text;
+        }
+        let d = self.out.d_desc(check);
+        format!("rt.check({d}, {text})")
+    }
+
     pub fn stmt(&mut self, s: &Stmt) {
-        let rt = "rt";
         match &s.kind {
             StmtKind::Let { name, mutable, ty, check, value } => {
                 let v = self.expr(value);
                 let v = match check {
-                    Some(c) if !trivial(self.out.plan, c) => {
-                        let d = self.out.d_desc(c);
-                        format!("{rt}.check({d}, {})", v.text)
-                    }
-                    _ => v.text,
+                    Some(c) => self.checked(c, Some(value), v.text),
+                    None => v.text,
                 };
                 let mutable = *mutable && self.assigned.contains(name);
                 let ts = if self.unused_let { self.bind_unused(name) } else { self.bind(name) };
@@ -119,28 +125,31 @@ impl Fx<'_, '_, '_> {
                     self.line(format!("const {ts}{t} = {v};"));
                 }
             }
-            StmtKind::Assign { place, value } => {
-                let v = self.expr(value).text;
-                self.write(place, v, s.span);
-            }
+            StmtKind::Assign { place, value } => self.assign(place, value, s.span),
             StmtKind::Mutate { place, op, args } => {
-                let printed: Vec<Ex> = args.iter().map(|a| self.expr(a)).collect();
-                let keys = self.keys(place);
-                let read = self.read(place, &keys, s.span);
-                let mut all = vec![read];
+                // The arguments, then the keys, then the read.
+                let hold = !args.iter().all(quiet);
+                let mut printed: Vec<Ex> = Vec::new();
+                for a in args {
+                    let x = self.expr(a);
+                    printed.push(if hold { Ex::primary(self.hold("item", &x.text, Some(&a.ty))) } else { x });
+                }
+                let keys = self.held_keys(place);
+                let mut all = vec![self.read(place, &keys, s.span)];
                 all.extend(printed);
                 let mut tys = vec![place.ty.clone()];
                 tys.extend(args.iter().map(|a| a.ty.clone()));
                 let new = self.prim(*op, all, &tys, &[]).text;
-                self.write_keys(place, &keys, new, s.span);
+                let new = match &place.check {
+                    Some(c) => self.checked(c, None, new),
+                    None => new,
+                };
+                self.store(place, &keys, new, s.span);
             }
             StmtKind::Expr(e) => self.tail(e, Sink::Discard),
             StmtKind::Return(v) => match v {
-                Some(e) => {
-                    let x = self.expr(e);
-                    self.ret(Some(x), &e.ty);
-                }
-                None => self.ret(None, &LTy::Unit),
+                Some(e) => self.tail(e, Sink::Return),
+                None => self.line("return null;"),
             },
             StmtKind::Assert(e) => {
                 let c = self.expr(e).text;
@@ -159,6 +168,7 @@ impl Fx<'_, '_, '_> {
             StmtKind::While { cond, body } => {
                 let c = self.expr(cond).text;
                 self.open(format!("while ({c}) {{"));
+                self.line("rt.turn();");
                 self.inner(body);
                 self.close("}");
             }
@@ -224,7 +234,8 @@ impl Fx<'_, '_, '_> {
     /// Statements in order; a `let` no later statement reads is named so.
     pub fn stmts(&mut self, stmts: &[Stmt]) {
         for (i, s) in stmts.iter().enumerate() {
-            self.unused_let = matches!(&s.kind, StmtKind::Let { name, .. } if !crate::expr::stmts_mention(&stmts[i + 1..], name));
+            self.unused_let =
+                matches!(&s.kind, StmtKind::Let { name, .. } if !crate::expr::stmts_mention(&stmts[i + 1..], name));
             self.stmt(s);
             self.unused_let = false;
         }
@@ -274,53 +285,58 @@ impl Fx<'_, '_, '_> {
         cur
     }
 
-    fn write(&mut self, p: &Place, value: String, span: spec_lang_syntax::Span) {
-        // The value first, then the keys: when a key is more than a plain read, both are held in locals.
-        let plain = p.path.iter().all(|s| match s {
-            PlaceStep::Field { .. } => true,
-            PlaceStep::MapKey(k) | PlaceStep::ListIndex(k) => {
-                matches!(k.kind, ExprKind::Local(_) | ExprKind::Int(_) | ExprKind::Text(_) | ExprKind::Bool(_))
-            }
-        });
-        let value = if plain {
-            value
-        } else {
-            let v = self.bind("value");
-            self.line(format!("const {v} = {value};"));
-            v
-        };
-        let keys = if plain {
-            self.keys(p)
-        } else {
-            let printed = self.keys(p);
-            printed
-                .into_iter()
-                .map(|k| {
-                    let mut hold = |t: String| {
-                        let n = self.bind("key");
-                        self.line(format!("const {n} = {t};"));
-                        n
-                    };
-                    match k {
-                        Key::Field(f) => Key::Field(f),
-                        Key::Map(t) => Key::Map(hold(t)),
-                        Key::List(t) => Key::List(hold(t)),
-                    }
-                })
-                .collect()
-        };
-        self.write_keys(p, &keys, value, span);
+    /// The place's keys, each held in a local unless it is a plain read.
+    fn held_keys(&mut self, p: &Place) -> Vec<Key> {
+        let keys = self.keys(p);
+        keys.into_iter()
+            .zip(&p.path)
+            .map(|(k, step)| match (k, step) {
+                (Key::Map(t), PlaceStep::MapKey(e)) if !plain(e) => Key::Map(self.hold("key", &t, None)),
+                (Key::List(t), PlaceStep::ListIndex(e)) if !plain(e) => Key::List(self.hold("key", &t, None)),
+                (k, _) => k,
+            })
+            .collect()
     }
 
-    fn write_keys(&mut self, p: &Place, keys: &[Key], value: String, span: spec_lang_syntax::Span) {
-        let rt = "rt";
-        let value = match &p.check {
-            Some(c) if !trivial(self.out.plan, c) => {
-                let d = self.out.d_desc(c);
-                format!("{rt}.check({d}, {value})")
-            }
-            _ => value,
+    /// `const name = value;`, the name unique in the function.
+    fn hold(&mut self, name: &str, value: &str, ty: Option<&LTy>) -> String {
+        let n = self.bind(name);
+        let t = ty.map(|t| format!(": {}", self.out.ts_type(t))).unwrap_or_default();
+        self.line(format!("const {n}{t} = {value};"));
+        n
+    }
+
+    /// The value, then the keys, then the check, then the read and the write: whatever would run out of that
+    /// order in one expression is held in a local first.
+    fn assign(&mut self, p: &Place, value: &Expr, span: spec_lang_syntax::Span) {
+        let v = self.expr(value).text;
+        let inner_key = p.path.iter().rev().skip(1).any(|s| !matches!(s, PlaceStep::Field { .. }));
+        let guarded = inner_key && p.check.as_ref().is_some_and(|c| !trivial(self.out.plan, c));
+        let keys_plain = p.path.iter().all(|s| match s {
+            PlaceStep::Field { .. } => true,
+            PlaceStep::MapKey(k) | PlaceStep::ListIndex(k) => plain(k),
+        });
+        let v = if p.path.is_empty() || plain(value) || (quiet(value) && keys_plain && !guarded) {
+            v
+        } else {
+            self.hold("value", &v, Some(&p.ty))
         };
+        let keys = self.held_keys(p);
+        if guarded {
+            // Broken before any absent key is met.
+            let d = p.check.as_ref().map(|c| self.out.d_desc(c)).unwrap_or_default();
+            self.line(format!("rt.check({d}, {v});"));
+            self.store(p, &keys, v, span);
+        } else {
+            let v = match &p.check {
+                Some(c) => self.checked(c, Some(value), v),
+                None => v,
+            };
+            self.store(p, &keys, v, span);
+        }
+    }
+
+    fn store(&mut self, p: &Place, keys: &[Key], value: String, span: spec_lang_syntax::Span) {
         let root = self.root(p, span);
         let new = self.rebuild(&Ex::primary(root.clone()), keys, value);
         self.line(format!("{root} = {new};"));
@@ -351,6 +367,11 @@ impl Fx<'_, '_, '_> {
             }
         }
     }
+}
+
+/// A read of a local or a literal.
+fn plain(e: &Expr) -> bool {
+    matches!(e.kind, ExprKind::Local(_) | ExprKind::Int(_) | ExprKind::Text(_) | ExprKind::Bool(_))
 }
 
 /// Whether the statements always end in a `return` or a failure.

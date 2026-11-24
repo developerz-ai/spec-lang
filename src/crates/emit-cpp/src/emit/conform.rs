@@ -40,8 +40,11 @@ impl<'g, 'a> Fx<'g, 'a> {
                 Some(format!("({})", parts.join(" && ")))
             }
             DTy::Tuple(ts) => {
-                let parts: Vec<String> =
-                    ts.iter().enumerate().filter_map(|(i, t)| self.conform(t, &format!("std::get<{i}>({v})"))).collect();
+                let parts: Vec<String> = ts
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, t)| self.conform(t, &format!("std::get<{i}>({v})")))
+                    .collect();
                 Some(format!("({})", parts.join(" && ")))
             }
             DTy::Where(base, claim) => {

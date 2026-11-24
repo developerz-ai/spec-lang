@@ -7,6 +7,7 @@ mod app;
 mod checks;
 mod expr;
 mod file;
+mod format;
 mod machine;
 mod module;
 mod names;
@@ -47,7 +48,10 @@ fn program(plan: &Plan<'_>) -> Result<Vec<OutFile>, Vec<Diag>> {
     let mut files = Vec::new();
     let mut errors = Vec::new();
     let mut add = |r: Result<(String, String), Vec<Diag>>| match r {
-        Ok((p, t)) => files.push(project::text(p, t)),
+        Ok((p, t)) => match project::source(&p, &t) {
+            Ok(f) => files.push(f),
+            Err(mut e) => errors.append(&mut e),
+        },
         Err(mut e) => errors.append(&mut e),
     };
     for m in plan.printed_modules() {

@@ -9,18 +9,77 @@ export interface Hold {
   readonly keys: string;
 }
 
-export const Hold = rt.record<Hold>("hop.tests.runs.Hold", () => [
+export const Hold: rt.RecordType<Hold> = rt.record<Hold>("hop.tests.runs.Hold", () => [
   rt.field("ticks", "ticks", rt.inRange(1n, 10000n, true)),
   rt.field("keys", "keys", rt.text),
 ]);
 
 /** const meadow_win (hop/tests/runs.slg:20): run right, with four held jumps: the gap, the first gem, the step past the crawler, the gap with the second gem */
-export const meadowWin = rt.lazy((): readonly Hold[] => [Hold.make([75n, "R"]), Hold.make([20n, "RJ"]), Hold.make([41n, "R"]), Hold.make([20n, "RJ"]), Hold.make([35n, "R"]), Hold.make([20n, "RJ"]), Hold.make([23n, "R"]), Hold.make([20n, "RJ"]), Hold.make([62n, "R"])]);
+export const meadowWin = rt.lazy((): readonly Hold[] => [
+  Hold.make([75n, "R"]),
+  Hold.make([20n, "RJ"]),
+  Hold.make([41n, "R"]),
+  Hold.make([20n, "RJ"]),
+  Hold.make([35n, "R"]),
+  Hold.make([20n, "RJ"]),
+  Hold.make([23n, "R"]),
+  Hold.make([20n, "RJ"]),
+  Hold.make([62n, "R"]),
+]);
 
 /** const ridge_win (hop/tests/runs.slg:27): found by a search over pad scripts: wait for the mover, ride it, hop the gem, then the high ground */
-export const ridgeWin = rt.lazy((): readonly Hold[] => [Hold.make([24n, "R"]), Hold.make([8n, "-"]), Hold.make([8n, "R"]), Hold.make([16n, "RJ"]), Hold.make([16n, "R"]), Hold.make([8n, "-"]), Hold.make([8n, "L"]), Hold.make([8n, "R"]), Hold.make([8n, "L"]), Hold.make([8n, "R"]), Hold.make([8n, "L"]), Hold.make([8n, "R"]), Hold.make([8n, "L"]), Hold.make([8n, "R"]), Hold.make([8n, "L"]), Hold.make([8n, "R"]), Hold.make([16n, "RJ"]), Hold.make([24n, "R"]), Hold.make([16n, "RJ"]), Hold.make([8n, "-"]), Hold.make([8n, "R"]), Hold.make([16n, "-"]), Hold.make([16n, "J"]), Hold.make([8n, "-"]), Hold.make([16n, "R"]), Hold.make([8n, "J"]), Hold.make([8n, "L"]), Hold.make([24n, "R"]), Hold.make([16n, "RJ"]), Hold.make([32n, "R"]), Hold.make([8n, "RJ"]), Hold.make([8n, "J"]), Hold.make([8n, "R"]), Hold.make([8n, "-"]), Hold.make([16n, "RJ"]), Hold.make([32n, "R"]), Hold.make([16n, "RJ"]), Hold.make([16n, "R"]), Hold.make([8n, "-"]), Hold.make([32n, "R"]), Hold.make([16n, "RJ"]), Hold.make([8n, "R"])]);
+export const ridgeWin = rt.lazy((): readonly Hold[] => [
+  Hold.make([24n, "R"]),
+  Hold.make([8n, "-"]),
+  Hold.make([8n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([16n, "R"]),
+  Hold.make([8n, "-"]),
+  Hold.make([8n, "L"]),
+  Hold.make([8n, "R"]),
+  Hold.make([8n, "L"]),
+  Hold.make([8n, "R"]),
+  Hold.make([8n, "L"]),
+  Hold.make([8n, "R"]),
+  Hold.make([8n, "L"]),
+  Hold.make([8n, "R"]),
+  Hold.make([8n, "L"]),
+  Hold.make([8n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([24n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([8n, "-"]),
+  Hold.make([8n, "R"]),
+  Hold.make([16n, "-"]),
+  Hold.make([16n, "J"]),
+  Hold.make([8n, "-"]),
+  Hold.make([16n, "R"]),
+  Hold.make([8n, "J"]),
+  Hold.make([8n, "L"]),
+  Hold.make([24n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([32n, "R"]),
+  Hold.make([8n, "RJ"]),
+  Hold.make([8n, "J"]),
+  Hold.make([8n, "R"]),
+  Hold.make([8n, "-"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([32n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([16n, "R"]),
+  Hold.make([8n, "-"]),
+  Hold.make([32n, "R"]),
+  Hold.make([16n, "RJ"]),
+  Hold.make([8n, "R"]),
+]);
 
 /** fn pad_of (hop/tests/runs.slg:10): one letter per Pad field, as the game vocabulary reads a script: L R F B J, or - for none */
 export function padOf(keys: string): model.Pad {
-  return model.Pad.make([keys.includes("L"), keys.includes("R"), keys.includes("F"), keys.includes("B"), keys.includes("J")]);
+  return model.Pad.make([
+    keys.includes("L"),
+    keys.includes("R"),
+    keys.includes("F"),
+    keys.includes("B"),
+    keys.includes("J"),
+  ]);
 }

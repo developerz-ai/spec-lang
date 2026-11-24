@@ -1,7 +1,9 @@
 //! The world, the machine, each handler operation, events and replies of traces.
+
 use crate::rt::{self, Failure, Int, Opt, R, Show};
 use crate::rt::rng::Rng;
 use std::collections::{BTreeMap, BTreeSet};
+
 /// Every state's value at one moment.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct World {
@@ -10,6 +12,7 @@ pub struct World {
     /// `todo.board.next_no`
     pub next_no: Int,
 }
+
 impl Show for World {
     fn show(&self) -> String {
         rt::show::seq(
@@ -23,22 +26,26 @@ impl Show for World {
         )
     }
 }
+
 /// The state of `PretendOut`, what tests run for `out`.
 #[derive(Clone, Debug)]
 pub struct PretendOut {
     pub sent: Vec<String>,
 }
+
 /// Every handler's pretend state.
 #[derive(Clone, Debug)]
 pub struct Handlers {
     pub out: PretendOut,
 }
+
 /// One run of the program: the world, the handlers' state.
 #[derive(Clone, Debug)]
 pub struct Machine {
     pub world: World,
     pub handlers: Handlers,
 }
+
 impl Machine {
     /// The initial world: every state's initial value, checked against its type.
     pub fn new() -> R<Machine> {
@@ -71,6 +78,7 @@ impl Machine {
         result
     }
 }
+
 /// `out.line` of library `cli`: in checks, its pretend runs.
 pub fn out_line(m: &mut Machine, text: String) -> R<()> {
     let mut sent = m.handlers.out.sent.clone();
@@ -81,6 +89,7 @@ pub fn out_line(m: &mut Machine, text: String) -> R<()> {
     m.handlers.out.sent = sent;
     Ok(reply)
 }
+
 /// `out.text` of library `cli`: in checks, its pretend runs.
 pub fn out_text(m: &mut Machine) -> R<String> {
     let sent = m.handlers.out.sent.clone();
@@ -91,6 +100,7 @@ pub fn out_text(m: &mut Machine) -> R<String> {
         .join(String::from("").as_str());
     Ok(reply)
 }
+
 /// A call of a rule with its arguments, as a trace records it.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Event {
@@ -115,6 +125,7 @@ pub enum Event {
     /// `todo.board.stats`
     Stats {},
 }
+
 impl Show for Event {
     fn show(&self) -> String {
         match self {
@@ -158,9 +169,9 @@ impl Show for Event {
         }
     }
 }
+
 impl Event {
     /// A call of rule number `rule` with arguments drawn from its parameters' types.
-    #[allow(unused_variables)]
     pub fn random(
         m: &mut Machine,
         rng: &mut Rng,
@@ -276,12 +287,14 @@ impl Event {
         )
     }
 }
+
 /// What a rule gives, one variant per result type.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Out {
     Unit(()),
     Int(Int),
 }
+
 impl Show for Out {
     fn show(&self) -> String {
         match self {
@@ -290,12 +303,14 @@ impl Show for Out {
         }
     }
 }
+
 /// A step's reply: the rule's value or its refusal.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Reply {
     Ok(Out),
     Err(Failure),
 }
+
 impl Show for Reply {
     fn show(&self) -> String {
         match self {
@@ -304,13 +319,14 @@ impl Show for Reply {
         }
     }
 }
+
 /// Values already in a world, by declared type: the keys of each state declared `Map[K, V]` and the elements of each `Set[K]`.
 #[derive(Clone, Debug, Default)]
 pub struct Pools {
     pub p0: Vec<Int>,
 }
+
 impl Pools {
-    #[allow(unused_variables)]
     pub fn of(worlds: &[World]) -> Pools {
         let mut p0 = BTreeSet::new();
         for w in worlds {
@@ -321,6 +337,7 @@ impl Pools {
         }
     }
 }
+
 /// A world drawn from the states' declared types, state by state.
 pub fn random_world(m: &mut Machine, rng: &mut Rng) -> R<World> {
     let pools = Pools::default();

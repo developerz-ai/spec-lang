@@ -22,10 +22,7 @@ pub struct Patience {
 
 impl Patience {
     /// Every 10 ms for up to 5 s.
-    pub const CONTRACT: Self = Self {
-        every: Duration::from_millis(10),
-        up_to: Duration::from_secs(5),
-    };
+    pub const CONTRACT: Self = Self { every: Duration::from_millis(10), up_to: Duration::from_secs(5) };
 }
 
 #[derive(Debug)]
@@ -44,12 +41,8 @@ pub struct Lock {
 
 /// Creates the lock file if missing (it is never deleted) and takes the lock without ever blocking in the kernel.
 pub fn acquire(path: &Path, mode: Mode, patience: Patience) -> Result<Lock, LockError> {
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(false)
-        .open(path)
-        .map_err(LockError::Unavailable)?;
+    let file =
+        OpenOptions::new().write(true).create(true).truncate(false).open(path).map_err(LockError::Unavailable)?;
     let deadline = Instant::now() + patience.up_to;
     loop {
         let attempt = match mode {

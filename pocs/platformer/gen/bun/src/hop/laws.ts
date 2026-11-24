@@ -3,24 +3,31 @@
 import type { WorldValue } from "../machine.ts";
 import * as rt from "../runtime/index.ts";
 import * as geom from "./geom.ts";
-import * as model from "./model.ts";
+import type * as model from "./model.ts";
 import * as physics from "./physics.ts";
 
 /** law never_inside_a_solid (hop/laws.slg:10): the hero is never inside a solid */
 export function neverInsideASolid(t: rt.Trace<WorldValue>): boolean {
-  return t.states.every((w_: WorldValue) => w_.stage.solids.every((s: model.Solid) => !geom.overlaps(physics.body(w_.player.at), s.box)));
+  return t.states.every((w_: WorldValue) =>
+    w_.stage.solids.every((s: model.Solid) => !geom.overlaps(physics.body(w_.player.at), s.box)),
+  );
 }
 
 /** law speed_is_bounded (hop/laws.slg:14): speeds stay in bounds, so a body never passes through a solid in one tick */
 export function speedIsBounded(t: rt.Trace<WorldValue>): boolean {
-  return t.states.every((w_: WorldValue) => rt.abs(w_.player.vel.x) <= physics.runSpeed && rt.abs(w_.player.vel.z) <= physics.runSpeed && (() => {
-    const left = 0n - physics.maxFall;
-    const right = w_.player.vel.y;
-    if (!(left <= right)) return false;
-    const right2 = physics.jumpSpeed;
-    if (!(right <= right2)) return false;
-    return true;
-  })());
+  return t.states.every(
+    (w_: WorldValue) =>
+      rt.abs(w_.player.vel.x) <= physics.runSpeed &&
+      rt.abs(w_.player.vel.z) <= physics.runSpeed &&
+      (() => {
+        const left = 0n - physics.maxFall;
+        const right = w_.player.vel.y;
+        if (!(left <= right)) return false;
+        const right2 = physics.jumpSpeed;
+        if (!(right <= right2)) return false;
+        return true;
+      })(),
+  );
 }
 
 /** law taken_only_grows (hop/laws.slg:19): a gem once taken stays taken until the level starts again */
@@ -35,20 +42,29 @@ export function livesNeverRise(t: rt.Trace<WorldValue>): boolean {
 
 /** law lost_means_no_lives (hop/laws.slg:27): no lives left is exactly a lost game */
 export function lostMeansNoLives(t: rt.Trace<WorldValue>): boolean {
-  return t.states.every((w_: WorldValue) => w_.lives === 0n === rt.equal(w_.mode, model.Mode.make("Lost")));
+  return t.states.every((w_: WorldValue) => (w_.lives === 0n) === (w_.mode.kind === "Lost"));
 }
 
 /** law over_is_final (hop/laws.slg:31): a finished game is final: a step is refused and nothing moves */
 export function overIsFinal(t: rt.Trace<WorldValue>): boolean {
-  return t.steps.every((s: rt.Step<WorldValue>) => !!rt.equal(s.before.mode, model.Mode.make("Playing")) || (((subject: rt.Reply) => subject.kind === "Err")(s.reply) && rt.equal(s.after, s.before)));
+  return t.steps.every(
+    (s: rt.Step<WorldValue>) =>
+      !(s.before.mode.kind !== "Playing") ||
+      (((subject: rt.Reply) => subject.kind === "Err")(s.reply) && rt.equal(s.after, s.before)),
+  );
 }
 
 /** law one_tick_per_step (hop/laws.slg:35): time moves one tick per accepted step */
 export function oneTickPerStep(t: rt.Trace<WorldValue>): boolean {
-  return t.steps.every((s: rt.Step<WorldValue>) => !((subject: rt.Reply) => subject.kind === "Ok")(s.reply) || s.after.ticks === s.before.ticks + 1n);
+  return t.steps.every(
+    (s: rt.Step<WorldValue>) =>
+      !((subject: rt.Reply) => subject.kind === "Ok")(s.reply) || s.after.ticks === s.before.ticks + 1n,
+  );
 }
 
 /** law taken_are_real_gems (hop/laws.slg:39): a taken gem is one the level has */
 export function takenAreRealGems(t: rt.Trace<WorldValue>): boolean {
-  return t.states.every((w_: WorldValue) => w_.taken.list().every((n: bigint) => w_.stage.gems.some((it: model.Gem) => it.no === n)));
+  return t.states.every((w_: WorldValue) =>
+    w_.taken.list().every((n: bigint) => w_.stage.gems.some((it: model.Gem) => it.no === n)),
+  );
 }

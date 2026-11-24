@@ -51,7 +51,7 @@ export interface Test<W> {
   readonly id: string;
   readonly params: readonly rt.ParamInfo[];
   readonly given: readonly Given<W>[];
-  readonly body: (w: W, args: readonly unknown[]) => void;
+  readonly body: (w: W, args: readonly unknown[]) => unknown;
 }
 
 export interface Check<W extends rt.Machine, V> {
@@ -70,8 +70,16 @@ export interface Config {
 
 export const DEFAULTS: Config = { seed: 0n, runs: 100, traces: 200, steps: 40, prefix: 10 };
 
+/**
+ * `while` turns one machine may take. The engine's budget is 20,000,000 evaluation steps and a turn takes at
+ * least seven, so no loop the engine finishes is stopped here.
+ */
+const TURNS = 3_000_000;
+
 /** How a run of a test ended: its world, or why not. */
-type Run<W> = { readonly status: "pass"; readonly world: W } | { readonly status: "fail" | "blocked"; readonly code: string };
+type Run<W> =
+  | { readonly status: "pass"; readonly world: W }
+  | { readonly status: "fail" | "blocked"; readonly code: string };
 
 /** With `SPEC_CHECKS_WHY` set, why a check did not pass goes to standard error. */
 function why(e: unknown): void {
@@ -101,23 +109,27 @@ export class Runner<W extends rt.Machine, V> {
     readonly config: Config = DEFAULTS,
   ) {}
 
-  /** A `@cases` row of a `fn`: a fresh world, one call, then the expected value. */
-  fnCase(call: (w: W) => unknown, want: (w: W) => unknown): Status {
+  private fresh(): W {
+    rt.limitTurns(TURNS);
+    return this.program.fresh();
+  }
+
+  /** A `@cases` row of a `fn`: a fresh world, the arguments, one call, then the expected value. */
+  fnCase(call: (w: W) => () => unknown, want: (w: W) => unknown): Status {
     try {
-      const w = this.program.fresh();
-      const got = rt.outcome(() => call(w));
-      if (!got.ok) return "fail";
-      return rt.equal(got.value, want(w)) ? "pass" : "fail";
+      const w = this.fresh();
+      const got = rt.outcome(call(w));
+      const wanted = want(w);
+      return got.ok && rt.equal(got.value, wanted) ? "pass" : "fail";
     } catch (e) {
       return blockedOnly(e);
     }
   }
 
   /** A `@cases` row expecting a refusal: compared by name only. */
-  fnCaseFails(call: (w: W) => unknown, name: string): Status {
+  fnCaseFails(call: (w: W) => () => unknown, name: string): Status {
     try {
-      const w = this.program.fresh();
-      const got = rt.outcome(() => call(w));
+      const got = rt.outcome(call(this.fresh()));
       return !got.ok && got.failure.failure === name ? "pass" : "fail";
     } catch (e) {
       return blockedOnly(e);
@@ -148,7 +160,7 @@ export class Runner<W extends rt.Machine, V> {
       const rng = new Rng(seedFor(this.config.seed, id, run));
       let args: unknown[];
       try {
-        this.program.fresh();
+        this.fresh();
         args = test.params.map((p) => value(rng, p.type));
       } catch (e) {
         return foreignOrFail(e);
@@ -195,7 +207,7 @@ export class Runner<W extends rt.Machine, V> {
   private given(id: string): Run<W> {
     let w: W;
     try {
-      w = this.program.fresh();
+      w = this.fresh();
     } catch (e) {
       return ended(e);
     }
@@ -216,7 +228,10 @@ export class Runner<W extends rt.Machine, V> {
         for (const s of this.program.states) s.set(w, (parent.world as Record<string, unknown>)[s.prop]);
         continue;
       }
-      return { status: "blocked", code: parent.status === "blocked" && parent.code === "B-FOREIGN" ? "B-FOREIGN" : "F-BLOCKED" };
+      return {
+        status: "blocked",
+        code: parent.status === "blocked" && parent.code === "B-FOREIGN" ? "B-FOREIGN" : "F-BLOCKED",
+      };
     }
     return { status: "pass", world: w };
   }
@@ -235,7 +250,7 @@ export class Runner<W extends rt.Machine, V> {
   /** A world drawn from the states' declared types on which every law holds at the start. */
   private lawfulWorld(rng: Rng): V | undefined {
     for (let i = 0; i < 200; i++) {
-      const w = this.program.fresh();
+      const w = this.fresh();
       for (const s of this.program.states) s.set(w, value(rng, s.type));
       const world = this.program.value(w);
       const still = rt.still(world);
@@ -262,9 +277,9 @@ export class Runner<W extends rt.Machine, V> {
   private holds(law: rt.LawInfo<W>, trace: rt.Trace<V>, others: readonly unknown[], quiet = false): boolean {
     const rest = [...others];
     const args = law.params.map((_, i) => (i === law.trace ? trace : rest.shift()));
-    if (!quiet) return law.body(this.program.fresh(), args);
+    if (!quiet) return law.body(this.fresh(), args);
     try {
-      return law.body(this.program.fresh(), args);
+      return law.body(this.fresh(), args);
     } catch {
       return false;
     }
@@ -278,15 +293,15 @@ export class Runner<W extends rt.Machine, V> {
   }
 
   private call(w: W, e: rt.Event): rt.Reply {
-    return rt.reply(() => (e.rule as unknown as rt.RuleInfo<W>).call(w, e.args));
+    return rt.reply(e.rule as unknown as rt.RuleInfo<W>, w, e.args);
   }
 
   private trace(rng: Rng, law: rt.LawInfo<W>, start: V | undefined): rt.Trace<V> {
-    const w = this.program.fresh();
-    let prefix = 0n;
-    if (start === undefined) prefix = rng.below(BigInt(this.config.prefix) + 1n);
+    const w = this.fresh();
+    let prefix = 0;
+    if (start === undefined) prefix = rng.below(this.config.prefix + 1);
     else for (const s of this.program.states) s.set(w, (start as Record<string, unknown>)[s.prop]);
-    for (let i = 0n; i < prefix; i++) this.call(w, this.event(rng, w, law.start));
+    for (let i = 0; i < prefix; i++) this.call(w, this.event(rng, w, law.start));
     const states: V[] = [this.program.value(w)];
     const steps: rt.Step<V>[] = [];
     for (let i = 0; i < this.config.steps; i++) {

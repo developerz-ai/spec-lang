@@ -21,16 +21,26 @@ class Int {
     n.value_ = value;
     return n;
   }
-  static constexpr Int of_size(std::size_t n) { return wide(static_cast<int128>(n)); }
-  static constexpr Int min() { return wide(static_cast<int128>(static_cast<uint128>(1) << 127)); }
+  static constexpr Int of_size(std::size_t n) {
+    return wide(static_cast<int128>(n));
+  }
+  static constexpr Int min() {
+    return wide(static_cast<int128>(static_cast<uint128>(1) << 127));
+  }
 
-  constexpr int128 value() const { return value_; }
+  constexpr int128 value() const {
+    return value_;
+  }
   // The value as an index into a collection of `size` items, or `size` when it is outside.
   constexpr std::size_t index(std::size_t size) const {
     return value_ >= 0 && value_ < static_cast<int128>(size) ? static_cast<std::size_t>(value_) : size;
   }
-  constexpr bool fits_long() const { return value_ >= -(int128{1} << 63) && value_ < (int128{1} << 63); }
-  constexpr long long to_long() const { return static_cast<long long>(value_); }
+  constexpr bool fits_long() const {
+    return value_ >= -(int128{1} << 63) && value_ < (int128{1} << 63);
+  }
+  constexpr long long to_long() const {
+    return static_cast<long long>(value_);
+  }
 
   friend constexpr Int operator+(Int a, Int b) {
     int128 r = 0;
@@ -47,7 +57,9 @@ class Int {
     if (__builtin_mul_overflow(a.value_, b.value_, &r)) overflow();
     return wide(r);
   }
-  friend constexpr Int operator-(Int a) { return Int{} - a; }
+  friend constexpr Int operator-(Int a) {
+    return Int{} - a;
+  }
   friend constexpr std::strong_ordering operator<=>(Int a, Int b) = default;
   friend constexpr bool operator==(Int a, Int b) = default;
 
@@ -81,8 +93,12 @@ Int bxor(Int a, Int b);
 Int shl(Int a, Int b);
 Int shr(Int a, Int b);
 Int abs(Int a);
-constexpr Int min(Int a, Int b) { return b < a ? b : a; }
-constexpr Int max(Int a, Int b) { return b > a ? b : a; }
+constexpr Int min(Int a, Int b) {
+  return b < a ? b : a;
+}
+constexpr Int max(Int a, Int b) {
+  return b > a ? b : a;
+}
 Int clamp(Int value, Int lo, Int hi);
 std::string to_string(Int n);
 

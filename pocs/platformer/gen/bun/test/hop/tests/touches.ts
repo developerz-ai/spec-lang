@@ -56,7 +56,7 @@ export function aCrawlerHurtsFromTheSide(w: World): null {
 export function fallingOutCostsALife(w: World): null {
   world.step(w, testsTouches.rest());
   check.assert(w.lives === 2n);
-  check.assert(rt.equal(w.mode, model.Mode.make("Playing")));
+  check.assert(w.mode.kind === "Playing");
   return null;
 }
 
@@ -64,7 +64,7 @@ export function fallingOutCostsALife(w: World): null {
 export function theLastLifeEndsTheGame(w: World): null {
   world.step(w, testsTouches.rest());
   check.assert(w.lives === 0n);
-  check.assert(rt.equal(w.mode, model.Mode.make("Lost")));
+  check.assert(w.mode.kind === "Lost");
   check.expectFail(() => world.step(w, testsTouches.rest()), "Over");
   return null;
 }
@@ -72,7 +72,7 @@ export function theLastLifeEndsTheGame(w: World): null {
 /** test reaching_the_flag_wins (hop/tests/touches.slg:68) */
 export function reachingTheFlagWins(w: World): null {
   world.step(w, testsTouches.rest());
-  check.assert(rt.equal(w.mode, model.Mode.make("Won")));
+  check.assert(w.mode.kind === "Won");
   check.expectFail(() => world.step(w, testsTouches.rest()), "Over");
   return null;
 }
@@ -80,7 +80,7 @@ export function reachingTheFlagWins(w: World): null {
 /** test starting_again_resets_everything (hop/tests/touches.slg:75) */
 export function startingAgainResetsEverything(w: World): null {
   world.start(w, 1n);
-  for (const i of rt.range(1n, 5n, true).list()) {
+  for (const _i of rt.range(1n, 5n, true).list()) {
     world.step(w, model.Pad.make([undefined, true]));
   }
   world.start(w, 2n);

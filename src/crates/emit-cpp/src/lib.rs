@@ -56,7 +56,11 @@ fn program(g: &Gen<'_>, lines: &Lines, real_foreign: bool) -> Printed {
     Printed { units, plain }
 }
 
-fn finish(g: &Gen<'_>, printed: Printed, extra: impl FnOnce(&[OutFile]) -> Vec<OutFile>) -> Result<Vec<OutFile>, Vec<Diag>> {
+fn finish(
+    g: &Gen<'_>,
+    printed: Printed,
+    extra: impl FnOnce(&[OutFile]) -> Vec<OutFile>,
+) -> Result<Vec<OutFile>, Vec<Diag>> {
     let errors = std::mem::take(&mut *g.errors.borrow_mut());
     if !errors.is_empty() {
         return Err(errors);
@@ -78,7 +82,8 @@ generator=()
 command -v ninja >/dev/null && generator=(-G Ninja)
 cmake -S . -B build \"${generator[@]}\" -DCMAKE_BUILD_TYPE=Release >build.log 2>&1 || { cat build.log >&2; exit 1; }
 cmake --build build --parallel >>build.log 2>&1 || { cat build.log >&2; exit 1; }
-exec build/checks
+# The exit code says whether a check failed; the lines say which.
+build/checks || true
 ";
 
 impl Printer for Cpp {

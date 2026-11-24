@@ -47,20 +47,41 @@ fn op_result(g: &Gen<'_>, t: &LTy) -> String {
 
 fn handler_decl(g: &Gen<'_>, h: &Handler, out: &mut String) {
     let class = class_name(&h.name);
-    let _ = writeln!(out, "// handler {}.{}: what a rule may ask of the world outside. A library's runtime performs it in an app;", h.library, h.name);
-    let _ = writeln!(out, "// in tests its pretend does. Until one is installed every operation stops E-UNSUPPORTED.\nclass {class} {{\npublic:\nvirtual ~{class}() = default;");
+    let _ = writeln!(
+        out,
+        "// handler {}.{}: what a rule may ask of the world outside. A library's runtime performs it in an app;",
+        h.library, h.name
+    );
+    let _ = writeln!(
+        out,
+        "// in tests its pretend does. Until one is installed every operation stops E-UNSUPPORTED.\nclass {class} {{\npublic:\nvirtual ~{class}() = default;"
+    );
     for o in &h.ops {
         let ps = o.params.as_deref().unwrap_or(&[]);
-        let _ = writeln!(out, "virtual {} {}({});", op_result(g, &o.result), ident(&o.name), op_params(g, ps, None, None));
+        let _ =
+            writeln!(out, "virtual {} {}({});", op_result(g, &o.result), ident(&o.name), op_params(g, ps, None, None));
     }
-    let _ = writeln!(out, "// A copy of the handler as it is now: what a refused rule goes back to.\nvirtual std::unique_ptr<{class}> clone() const;\n}};\n");
+    let _ = writeln!(
+        out,
+        "// A copy of the handler as it is now: what a refused rule goes back to.\nvirtual std::unique_ptr<{class}> clone() const;\n}};\n"
+    );
     if let Some(p) = &h.pretend {
         let name = ident(&p.name);
-        let _ = writeln!(out, "// pretend {}: what tests run for `{}`.\nclass {name} final : public {class} {{\npublic:", p.name, h.name);
+        let _ = writeln!(
+            out,
+            "// pretend {}: what tests run for `{}`.\nclass {name} final : public {class} {{\npublic:",
+            p.name, h.name
+        );
         for (o, arm) in h.ops.iter().zip(&p.arms) {
             if arm.is_some() {
                 let ps = o.params.as_deref().unwrap_or(&[]);
-                let _ = writeln!(out, "{} {}({}) override;", op_result(g, &o.result), ident(&o.name), op_params(g, ps, None, None));
+                let _ = writeln!(
+                    out,
+                    "{} {}({}) override;",
+                    op_result(g, &o.result),
+                    ident(&o.name),
+                    op_params(g, ps, None, None)
+                );
             }
         }
         let _ = writeln!(out, "std::unique_ptr<{class}> clone() const override;\n\nprivate:");
@@ -81,10 +102,20 @@ fn handler_impl(g: &Gen<'_>, h: &Handler, out: &mut String) {
     for o in &h.ops {
         let ps = o.params.as_deref().unwrap_or(&[]);
         let unnamed: Vec<String> = ps.iter().map(|p| g.param_ty(&p.ty)).collect();
-        let what = string_literal(&format!("`{}.{}`: no runtime of library `{}` is installed", h.name, o.name, h.library));
-        let _ = writeln!(out, "{} {class}::{}({}) {{\nrt::stop(\"E-UNSUPPORTED\", {what});\n}}\n", op_result(g, &o.result), ident(&o.name), unnamed.join(", "));
+        let what =
+            string_literal(&format!("`{}.{}`: no runtime of library `{}` is installed", h.name, o.name, h.library));
+        let _ = writeln!(
+            out,
+            "{} {class}::{}({}) {{\nrt::stop(\"E-UNSUPPORTED\", {what});\n}}\n",
+            op_result(g, &o.result),
+            ident(&o.name),
+            unnamed.join(", ")
+        );
     }
-    let _ = writeln!(out, "std::unique_ptr<{class}> {class}::clone() const {{\nreturn std::make_unique<{class}>(*this);\n}}\n");
+    let _ = writeln!(
+        out,
+        "std::unique_ptr<{class}> {class}::clone() const {{\nreturn std::make_unique<{class}>(*this);\n}}\n"
+    );
     let Some(p) = &h.pretend else { return };
     let name = ident(&p.name);
     for (o, arm) in h.ops.iter().zip(&p.arms) {
@@ -100,7 +131,11 @@ fn handler_impl(g: &Gen<'_>, h: &Handler, out: &mut String) {
         for (param, (source, _)) in ps.iter().zip(&arm.params) {
             let cpp = fx.local(source);
             if let Some(c) = fx.conform(&param.check, &cpp) {
-                let _ = writeln!(body, "rt::claim({c}, {});", string_literal(&format!("argument `{}` of `{}.{}`", param.name, h.name, o.name)));
+                let _ = writeln!(
+                    body,
+                    "rt::claim({c}, {});",
+                    string_literal(&format!("argument `{}` of `{}.{}`", param.name, h.name, o.name))
+                );
             }
         }
         let ret = if o.result == LTy::Unit { Ret::Void } else { Ret::Value };
@@ -108,7 +143,10 @@ fn handler_impl(g: &Gen<'_>, h: &Handler, out: &mut String) {
         let text = format!("{} {name}::{}({params}) {{\n{body}}}\n", op_result(g, &o.result), ident(&o.name));
         let _ = writeln!(out, "{}", fx.resolve(&text));
     }
-    let _ = writeln!(out, "std::unique_ptr<{class}> {name}::clone() const {{\nreturn std::make_unique<{name}>(*this);\n}}\n");
+    let _ = writeln!(
+        out,
+        "std::unique_ptr<{class}> {name}::clone() const {{\nreturn std::make_unique<{name}>(*this);\n}}\n"
+    );
 }
 
 /// `include/program/machine.hpp` and `src/program/machine.cpp`.
@@ -143,7 +181,8 @@ pub fn machine(g: &Gen<'_>, lines: &Lines) -> Vec<Unit> {
     };
 
     let mut h = banner("the program's states, rules and handlers");
-    let _ = writeln!(h, "#pragma once\n\n#include \"rt/prelude.hpp\"\n{}\nnamespace program {{\n", includes(&reach, None));
+    let _ =
+        writeln!(h, "#pragma once\n\n#include \"rt/prelude.hpp\"\n{}\nnamespace program {{\n", includes(&reach, None));
     h.push_str("// Every rule's number, as an event of a trace names it.\nnamespace rule {\n");
     for (i, r) in lir.rules.iter().enumerate() {
         let _ = writeln!(h, "inline constexpr int {} = {i};", flat(&r.info.qualified));
@@ -174,11 +213,20 @@ pub fn machine(g: &Gen<'_>, lines: &Lines) -> Vec<Unit> {
     h.push_str("throw;\n}\n}\n};\n\n}  // namespace program\n");
 
     let mut c = banner("the program's states, rules and handlers");
-    let _ = writeln!(c, "#include \"program/machine.hpp\"\n\n{}\nnamespace program {{\n", includes(&src_reach, Some(&reach)));
+    let _ = writeln!(
+        c,
+        "#include \"program/machine.hpp\"\n\n{}\nnamespace program {{\n",
+        includes(&src_reach, Some(&reach))
+    );
     c.push_str("rt::Text show(const World& value) {\nrt::Text out = \"World(\";\n");
     for (i, s) in lir.states.iter().enumerate() {
         let sep = if i == 0 { "" } else { ", " };
-        let _ = writeln!(c, "out += {} + rt::str(value.{});", string_literal(&format!("{sep}{}: ", s.info.qualified)), g.state_field(spec_lang_ir::StateId(i as u32)));
+        let _ = writeln!(
+            c,
+            "out += {} + rt::str(value.{});",
+            string_literal(&format!("{sep}{}: ", s.info.qualified)),
+            g.state_field(spec_lang_ir::StateId(i as u32))
+        );
     }
     if lir.states.is_empty() {
         c.push_str("static_cast<void>(value);\n");
@@ -199,14 +247,25 @@ pub fn machine(g: &Gen<'_>, lines: &Lines) -> Vec<Unit> {
             }
             None if matches!(s.ty, LTy::Map(..) | LTy::Set(_) | LTy::List(_) | LTy::Option(_)) => {}
             None => {
-                let _ = writeln!(init, "rt::stop(\"E-TYPE-MISMATCH\", {});", string_literal(&format!("state {} is not a collection or an Option and has no initial value", s.info.qualified)));
+                let _ = writeln!(
+                    init,
+                    "rt::stop(\"E-TYPE-MISMATCH\", {});",
+                    string_literal(&format!(
+                        "state {} is not a collection or an Option and has no initial value",
+                        s.info.qualified
+                    ))
+                );
             }
         }
     }
     for (i, s) in lir.states.iter().enumerate() {
         let field = format!("world.{}", g.state_field(spec_lang_ir::StateId(i as u32)));
         if let Some(cond) = fx.conform(&s.check, &field) {
-            let _ = writeln!(init, "rt::claim({cond}, {});", string_literal(&format!("the initial value of {}", s.info.qualified)));
+            let _ = writeln!(
+                init,
+                "rt::claim({cond}, {});",
+                string_literal(&format!("the initial value of {}", s.info.qualified))
+            );
         }
     }
     let mut ctor = String::from("Machine::Machine() {\n");
@@ -218,7 +277,10 @@ pub fn machine(g: &Gen<'_>, lines: &Lines) -> Vec<Unit> {
         ctor.push_str("Machine& ctx = *this;\n");
     }
     let _ = writeln!(c, "{ctor}{}}}\n\n}}  // namespace program", fx.resolve(&init));
-    vec![Unit { path: "include/program/machine.hpp".into(), text: h }, Unit { path: "src/program/machine.cpp".into(), text: c }]
+    vec![
+        Unit { path: "include/program/machine.hpp".into(), text: h },
+        Unit { path: "src/program/machine.cpp".into(), text: c },
+    ]
 }
 
 /// Every foreign declaration of the program, once per symbol and signature.
@@ -283,7 +345,7 @@ pub fn foreign(g: &Gen<'_>, lines: &Lines, real: bool) -> Vec<Unit> {
     let mut blocked = banner("the program's foreign declarations");
     blocked.push_str("// No library is linked here: a check that reaches a foreign body is blocked.\n#include \"program/foreign.hpp\"\n\n");
     let mut bound = banner("the program's foreign declarations");
-    bound.push_str("// Each foreign declaration, bound to its library's runtime.\n#include \"program/foreign.hpp\"\n\n");
+    bound.push_str("// Each foreign declaration, bound to its library's runtime.\n#include \"program/foreign.hpp\"\n\n#include \"program/data.hpp\"\n");
     for library in foreign_libraries(g) {
         let _ = writeln!(bound, "#include \"lib/{library}/foreign.hpp\"");
     }
@@ -293,14 +355,35 @@ pub fn foreign(g: &Gen<'_>, lines: &Lines, real: bool) -> Vec<Unit> {
         let _ = writeln!(h, "namespace {ns} {{");
         let _ = writeln!(blocked, "namespace {ns} {{");
         let _ = writeln!(bound, "namespace {ns} {{");
-        for (x, params, result, info) in all.iter().filter(|(x, ..)| if x.library.is_empty() { x.lang == library } else { x.library == library }) {
-            let written = format!("foreign {} \"{}{}{}\"", x.lang, x.library, if x.library.is_empty() { "" } else { "#" }, x.symbol);
+        for (x, params, result, info) in
+            all.iter().filter(|(x, ..)| if x.library.is_empty() { x.lang == library } else { x.library == library })
+        {
+            let written = format!(
+                "foreign {} \"{}{}{}\"",
+                x.lang,
+                x.library,
+                if x.library.is_empty() { "" } else { "#" },
+                x.symbol
+            );
             let _ = writeln!(h, "// {} ({}) = {written}", info.qualified, lines.at(lir, info));
             let _ = writeln!(h, "{};", extern_sig(g, x, params, result, true));
-            let _ = writeln!(blocked, "{} {{\nrt::foreign({}, {});\n}}", extern_sig(g, x, params, result, false), string_literal(&info.qualified), string_literal(&written));
+            let _ = writeln!(
+                blocked,
+                "{} {{\nrt::foreign({}, {});\n}}",
+                extern_sig(g, x, params, result, false),
+                string_literal(&info.qualified),
+                string_literal(&written)
+            );
             let args: Vec<String> = params.iter().map(|p| ident(&p.name)).collect();
             let give = if **result == LTy::Unit { "" } else { "return " };
-            let _ = writeln!(bound, "{} {{\n{give}lib::{}::{}({});\n}}", extern_sig(g, x, params, result, true), ident(&library), ident(&x.symbol), args.join(", "));
+            let _ = writeln!(
+                bound,
+                "{} {{\n{give}lib::{}::{}({});\n}}",
+                extern_sig(g, x, params, result, true),
+                ident(&library),
+                ident(&x.symbol),
+                args.join(", ")
+            );
         }
         let _ = writeln!(h, "}}  // namespace {ns}\n");
         let _ = writeln!(blocked, "}}  // namespace {ns}\n");

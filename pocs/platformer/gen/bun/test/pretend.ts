@@ -4,35 +4,34 @@ import type { Handlers, KeysHandler, OutHandler, ScreenHandler } from "../src/ma
 
 /** `out` of library `cli` in the checks. */
 class OutPretend implements OutHandler {
-  private sent: readonly string[] = [];
+  #sent: readonly string[] = [];
 
   line(text: string): null {
-    let sent = this.sent;
+    let sent = this.#sent;
     const reply = (() => {
       sent = [...sent, text];
       return null;
     })();
-    this.sent = sent;
+    this.#sent = sent;
     return reply;
   }
 
   text(): string {
-    const sent = this.sent;
+    const sent = this.#sent;
     return sent.map((line: string) => `${line}\n`).join("");
   }
 
   save(): unknown {
-    return [this.sent];
+    return [this.#sent];
   }
 
   restore(saved: unknown): void {
-    [this.sent] = saved as [readonly string[]];
+    [this.#sent] = saved as [readonly string[]];
   }
 }
 
 /** `screen` of library `game` in the checks. */
 class ScreenPretend implements ScreenHandler {
-
   save(): unknown {
     return [];
   }
@@ -42,7 +41,6 @@ class ScreenPretend implements ScreenHandler {
 
 /** `keys` of library `game` in the checks. */
 class KeysPretend implements KeysHandler {
-
   save(): unknown {
     return [];
   }

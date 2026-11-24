@@ -6,7 +6,9 @@ namespace rt {
 namespace unicode {
 
 char32_t next(std::string_view text, std::size_t& at) {
-  const auto byte = [&](std::size_t i) { return static_cast<unsigned char>(i < text.size() ? text[i] : 0); };
+  const auto byte = [&](std::size_t i) {
+    return static_cast<unsigned char>(i < text.size() ? text[i] : 0);
+  };
   const unsigned char lead = byte(at);
   if (lead < 0x80) {
     at += 1;
@@ -18,8 +20,8 @@ char32_t next(std::string_view text, std::size_t& at) {
     return c;
   }
   if (lead < 0xF0) {
-    const char32_t c =
-        (static_cast<char32_t>(lead & 0x0F) << 12) | (static_cast<char32_t>(byte(at + 1) & 0x3F) << 6) | (byte(at + 2) & 0x3F);
+    const char32_t c = (static_cast<char32_t>(lead & 0x0F) << 12) | (static_cast<char32_t>(byte(at + 1) & 0x3F) << 6) |
+                       (byte(at + 2) & 0x3F);
     at += 3;
     return c;
   }
@@ -49,11 +51,13 @@ void append(Text& out, char32_t c) {
 
 // Unicode White_Space: exactly 25 code points. Not U+200B, U+FEFF, U+180E.
 bool is_white_space(char32_t c) {
-  return (c >= 0x09 && c <= 0x0D) || c == 0x20 || c == 0x85 || c == 0xA0 || c == 0x1680 || (c >= 0x2000 && c <= 0x200A) ||
-         c == 0x2028 || c == 0x2029 || c == 0x202F || c == 0x205F || c == 0x3000;
+  return (c >= 0x09 && c <= 0x0D) || c == 0x20 || c == 0x85 || c == 0xA0 || c == 0x1680 ||
+         (c >= 0x2000 && c <= 0x200A) || c == 0x2028 || c == 0x2029 || c == 0x202F || c == 0x205F || c == 0x3000;
 }
 
-bool is_control(char32_t c) { return c < 0x20 || (c >= 0x7F && c <= 0x9F); }
+bool is_control(char32_t c) {
+  return c < 0x20 || (c >= 0x7F && c <= 0x9F);
+}
 
 }  // namespace unicode
 
@@ -95,8 +99,12 @@ Text trim(const Text& text) {
   return text.substr(from, to - from);
 }
 
-bool starts_with(const Text& text, const Text& prefix) { return text.starts_with(prefix); }
-bool contains(const Text& text, const Text& part) { return text.find(part) != Text::npos; }
+bool starts_with(const Text& text, const Text& prefix) {
+  return text.starts_with(prefix);
+}
+bool contains(const Text& text, const Text& part) {
+  return text.find(part) != Text::npos;
+}
 
 List<Text> split(const Text& text, const Text& separator) {
   if (separator.empty()) stop("E-TYPE-ARITY", "`text.split` takes one non-empty Text");
@@ -123,8 +131,12 @@ Text replace(const Text& text, const Text& old, const Text& with) {
   return out;
 }
 
-Text take(const Text& text, Int count) { return text.substr(0, offset_of(text, count)); }
-Text drop(const Text& text, Int count) { return text.substr(offset_of(text, count)); }
+Text take(const Text& text, Int count) {
+  return text.substr(0, offset_of(text, count));
+}
+Text drop(const Text& text, Int count) {
+  return text.substr(offset_of(text, count));
+}
 
 Text join(const List<Text>& parts, const Text& separator) {
   Text out;

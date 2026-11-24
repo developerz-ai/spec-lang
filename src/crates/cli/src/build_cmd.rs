@@ -3,8 +3,7 @@
 //! here; `spec-lang test` is the gate before a build.
 //! `spec-lang build <project> --target <t> --tests --out <dir>`: the whole
 //! program's checks as a project whose `bin/test` runs them (decision 009).
-//! Printers over the LIR are listed in [`printers`]; an app whose target has
-//! none there still goes to its old emitter until that emitter is replaced.
+//! Printers over the LIR are listed in [`printers`].
 
 use crate::output::emit;
 use spec_lang_diag::Diag;
@@ -56,16 +55,14 @@ fn print(prog: &Program, app: &AppDecl) -> Result<Vec<File>, Vec<Diag>> {
     if let Some(p) = printer_for(target) {
         return lowered(prog).and_then(|lir| p.app(&lir, &app.info.name)).map(from_lir);
     }
-    match target {
-        other => Err(vec![
-            Diag::error(
-                "E-NOTE-ARG",
-                app.info.name_span,
-                format!("no printer for `@target({other})`: one of {}", TARGETS.join(", ")),
-            )
-            .with_decl(prog.qualified(&app.info)),
-        ]),
-    }
+    Err(vec![
+        Diag::error(
+            "E-NOTE-ARG",
+            app.info.name_span,
+            format!("no printer for `@target({target})`: one of {}", TARGETS.join(", ")),
+        )
+        .with_decl(prog.qualified(&app.info)),
+    ])
 }
 
 pub fn run(args: &[String]) -> u8 {

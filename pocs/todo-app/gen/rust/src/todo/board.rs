@@ -1,7 +1,9 @@
 //! Module `todo.board`, printed by spec-lang from `src/todo/board.slg`. Each item names its declaration and line; rebuild with `spec-lang build`, do not edit.
+
 use crate::rt::{self, Int, Opt, R, Show};
 use crate::machine::Machine;
 use std::collections::BTreeSet;
+
 /// Fn `todo.board.has_tag`, `src/todo/board.slg:16`.
 pub fn has_tag(t: crate::todo::model::Task, tag: Opt<String>) -> R<bool> {
     rt::claim(crate::conform::task(&t)?, "argument `t` of todo.board.has_tag")?;
@@ -10,16 +12,16 @@ pub fn has_tag(t: crate::todo::model::Task, tag: Opt<String>) -> R<bool> {
         "argument `tag` of todo.board.has_tag",
     )?;
     Ok(
-        if let Opt::None = &tag {
-            true
-        } else if let Opt::Some(_) = &tag && let Opt::Some(tmp1) = &tag {
-            let x = (*tmp1).clone();
-            t.tags.contains(&x)
-        } else {
-            return Err(rt::stop("E-RUNTIME", "no arm matches"))
+        match &tag {
+            Opt::None => true,
+            Opt::Some(tmp1) => {
+                let x = (*tmp1).clone();
+                t.tags.contains(&x)
+            }
         },
     )
 }
+
 /// a number is never reused, so an old note that says 'task 3' never names a new task
 ///
 /// Rule `todo.board.add`, `src/todo/board.slg:21`.
@@ -60,6 +62,7 @@ pub fn add(
         Ok(result)
     })
 }
+
 /// open work first; finished work only when asked for
 ///
 /// Rule `todo.board.list`, `src/todo/board.slg:32`.
@@ -98,6 +101,7 @@ pub fn list(m: &mut Machine, all: Option<bool>, tag: Option<Opt<String>>) -> R<(
         Ok(())
     })
 }
+
 /// finishing is one step, and only open work can finish
 ///
 /// Rule `todo.board.done`, `src/todo/board.slg:44`.
@@ -122,6 +126,7 @@ pub fn done(m: &mut Machine, no: Int) -> R<()> {
         Ok(())
     })
 }
+
 /// a mistaken done is undone, not re-added under a new number
 ///
 /// Rule `todo.board.reopen`, `src/todo/board.slg:53`.
@@ -146,6 +151,7 @@ pub fn reopen(m: &mut Machine, no: Int) -> R<()> {
         Ok(())
     })
 }
+
 /// a title changes without losing its number, status or tags
 ///
 /// Rule `todo.board.rename`, `src/todo/board.slg:62`.
@@ -169,6 +175,7 @@ pub fn rename(m: &mut Machine, no: Int, title: String) -> R<()> {
         Ok(())
     })
 }
+
 /// removing frees nothing: the number stays used
 ///
 /// Rule `todo.board.remove`, `src/todo/board.slg:71`.
@@ -191,6 +198,7 @@ pub fn remove(m: &mut Machine, no: Int) -> R<()> {
         Ok(())
     })
 }
+
 /// finished work leaves the list in one step
 ///
 /// Rule `todo.board.clear`, `src/todo/board.slg:80`.
@@ -220,6 +228,7 @@ pub fn clear(m: &mut Machine) -> R<Int> {
         Ok(rt::int::count(gone.len()))
     })
 }
+
 /// a count at a glance, without listing
 ///
 /// Rule `todo.board.stats`, `src/todo/board.slg:90`.
@@ -246,9 +255,10 @@ pub fn stats(m: &mut Machine) -> R<()> {
         Ok(())
     })
 }
+
 /// a named start world for tests in other modules: three open tasks, one done
 ///
 /// Test `todo.board.three_open_one_done`, `src/todo/board.slg:98`.
-pub fn three_open_one_done(m: &mut Machine) -> R<()> {
+pub fn three_open_one_done(_m: &mut Machine) -> R<()> {
     Ok(())
 }

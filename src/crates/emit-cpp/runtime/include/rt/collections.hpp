@@ -361,6 +361,8 @@ M map_of(std::initializer_list<typename M::value_type> entries) {
 
 // The numbers of the range ascending; more than ten million stops E-RUNTIME.
 List<Int> list(const Range& range);
-inline bool contains(const Range& range, Int n) { return range.has(n); }
+inline bool contains(const Range& range, Int n) {
+  return range.has(n);
+}
 
 }  // namespace rt

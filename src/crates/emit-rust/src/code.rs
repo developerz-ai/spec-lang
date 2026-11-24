@@ -108,7 +108,17 @@ pub struct Fx<'c, 'a> {
 
 impl<'c, 'a> Fx<'c, 'a> {
     pub fn new(cx: &'c mut Cx<'a>, module: Option<ModuleId>, has_m: bool) -> Self {
-        Fx { cx, module, has_m, locals: BTreeSet::new(), assigned: BTreeSet::new(), discard: false, targets: vec![Target::Fn], tmp: 0, label: 0 }
+        Fx {
+            cx,
+            module,
+            has_m,
+            locals: BTreeSet::new(),
+            assigned: BTreeSet::new(),
+            discard: false,
+            targets: vec![Target::Fn],
+            tmp: 0,
+            label: 0,
+        }
     }
 
     pub fn tmp(&mut self) -> String {
@@ -144,8 +154,8 @@ impl<'c, 'a> Fx<'c, 'a> {
         let mut out = Vec::with_capacity(items.len());
         for (i, mut c) in items.into_iter().enumerate() {
             let before_last = last.is_some_and(|l| i < l);
-            let hoist = (before_last && !(c.simple && c.pre.is_empty() && !c.m))
-                || (last == Some(i) && callee_m && c.m);
+            let hoist =
+                (before_last && !(c.simple && c.pre.is_empty() && !c.m)) || (last == Some(i) && callee_m && c.m);
             pre.append(&mut c.pre);
             if hoist {
                 let t = self.tmp();
@@ -167,7 +177,14 @@ impl<'c, 'a> Fx<'c, 'a> {
         if callee_m {
             list.insert(0, "m".into());
         }
-        Code { pre, text: format!("{path}({})?", list.join(", ")), atomic: true, m: callee_m || any_m, fail: true, ..Code::default() }
+        Code {
+            pre,
+            text: format!("{path}({})?", list.join(", ")),
+            atomic: true,
+            m: callee_m || any_m,
+            fail: true,
+            ..Code::default()
+        }
     }
 }
 
@@ -189,10 +206,44 @@ pub fn ok(text: &str) -> String {
         }
         if let Some(i) = open {
             let head = &call[..i];
-            if !head.is_empty() && head.chars().all(|c| c.is_alphanumeric() || matches!(c, '_' | ':' | '.' | '<' | '>' | '#')) {
+            if !head.is_empty()
+                && head.chars().all(|c| c.is_alphanumeric() || matches!(c, '_' | ':' | '.' | '<' | '>' | '#'))
+            {
                 return format!("{call})");
             }
         }
     }
     format!("Ok({text})")
+}
+
+/// Whether `text` reads the name: the word itself, not a field (`x.name`) or a path segment (`a::name`).
+pub fn uses(text: &str, name: &str) -> bool {
+    let b = text.as_bytes();
+    let word = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'#' || c >= 0x80;
+    let mut from = 0;
+    while let Some(i) = text[from..].find(name) {
+        let at = from + i;
+        let end = at + name.len();
+        let before = at.checked_sub(1).map(|j| b[j]);
+        let field = before == Some(b'.') && at.checked_sub(2).is_none_or(|j| b[j] != b'.');
+        if !field && !before.is_some_and(|c| word(c) || c == b':') && !b.get(end).copied().is_some_and(word) {
+            return true;
+        }
+        from = end;
+    }
+    false
+}
+
+/// A parameter or local as it is declared: `_x` when the code after it never reads it.
+pub fn declared(name: &str, text: &str) -> String {
+    if uses(text, name) { name.to_string() } else { format!("_{}", name.trim_start_matches("r#")) }
+}
+
+/// A parameter list with the names `body` never reads marked as such.
+pub fn params(list: &[String], body: &str) -> String {
+    let one = |p: &String| match p.split_once(": ") {
+        Some((n, t)) => format!("{}: {t}", declared(n, body)),
+        None => p.clone(),
+    };
+    list.iter().map(one).collect::<Vec<_>>().join(", ")
 }

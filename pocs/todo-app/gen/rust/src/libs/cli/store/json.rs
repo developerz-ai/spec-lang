@@ -227,7 +227,8 @@ impl Document {
 
 fn int(literal: &str) -> Option<Int> {
     let digits = literal.strip_prefix('-').unwrap_or(literal);
-    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) || (digits.len() > 1 && digits.starts_with('0')) {
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) || (digits.len() > 1 && digits.starts_with('0'))
+    {
         return None;
     }
     let n: Int = literal.parse().ok()?;
@@ -326,7 +327,9 @@ pub fn encode(out: &mut String, d: &Data, ty: &'static Ty) -> Result<(), Full> {
         }
         (_, Data::Text(t)) => text(out, t),
         (Shape::Option(t), Data::Some(v)) => encode(out, v, t)?,
-        (Shape::List(t) | Shape::Set(t), Data::List(xs) | Data::Set(xs)) => array(out, xs.iter(), |out, x| encode(out, x, t))?,
+        (Shape::List(t) | Shape::Set(t), Data::List(xs) | Data::Set(xs)) => {
+            array(out, xs.iter(), |out, x| encode(out, x, t))?
+        }
         (Shape::Tuple(ts), Data::Tuple(xs)) => array(out, ts.iter().zip(xs), |out, (t, x)| encode(out, x, t))?,
         (Shape::Map(k, v), Data::Map(entries)) => match key_field(k, v) {
             Some(_) => array(out, entries.iter(), |out, (_, x)| encode(out, x, v))?,
@@ -371,7 +374,11 @@ fn object(out: &mut String, fields: &[(&str, &'static Ty)], values: &[(&str, Dat
     Ok(())
 }
 
-fn array<T>(out: &mut String, items: impl Iterator<Item = T>, mut each: impl FnMut(&mut String, T) -> Result<(), Full>) -> Result<(), Full> {
+fn array<T>(
+    out: &mut String,
+    items: impl Iterator<Item = T>,
+    mut each: impl FnMut(&mut String, T) -> Result<(), Full>,
+) -> Result<(), Full> {
     out.push('[');
     for (i, x) in items.enumerate() {
         if i > 0 {

@@ -8,7 +8,7 @@ use crate::types::{Out, trivial};
 use spec_lang_diag::Diag;
 use spec_lang_lir::node::*;
 use spec_lang_lir::program::TypeDef;
-use spec_lang_lir::{LTy, Prim};
+use spec_lang_lir::{DTy, LTy, Prim};
 use std::collections::BTreeSet;
 
 /// Precedence levels of the JavaScript grammar, as far as the printer needs them.
@@ -61,7 +61,7 @@ pub struct Fx<'o, 'a, 'l> {
     /// `w`, when the world is in scope.
     pub world: Option<String>,
     /// A `return` at the function's own level checks its value against this type.
-    pub result: Option<String>,
+    pub result: Option<DTy>,
     depth: usize,
     /// Local names some statement assigns: only these are `let`.
     pub assigned: BTreeSet<String>,
@@ -149,40 +149,48 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
         self.scopes.push(Vec::new());
     }
 
+    /// Ends a scope whose text is inside its own braces or function: its names are free again.
     pub fn pop_scope(&mut self) {
         self.scopes.pop();
     }
 
-    /// A new local named after `lir`, unique in this function.
-    pub fn bind(&mut self, lir: &str) -> String {
-        let base = camel(lir);
+    /// Ends a scope whose text stands among the enclosing statements: its names stay taken there.
+    pub fn merge_scope(&mut self) {
+        let taken = self.scopes.pop().unwrap_or_default();
+        if let Some(outer) = self.scopes.last_mut() {
+            outer.extend(taken.into_iter().map(|l| Local { lir: String::new(), ts: l.ts }));
+        }
+    }
+
+    /// `base`, or `base` and a number: no name a reader sees from here.
+    fn fresh(&self, base: String) -> String {
+        let taken = |ts: &String| self.used.contains(ts) || self.scopes.iter().flatten().any(|l| l.ts == *ts);
         let mut ts = base.clone();
         let mut n = 2;
-        while self.used.contains(&ts) {
+        while taken(&ts) {
             ts = format!("{base}{n}");
             n += 1;
         }
-        self.used.insert(ts.clone());
+        ts
+    }
+
+    /// A new local named after `lir`, unlike every name in sight.
+    pub fn bind(&mut self, lir: &str) -> String {
+        let ts = self.fresh(camel(lir));
+        self.mutable.remove(&ts);
         self.bind_as(lir, &ts);
         ts
     }
 
     /// A local nothing reads: `_` and a name unique in this function.
     pub fn bind_unused(&mut self, lir: &str) -> String {
-        let base = format!("_{}", camel(lir));
-        let mut ts = base.clone();
-        let mut n = 2;
-        while self.used.contains(&ts) {
-            ts = format!("{base}{n}");
-            n += 1;
-        }
-        self.bind_named(lir, &ts);
+        let ts = self.fresh(format!("_{}", camel(lir)));
+        self.bind_as(lir, &ts);
         ts
     }
 
     /// A local `lir` whose TypeScript name was chosen elsewhere (a parameter).
     pub fn bind_named(&mut self, lir: &str, ts: &str) {
-        self.used.insert(ts.to_string());
         self.bind_as(lir, ts);
     }
 
@@ -215,14 +223,8 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
         self.errors.push(d);
     }
 
-    /// Imports the runtime when printed text reads it.
     fn note_rt(&mut self, text: &str) {
-        let reads = text.match_indices("rt.").any(|(i, _)| {
-            !text[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.' || c == '$')
-        });
-        if reads {
-            self.out.rt();
-        }
+        self.out.note_rt(text);
     }
 
     fn w(&mut self, span: spec_lang_syntax::Span) -> String {
@@ -230,7 +232,10 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
         match &self.world {
             Some(w) => w.clone(),
             None => {
-                self.unsupported(Some(span), "the world is read where no world is in scope (a constant, a claim or a default)");
+                self.unsupported(
+                    Some(span),
+                    "the world is read where no world is in scope (a constant, a claim or a default)",
+                );
                 "w".into()
             }
         }
@@ -288,17 +293,20 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
                 let h = self.out.plan.handler_prop[handler.index()].clone();
                 let o = self.out.plan.op_name[handler.index()].get(*op as usize).cloned().unwrap_or_default();
                 let params = self.out.plan.lir.handler(*handler).ops.get(*op as usize).and_then(|o| o.params.as_ref());
-                let mut texts = Vec::new();
-                for (i, a) in args.iter().enumerate() {
-                    let x = self.expr(a).text;
-                    let check = params.and_then(|ps| ps.get(i)).map(|p| p.check.clone());
-                    texts.push(match check {
-                        Some(c) if !trivial(self.out.plan, &c) => {
-                            let d = self.out.d_desc(&c);
-                            format!("{rt}.check({d}, {x})")
-                        }
-                        _ => x,
-                    });
+                let texts: Vec<String> = args.iter().map(|a| self.expr(a).text).collect();
+                let checked = params.is_some_and(|ps| ps.iter().any(|p| !trivial(self.out.plan, &p.check)));
+                if checked {
+                    // Every argument is evaluated, then each is checked.
+                    let types: Vec<String> =
+                        params.iter().flat_map(|ps| ps.iter()).map(|p| self.out.d_desc(&p.check)).collect();
+                    return Ex::new(
+                        format!(
+                            "{w}.fx.{h}.{o}(...{rt}.checked([{}], [{}] as const))",
+                            types.join(", "),
+                            texts.join(", ")
+                        ),
+                        P_CALL,
+                    );
                 }
                 Ex::new(format!("{w}.fx.{h}.{o}({})", texts.join(", ")), P_CALL)
             }
@@ -311,7 +319,7 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
             ExprKind::Prim { op, args } => {
                 let printed: Vec<Ex> = self.prim_args(*op, args);
                 let tys: Vec<LTy> = args.iter().map(|a| a.ty.clone()).collect();
-                self.prim(*op, printed, &tys, args)
+                self.prim(*op, printed, &tys, &args.iter().collect::<Vec<_>>())
             }
             ExprKind::Lambda(l) => self.lambda(l),
             ExprKind::CallLambda { callee, args } => {
@@ -422,7 +430,11 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
                 if data.is_empty() {
                     Ex::new(format!("{rt}.fail({})", string_literal(name)), P_CALL)
                 } else {
-                    Ex::new(format!("{rt}.fail({}, [{}])", string_literal(name), data.join(", ")), P_CALL)
+                    let types: Vec<String> = args.iter().map(|a| self.out.l_desc(&a.ty)).collect();
+                    Ex::new(
+                        format!("{rt}.fail({}, [{}], [{}])", string_literal(name), data.join(", "), types.join(", ")),
+                        P_CALL,
+                    )
                 }
             }
             ExprKind::Match { scrutinee, arms } => self.match_expr(scrutinee, arms, &e.ty),
@@ -560,20 +572,24 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
     }
 
     fn lambda(&mut self, l: &Lambda) -> Ex {
-        let copies: Vec<String> = l
-            .captures
-            .iter()
-            .filter_map(|(n, _)| {
-                let ts = self.lookup(n);
-                self.mutable.contains(&ts).then_some(ts)
-            })
-            .collect();
+        let mut copies: Vec<(String, String)> = Vec::new();
+        for (n, t) in &l.captures {
+            let ts = self.lookup(n);
+            if self.mutable.contains(&ts) {
+                let t = self.out.ts_type(t);
+                copies.push((ts, t));
+            }
+        }
         self.push_scope();
         let params: Vec<String> = l
             .params
             .iter()
             .map(|(n, t)| {
-                let ts = self.bind(n);
+                let read = match &l.body {
+                    LambdaBody::Expr(x) => mentions(x, n),
+                    LambdaBody::Block(b) => block_mentions(b, n),
+                };
+                let ts = if read { self.bind(n) } else { self.bind_unused(n) };
                 let t = self.out.ts_type(t);
                 format!("{ts}: {t}")
             })
@@ -597,8 +613,9 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
             return Ex::new(text, P_ARROW);
         }
         // A lambda keeps the values its locals had when it was made: the mutable ones are copied now.
-        let ps: Vec<String> = copies.iter().map(|c| c.to_string()).collect();
-        Ex::new(format!("(({}) => {text})({})", ps.join(", "), ps.join(", ")), P_CALL)
+        let params: Vec<String> = copies.iter().map(|(n, t)| format!("{n}: {t}")).collect();
+        let args: Vec<String> = copies.into_iter().map(|(n, _)| n).collect();
+        Ex::new(format!("(({}) => {text})({})", params.join(", "), args.join(", ")), P_CALL)
     }
 
     /// A subject read twice without harm: a local, a state, or fields of one.
@@ -619,9 +636,9 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
             let mut parts: Vec<Ex> = Vec::new();
             for (op, right) in links {
                 let args = if op.is_containment() { [right, left] } else { [left, right] };
-                let printed = vec![self.expr(args[0]), self.expr(args[1])];
+                let printed = vec![self.operand(*op, args[0]), self.operand(*op, args[1])];
                 let tys = vec![args[0].ty.clone(), args[1].ty.clone()];
-                parts.push(self.prim(*op, printed, &tys, &[]));
+                parts.push(self.prim(*op, printed, &tys, &args));
                 left = right;
             }
             if parts.len() == 1 {
@@ -669,7 +686,13 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
 
     /// A `match` as an expression: a chain of conditionals over a subject read twice without harm.
     fn match_expr(&mut self, scrutinee: &Expr, arms: &[Arm], ty: &LTy) -> Ex {
-        let subject = self.simple(scrutinee);
+        // Read again at each binding, so only a subject nothing can change before then.
+        let settled = match root_of(scrutinee) {
+            Some(Root::Local(n)) => !self.assigned.contains(n) || arms.iter().all(|a| settles(&a.value)),
+            Some(Root::State) => arms.iter().all(|a| settles(&a.value)),
+            None => false,
+        };
+        let subject = if settled { self.simple(scrutinee) } else { None };
         let Some(subject) = subject else {
             let saved = self.result.take();
             let body = self.nested(|fx| {
@@ -711,12 +734,20 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
     }
 
     /// The arguments of a primitive, printed in order.
-    fn prim_args(&mut self, _op: Prim, args: &[Expr]) -> Vec<Ex> {
-        args.iter().map(|a| self.expr(a)).collect()
+    fn prim_args(&mut self, op: Prim, args: &[Expr]) -> Vec<Ex> {
+        args.iter().map(|a| self.operand(op, a)).collect()
+    }
+
+    /// An argument; a variant without data compared with `==` is only its kind, so it is not printed.
+    fn operand(&mut self, op: Prim, e: &Expr) -> Ex {
+        match self.dataless(e) {
+            Some(kind) if matches!(op, Prim::Eq | Prim::Ne) => Ex::primary(format!("{{ kind: {kind} }}")),
+            _ => self.expr(e),
+        }
     }
 
     /// A primitive applied to printed arguments. `exprs`, when given, are the argument expressions.
-    pub fn prim(&mut self, op: Prim, a: Vec<Ex>, tys: &[LTy], exprs: &[Expr]) -> Ex {
+    pub fn prim(&mut self, op: Prim, a: Vec<Ex>, tys: &[LTy], exprs: &[&Expr]) -> Ex {
         let rt = "rt";
         let arg = |i: usize| a.get(i).cloned().unwrap_or_else(|| Ex::primary("undefined"));
         let recv = |i: usize| arg(i).at(P_CALL);
@@ -745,14 +776,24 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
             Prim::Eq | Prim::Ne => {
                 let negate = op == Prim::Ne;
                 if primitive(&ty(0)) {
-                    return bin(if negate { "!==" } else { "===" }, P_EQ);
+                    let constant = |x: &Ex| {
+                        x.text.starts_with('"')
+                            || x.text.ends_with('n')
+                                && x.prec >= P_UNARY
+                                && x.text.trim_start_matches('-').starts_with(|c: char| c.is_ascii_digit())
+                    };
+                    // TypeScript refuses a comparison whose answer it already knows; the program may write one.
+                    if arg(0).text != arg(1).text && !(constant(&arg(0)) && constant(&arg(1))) {
+                        return bin(if negate { "!==" } else { "===" }, P_EQ);
+                    }
                 }
                 // `x == Open`: a variant without data is its kind.
-                if let Some(kind) = exprs.get(1).and_then(|e| self.dataless(e)) {
-                    return Ex::new(format!("{}.kind {} {kind}", recv(0), if negate { "!==" } else { "===" }), P_EQ);
-                }
-                if let Some(kind) = exprs.first().and_then(|e| self.dataless(e)) {
-                    return Ex::new(format!("{}.kind {} {kind}", arg(1).at(P_CALL), if negate { "!==" } else { "===" }), P_EQ);
+                let kinds = [0, 1].map(|i| exprs.get(i).and_then(|e| self.dataless(e)));
+                let eq = if negate { "!==" } else { "===" };
+                match kinds {
+                    [None, Some(kind)] => return Ex::new(format!("{}.kind {eq} {kind}", recv(0)), P_EQ),
+                    [Some(kind), None] => return Ex::new(format!("{}.kind {eq} {kind}", recv(1)), P_EQ),
+                    _ => {}
                 }
                 let eq = Ex::new(format!("{rt}.equal({}, {})", arg(0).text, arg(1).text), P_CALL);
                 if negate { Ex::new(format!("!{}", eq.text), P_UNARY) } else { eq }
@@ -803,7 +844,7 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
             Prim::ListFilter => method("filter", 2),
             Prim::ListMap => method("map", 2),
             Prim::ListFlatMap => method("flatMap", 2),
-            Prim::ListFold => Ex::new(format!("{}.reduce({}, {})", recv(0), arg(2).text, arg(1).text), P_CALL),
+            Prim::ListFold => call("fold", 3),
             Prim::ListAll => method("every", 2),
             Prim::ListAny => method("some", 2),
             Prim::ListFind => call("find", 2),
@@ -972,7 +1013,8 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
                     continue;
                 }
                 let ts = self.bind(&name);
-                let cast = if path.contains(".args[") { format!(" as {}", self.out.ts_type(&bt)) } else { String::new() };
+                let cast =
+                    if path.contains(".args[") { format!(" as {}", self.out.ts_type(&bt)) } else { String::new() };
                 self.line(format!("const {ts} = {path}{cast};"));
             }
             self.tail(&arm.value, sink);
@@ -980,7 +1022,11 @@ impl<'o, 'a, 'l> Fx<'o, 'a, 'l> {
                 self.close("}");
                 opened = false;
             }
-            self.pop_scope();
+            if unconditional && !opened {
+                self.merge_scope();
+            } else {
+                self.pop_scope();
+            }
             if unconditional {
                 exhausted = true;
                 break;
@@ -1026,7 +1072,8 @@ pub fn block_mentions(b: &Block, name: &str) -> bool {
 
 /// Whether one of the statements reads or writes the local `name`.
 pub fn stmts_mention(stmts: &[Stmt], name: &str) -> bool {
-    let block = Block { stmts: stmts.to_vec(), ty: LTy::Unit, span: spec_lang_syntax::Span::default() };
+    let Some(first) = stmts.first() else { return false };
+    let block = Block { stmts: stmts.to_vec(), ty: LTy::Unit, span: first.span };
     let mut found = false;
     spec_lang_lir::walk::block_exprs(&block, &mut |x| found |= matches!(&x.kind, ExprKind::Local(n) if n == name));
     found
@@ -1070,6 +1117,45 @@ pub fn variant_name(lir: &spec_lang_lir::Lir, ty: spec_lang_ir::TypeId, tag: u32
     }
 }
 
+enum Root<'e> {
+    Local(&'e str),
+    State,
+}
+
+/// What a chain of field reads starts from.
+fn root_of(e: &Expr) -> Option<Root<'_>> {
+    match &e.kind {
+        ExprKind::Local(n) => Some(Root::Local(n)),
+        ExprKind::State(_) => Some(Root::State),
+        ExprKind::Field { recv, .. } | ExprKind::WorldState { recv, .. } => root_of(recv),
+        _ => None,
+    }
+}
+
+/// Whether evaluating `e` changes no state and no local: no rule, no effect, no block, no function value called.
+pub fn quiet(e: &Expr) -> bool {
+    let mut quiet = true;
+    spec_lang_lir::walk::exprs(e, &mut |x| {
+        quiet &= !matches!(
+            x.kind,
+            ExprKind::CallRule { .. } | ExprKind::Effect { .. } | ExprKind::Block(_) | ExprKind::CallLambda { .. }
+        );
+        // A block-bodied lambda's statements, and a function value run inside a primitive.
+        quiet &= !matches!(&x.kind, ExprKind::Lambda(l) if matches!(l.body, LambdaBody::Block(_)));
+        if let ExprKind::Prim { args, .. } = &x.kind {
+            quiet &= !args.iter().any(|a| matches!(a.ty, LTy::Func(..)) && !matches!(a.kind, ExprKind::Lambda(_)));
+        }
+    });
+    quiet
+}
+
+/// Quiet, and no function is made that would read a binding later.
+fn settles(e: &Expr) -> bool {
+    let mut made = false;
+    spec_lang_lir::walk::exprs(e, &mut |x| made |= matches!(x.kind, ExprKind::Lambda(_)));
+    !made && quiet(e)
+}
+
 /// A read that gives the same value however often it is evaluated, and never fails.
 fn is_simple(e: &Expr) -> bool {
     match &e.kind {
@@ -1093,6 +1179,14 @@ pub fn may_fail(e: &Expr) -> bool {
             | ExprKind::Fail { .. }
             | ExprKind::Const(_)
             | ExprKind::Block(_) => true,
+            // A field left out takes its default, which is not among the arguments.
+            ExprKind::Construct { args, .. } => args.iter().any(Option::is_none),
+            // A function value given to a primitive runs inside it.
+            ExprKind::Prim { args, .. }
+                if args.iter().any(|a| matches!(a.ty, LTy::Func(..)) && !matches!(a.kind, ExprKind::Lambda(_))) =>
+            {
+                true
+            }
             ExprKind::Prim { op, .. } => matches!(
                 op,
                 Prim::IntMod
@@ -1119,6 +1213,7 @@ pub fn claim_body(out: &mut Out<'_, '_>, body: &Expr) -> String {
     let mut fx = Fx::new(out, false);
     fx.bind_as("self", "self");
     let text = fx.expr(body).at(P_ARROW);
-    // A claim that needed the world is refused where the declaration is printed.
+    let mut errors = std::mem::take(&mut fx.errors);
+    out.errors.append(&mut errors);
     text
 }

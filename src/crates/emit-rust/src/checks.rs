@@ -5,9 +5,9 @@ use crate::code::{Code, Fx};
 use crate::cx::Cx;
 use crate::dty::gen_fn;
 use crate::names::ident;
+use spec_lang_lir::Param;
 use spec_lang_lir::node::{Expected, Expr, ExprKind};
 use spec_lang_lir::program::{CaseTarget, CheckWhat, Given};
-use spec_lang_lir::{LTy, Param};
 
 fn test_path(cx: &Cx<'_>, t: spec_lang_ir::TestId) -> String {
     let d = cx.lir.test(t);
@@ -21,6 +21,11 @@ fn body_of(path: &str, params: &[Param], args: &[String]) -> String {
         list.push(if p.default.is_some() && a != "None" { format!("Some({a})") } else { a.clone() });
     }
     format!("Ok(Box::new(move |m: &mut Machine| {path}({})))", list.join(", "))
+}
+
+/// The machine parameter of a check's function, marked when `lines` never touch it.
+fn m_param(lines: &[String]) -> String {
+    crate::code::params(&["m: &mut Machine".to_string()], &lines.join(" "))
 }
 
 pub fn file(cx: &mut Cx<'_>) -> String {
@@ -41,7 +46,8 @@ pub fn file(cx: &mut Cx<'_>) -> String {
                     let v = fx.value(value);
                     let mut lines = v.pre.clone();
                     lines.push(format!("let v = {};", v.text));
-                    if let Some(line) = fx.check(&s.check, "v", &format!("the `@given` value of {}", s.info.qualified)) {
+                    if let Some(line) = fx.check(&s.check, "v", &format!("the `@given` value of {}", s.info.qualified))
+                    {
                         lines.push(line);
                     }
                     lines.push(format!("m.world.{} = v;", cx.names.state(*state)));
@@ -63,10 +69,12 @@ pub fn file(cx: &mut Cx<'_>) -> String {
             given.join(", ")
         ));
     }
-    items.push(
+    if lir.tests.iter().any(|t| !t.params.is_empty()) {
+        items.push(
         "/// A test with parameters has no one end world.\nfn no_end(_: &mut Machine) -> R<()> { Err(rt::stop(\"E-TYPE-MISMATCH\", \"a test with parameters has no one end world\")) }"
             .into(),
-    );
+        );
+    }
 
     // Laws, by `LawId`.
     let mut laws = Vec::new();
@@ -85,8 +93,9 @@ pub fn file(cx: &mut Cx<'_>) -> String {
         }
         let path = cx.names.path(None, l.info.module, &ident(&l.info.name));
         items.push(format!(
-            "/// The parameters of `{}` besides its trace, drawn after it.\nfn {f}(m: &mut Machine, rng: &mut Rng, pools: &Pools) -> R<LawBody> {{ {} Ok(Box::new(move |m: &mut Machine, t: Trace| {path}(m, {}))) }}",
+            "/// The parameters of `{}` besides its trace, drawn after it.\nfn {f}({}) -> R<LawBody> {{ {} Ok(Box::new(move |m: &mut Machine, t: Trace| {path}(m, {}))) }}",
             l.info.qualified,
+            crate::code::params(&crate::dty::draw_params(), &lines.join(" ")),
             lines.join(" "),
             args.join(", ")
         ));
@@ -146,13 +155,19 @@ pub fn file(cx: &mut Cx<'_>) -> String {
                     }
                 }
                 lines.push(body_of(&test_path(cx, *t), &test.params, &names));
-                items.push(format!("/// `{}`: the row's values.\nfn {f}(m: &mut Machine) -> R<Body> {{ {} }}", c.name, lines.join(" ")));
+                items.push(format!(
+                    "/// `{}`: the row's values.\nfn {f}({}) -> R<Body> {{ {} }}",
+                    c.name,
+                    m_param(&lines[..lines.len() - 1]),
+                    lines.join(" ")
+                ));
                 format!("What::TestCase {{ test: {}, args: {f} }}", t.index())
             }
             CheckWhat::Case { target: CaseTarget::Fn(func), args, expect } => {
                 let f = format!("case_{k}");
                 let d = lir.func(*func);
-                let call = Expr::new(ExprKind::CallFn { func: *func, args: args.clone() }, d.result.clone(), d.info.span);
+                let call =
+                    Expr::new(ExprKind::CallFn { func: *func, args: args.clone() }, d.result.clone(), d.info.span);
                 let mut fx = Fx::new(cx, None, true);
                 let got: Code = fx.expr(&call);
                 let mut lines = got.pre.clone();
@@ -166,17 +181,26 @@ pub fn file(cx: &mut Cx<'_>) -> String {
                         lines.push(format!("let want: {ty} = {};", w.text));
                         lines.push("Ok(got == Ok(want))".into());
                     }
-                    Expected::Fail { name, .. } => lines.push(format!("Ok(matches!(&got, Err(f) if f.name == {name:?}))")),
+                    Expected::Fail { name, .. } => {
+                        lines.push(format!("Ok(matches!(&got, Err(f) if f.name == {name:?}))"))
+                    }
                 }
-                items.push(format!("/// `{}`.\nfn {f}(m: &mut Machine) -> R<bool> {{ {} }}", c.name, lines.join(" ")));
+                items.push(format!(
+                    "/// `{}`.\nfn {f}({}) -> R<bool> {{ {} }}",
+                    c.name,
+                    m_param(&lines),
+                    lines.join(" ")
+                ));
                 format!("What::Case({f})")
             }
         };
         checks.push(format!("Check {{ name: {:?}, what: {what} }},", c.name));
     }
-    let _ = LTy::Unit;
     items.push(format!("/// Every test, by number.\npub static TESTS: &[TestDecl] = &[{}];", tests.join(" ")));
     items.push(format!("/// Every law, by number.\npub static LAWS: &[LawDecl] = &[{}];", laws.join(" ")));
-    items.push(format!("/// Every check, in the order `spec-lang test` runs them.\npub static CHECKS: &[Check] = &[{}];", checks.join(" ")));
+    items.push(format!(
+        "/// Every check, in the order `spec-lang test` runs them.\npub static CHECKS: &[Check] = &[{}];",
+        checks.join(" ")
+    ));
     items.join("\n\n")
 }

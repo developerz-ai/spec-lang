@@ -55,6 +55,20 @@ export class World implements rt.Machine {
 }
 
 export const states: readonly rt.StateInfo<World>[] = [
-  { name: "todo.board.tasks", prop: "tasks", type: rt.map(model.TaskNo, model.Task), set: (w, v) => { w.tasks = v as rt.OrdMap<bigint, model.Task>; } },
-  { name: "todo.board.next_no", prop: "nextNo", type: model.TaskNo, set: (w, v) => { w.nextNo = v as bigint; } },
+  {
+    name: "todo.board.tasks",
+    prop: "tasks",
+    type: rt.map(model.TaskNo, model.Task),
+    set: (w, v) => {
+      w.tasks = v as rt.OrdMap<bigint, model.Task>;
+    },
+  },
+  {
+    name: "todo.board.next_no",
+    prop: "nextNo",
+    type: model.TaskNo,
+    set: (w, v) => {
+      w.nextNo = v as bigint;
+    },
+  },
 ];

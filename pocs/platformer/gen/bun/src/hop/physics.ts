@@ -10,7 +10,7 @@ export interface Axis {
   readonly vel: bigint;
 }
 
-export const Axis = rt.record<Axis>("hop.physics.Axis", () => [
+export const Axis: rt.RecordType<Axis> = rt.record<Axis>("hop.physics.Axis", () => [
   rt.field("pos", "pos", rt.int),
   rt.field("vel", "vel", rt.int),
 ]);
@@ -23,7 +23,7 @@ export interface Fall {
   readonly riding: rt.Option<bigint>;
 }
 
-export const Fall = rt.record<Fall>("hop.physics.Fall", () => [
+export const Fall: rt.RecordType<Fall> = rt.record<Fall>("hop.physics.Fall", () => [
   rt.field("y", "y", rt.int),
   rt.field("vel", "vel", rt.int),
   rt.field("grounded", "grounded", rt.bool),
@@ -36,7 +36,7 @@ export interface Placed {
   readonly box: geom.Box;
 }
 
-export const Placed = rt.record<Placed>("hop.physics.Placed", () => [
+export const Placed: rt.RecordType<Placed> = rt.record<Placed>("hop.physics.Placed", () => [
   rt.field("no", "no", rt.int),
   rt.field("box", "box", geom.Box),
 ]);
@@ -123,7 +123,7 @@ export function walkTarget(pad: model.Pad): geom.Vec3 {
   const dx = axis(pad.left, pad.right);
   const dz = axis(pad.forward, pad.back);
   const speed = dx !== 0n && dz !== 0n ? diagonalSpeed : runSpeed;
-  return rt.check(geom.Vec3, geom.Vec3.make([dx * speed, 0n, dz * speed]));
+  return geom.Vec3.make([dx * speed, 0n, dz * speed]);
 }
 
 /** fn facing (hop/physics.slg:59): the hero faces where the pad points, and keeps facing there when it lets go */
@@ -151,9 +151,21 @@ export function slideX(at: geom.Vec3, v: bigint, solids: readonly model.Solid[])
     return Axis.make([at.x + v, v]);
   }
   if (v > 0n) {
-    return Axis.make([rt.min(hits.map((it: model.Solid) => it.box.lo.x), rt.int) - bodyHalf().x, 0n]);
+    return Axis.make([
+      rt.min(
+        hits.map((it: model.Solid) => it.box.lo.x),
+        rt.int,
+      ) - bodyHalf().x,
+      0n,
+    ]);
   }
-  return Axis.make([rt.max(hits.map((it2: model.Solid) => it2.box.hi.x), rt.int) + bodyHalf().x, 0n]);
+  return Axis.make([
+    rt.max(
+      hits.map((it: model.Solid) => it.box.hi.x),
+      rt.int,
+    ) + bodyHalf().x,
+    0n,
+  ]);
 }
 
 /** fn slide_z (hop/physics.slg:78) */
@@ -168,9 +180,21 @@ export function slideZ(at: geom.Vec3, v: bigint, solids: readonly model.Solid[])
     return Axis.make([at.z + v, v]);
   }
   if (v > 0n) {
-    return Axis.make([rt.min(hits.map((it: model.Solid) => it.box.lo.z), rt.int) - bodyHalf().z, 0n]);
+    return Axis.make([
+      rt.min(
+        hits.map((it: model.Solid) => it.box.lo.z),
+        rt.int,
+      ) - bodyHalf().z,
+      0n,
+    ]);
   }
-  return Axis.make([rt.max(hits.map((it2: model.Solid) => it2.box.hi.z), rt.int) + bodyHalf().z, 0n]);
+  return Axis.make([
+    rt.max(
+      hits.map((it: model.Solid) => it.box.hi.z),
+      rt.int,
+    ) + bodyHalf().z,
+    0n,
+  ]);
 }
 
 /** fn fall (hop/physics.slg:86): solids stop the body both ways; a mover's top only catches feet that were above it */
@@ -180,17 +204,48 @@ export function fall(at: geom.Vec3, v: bigint, solids: readonly model.Solid[], t
   rt.check(rt.list(Placed), tops, "argument `tops`");
   const hits = solids.filter((s: model.Solid) => geom.overlaps(body(geom.Vec3.with(at, { y: at.y + v })), s.box));
   if (BigInt(hits.length) > 0n && v > 0n) {
-    return Fall.make([rt.min(hits.map((it: model.Solid) => it.box.lo.y), rt.int) - bodyHalf().y, 0n, false, rt.none]);
+    return Fall.make([
+      rt.min(
+        hits.map((it: model.Solid) => it.box.lo.y),
+        rt.int,
+      ) - bodyHalf().y,
+      0n,
+      false,
+      rt.none,
+    ]);
   }
   if (BigInt(hits.length) > 0n) {
-    return Fall.make([rt.max(hits.map((it2: model.Solid) => it2.box.hi.y), rt.int), 0n, true, rt.none]);
+    return Fall.make([
+      rt.max(
+        hits.map((it: model.Solid) => it.box.hi.y),
+        rt.int,
+      ),
+      0n,
+      true,
+      rt.none,
+    ]);
   }
-  const catching = tops.filter((p: Placed) => v < 0n && geom.over(body(at), p.box) && at.y >= p.box.hi.y && at.y + v < p.box.hi.y);
+  const catching = tops.filter(
+    (p: Placed) => v < 0n && geom.over(body(at), p.box) && at.y >= p.box.hi.y && at.y + v < p.box.hi.y,
+  );
   if (BigInt(catching.length) === 0n) {
     return Fall.make([at.y + v, v, false, rt.none]);
   }
-  const top = rt.max(catching.map((it3: Placed) => it3.box.hi.y), rt.int);
-  return Fall.make([top, 0n, true, rt.some(rt.min(catching.filter((it4: Placed) => it4.box.hi.y === top).map((it5: Placed) => it5.no), rt.int))]);
+  const top = rt.max(
+    catching.map((it: Placed) => it.box.hi.y),
+    rt.int,
+  );
+  return Fall.make([
+    top,
+    0n,
+    true,
+    rt.some(
+      rt.min(
+        catching.filter((it: Placed) => it.box.hi.y === top).map((it: Placed) => it.no),
+        rt.int,
+      ),
+    ),
+  ]);
 }
 
 /** fn patrol (hop/physics.slg:97): a crawler walks to the end of its beat and turns */

@@ -18,7 +18,7 @@ export interface View {
   readonly mode: model.Mode;
 }
 
-export const View = rt.record<View>("hop.world.View", () => [
+export const View: rt.RecordType<View> = rt.record<View>("hop.world.View", () => [
   rt.field("stage", "stage", model.Level),
   rt.field("ticks", "ticks", rt.int),
   rt.field("player", "player", model.Player),
@@ -49,7 +49,7 @@ export function summary(w: World): string {
 
 /** fn view (hop/world.slg:148) */
 export function view(w: World): View {
-  return rt.check(View, View.make([w.stage, w.ticks, w.player, w.taken, w.crawlers.values(), w.lives, w.mode]));
+  return View.make([w.stage, w.ticks, w.player, w.taken, w.crawlers.values(), w.lives, w.mode]);
 }
 
 /** rule start (hop/world.slg:26): every level starts the same way: three lives, nothing taken, every crawler home */
@@ -59,13 +59,12 @@ export function start(w: World, level: bigint): null {
     const l = levels.level(level);
     w.stage = rt.check(model.Level, l);
     w.ticks = 0n;
-    w.player = rt.check(model.Player, model.Player.make([l.start]));
+    w.player = model.Player.make([l.start]);
     w.taken = rt.OrdSet.empty(rt.int);
     w.crawlers = rt.check(rt.map(rt.int, model.Crawler), rt.OrdMap.empty<bigint, model.Crawler>(rt.int));
     for (const c of l.crawlers) {
-      const value = c;
       const key = c.no;
-      w.crawlers = w.crawlers.set(key, rt.check(model.Crawler, value));
+      w.crawlers = w.crawlers.set(key, rt.check(model.Crawler, c));
     }
     w.lives = rt.check(rt.inRange(0n, 3n, true), 3n);
     w.mode = model.Mode.make("Playing");
@@ -77,10 +76,10 @@ export function start(w: World, level: bigint): null {
 /** rule lose (hop/world.slg:41): a hit or a fall costs a life and sends the hero back to the start; the last one ends the game */
 export function lose(w: World, why: string): null {
   return rt.atomic(w, () => {
-    if (!rt.equal(w.mode, model.Mode.make("Playing"))) rt.fail("Over");
+    if (!(w.mode.kind === "Playing")) rt.fail("Over");
     w.fx.out.line(`${w.ticks} ${why}`);
     w.lives = rt.check(rt.inRange(0n, 3n, true), w.lives - 1n);
-    w.player = rt.check(model.Player, model.Player.make([w.stage.start]));
+    w.player = model.Player.make([w.stage.start]);
     if (w.lives === 0n) {
       w.mode = model.Mode.make("Lost");
       w.fx.out.line(`${w.ticks} lost`);
@@ -92,16 +91,16 @@ export function lose(w: World, why: string): null {
 /** rule step (hop/world.slg:53): one tick of play: carry, steer, jump, fall, then everything the hero touches */
 export function step(w: World, pad: model.Pad): null {
   return rt.atomic(w, () => {
-    if (!rt.equal(w.mode, model.Mode.make("Playing"))) rt.fail("Over");
+    if (!(w.mode.kind === "Playing")) rt.fail("Over");
     const t = w.ticks + 1n;
     w.ticks = t;
     const was = w.player;
     const tops = w.stage.movers.map((m: model.Mover) => physics.Placed.make([m.no, physics.moverBox(m, t)]));
     let at: geom.Vec3 = was.at;
     if (was.riding.kind === "Some") {
-      const ridden = w.stage.movers.filter((m2: model.Mover) => rt.equal(was.riding, rt.some(m2.no)));
-      for (const m3 of ridden) {
-        at = geom.plus(at, physics.moverShift(m3, t));
+      const ridden = w.stage.movers.filter((m: model.Mover) => rt.equal(was.riding, rt.some(m.no)));
+      for (const m of ridden) {
+        at = geom.plus(at, physics.moverShift(m, t));
       }
     }
     const target = physics.walkTarget(pad);
@@ -125,9 +124,17 @@ export function step(w: World, pad: model.Pad): null {
     if (f.grounded && !was.grounded) {
       w.fx.out.line(`${t} land`);
     }
-    w.player = rt.check(model.Player, model.Player.make([at, geom.Vec3.make([sx.vel, f.vel, sz.vel]), f.grounded, f.grounded ? physics.coyoteTicks : rt.maxInt(coyote - 1n, 0n), pad.jump, f.riding, physics.facing(pad, was.yaw)]));
+    w.player = model.Player.make([
+      at,
+      geom.Vec3.make([sx.vel, f.vel, sz.vel]),
+      f.grounded,
+      f.grounded ? physics.coyoteTicks : rt.maxInt(coyote - 1n, 0n),
+      pad.jump,
+      f.riding,
+      physics.facing(pad, was.yaw),
+    ]);
     for (const c of w.crawlers.values()) {
-      const value = physics.patrol(c);
+      const value: model.Crawler = physics.patrol(c);
       const key = c.no;
       w.crawlers = w.crawlers.set(key, rt.check(model.Crawler, value));
     }
@@ -138,12 +145,19 @@ export function step(w: World, pad: model.Pad): null {
       }
     }
     let alive: boolean = true;
-    for (const c2 of w.crawlers.values()) {
-      if (alive && geom.touches(physics.body(at), physics.crawlerBox(c2))) {
-        if (physics.stomps(at.y, vy, c2)) {
-          w.crawlers = rt.check(rt.map(rt.int, model.Crawler), w.crawlers.remove(c2.no));
-          w.player = rt.check(model.Player, model.Player.with(w.player, { vel: geom.Vec3.with(w.player.vel, { y: physics.stompBounce }), grounded: false, riding: rt.none }));
-          w.fx.out.line(`${t} stomp ${c2.no}`);
+    for (const c of w.crawlers.values()) {
+      if (alive && geom.touches(physics.body(at), physics.crawlerBox(c))) {
+        if (physics.stomps(at.y, vy, c)) {
+          w.crawlers = rt.check(rt.map(rt.int, model.Crawler), w.crawlers.remove(c.no));
+          w.player = rt.check(
+            model.Player,
+            model.Player.with(w.player, {
+              vel: geom.Vec3.with(w.player.vel, { y: physics.stompBounce }),
+              grounded: false,
+              riding: rt.none,
+            }),
+          );
+          w.fx.out.line(`${t} stomp ${c.no}`);
         } else {
           lose(w, "hit");
           alive = false;

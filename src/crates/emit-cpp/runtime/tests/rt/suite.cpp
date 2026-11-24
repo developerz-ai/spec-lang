@@ -1,6 +1,7 @@
 #include "rt/suite.hpp"
 
 #include <iostream>
+#include <string_view>
 
 namespace rt::test {
 
@@ -41,7 +42,16 @@ Diag current_diag() {
   }
 }
 
+namespace {
+bool any_failed = false;
+}  // namespace
+
+int exit_code() {
+  return any_failed ? 1 : 0;
+}
+
 void report(const std::string& check, const char* status, const std::optional<Diag>& diag) {
+  if (std::string_view{status} == "fail") any_failed = true;
   std::string line = "{\"check\": " + json(check) + ", \"status\": \"" + status + "\"";
   if (diag) line += ", \"code\": " + json(diag->code) + ", \"diagnostic\": " + json(diag->message);
   std::cout << line << "}\n";

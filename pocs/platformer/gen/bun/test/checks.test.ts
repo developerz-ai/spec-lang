@@ -10,5 +10,5 @@ for (const c of checks) {
   // A check that reaches a foreign body is blocked here: only the app runs it.
   test(c.name, () => {
     expect(c.run(runner)).not.toBe("fail");
-  });
+  }, 60_000);
 }

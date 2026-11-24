@@ -54,7 +54,10 @@ export const checkCollisionBoxesForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "CheckCollisionBoxes",
-  params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+  params: [
+    { name: "a", type: geom.Box, hasDefault: false },
+    { name: "b", type: geom.Box, hasDefault: false },
+  ],
   result: rt.bool,
 };
 
@@ -66,7 +69,13 @@ export function checkCollisionBoxes(a: geom.Box, b: geom.Box): boolean {
 
 /** fn read_pad (hop/screen.slg:58): arrows or WASD to run, space to jump */
 export function readPad(): model.Pad {
-  return model.Pad.make([keyDown(keyLeft) || keyDown(keyA), keyDown(keyRight) || keyDown(keyD), keyDown(keyUp) || keyDown(keyW), keyDown(keyDownArrow) || keyDown(keyS), keyDown(keySpace)]);
+  return model.Pad.make([
+    keyDown(keyLeft) || keyDown(keyA),
+    keyDown(keyRight) || keyDown(keyD),
+    keyDown(keyUp) || keyDown(keyW),
+    keyDown(keyDownArrow) || keyDown(keyS),
+    keyDown(keySpace),
+  ]);
 }
 
 /** rule clear_background (hop/screen.slg:13) */
@@ -92,7 +101,10 @@ export const beginMode3dForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "BeginMode3D",
-  params: [{ name: "eye", type: geom.Vec3, hasDefault: false }, { name: "target", type: geom.Vec3, hasDefault: false }],
+  params: [
+    { name: "eye", type: geom.Vec3, hasDefault: false },
+    { name: "target", type: geom.Vec3, hasDefault: false },
+  ],
   result: rt.unit,
 };
 
@@ -158,7 +170,10 @@ export const drawCubeForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "DrawCube",
-  params: [{ name: "box", type: geom.Box, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "box", type: geom.Box, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
 };
 
@@ -176,7 +191,10 @@ export const drawCubeWiresForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "DrawCubeWires",
-  params: [{ name: "box", type: geom.Box, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "box", type: geom.Box, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
 };
 
@@ -194,7 +212,11 @@ export const drawModelForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "DrawModelEx",
-  params: [{ name: "asset", type: render.Asset, hasDefault: false }, { name: "at", type: geom.Vec3, hasDefault: false }, { name: "yaw", type: rt.inRange(0n, 359n, true), hasDefault: false }],
+  params: [
+    { name: "asset", type: render.Asset, hasDefault: false },
+    { name: "at", type: geom.Vec3, hasDefault: false },
+    { name: "yaw", type: rt.inRange(0n, 359n, true), hasDefault: false },
+  ],
   result: rt.unit,
 };
 
@@ -212,7 +234,13 @@ export const drawTextForeign: rt.ExternInfo = {
   lang: "c",
   library: "raylib",
   symbol: "DrawText",
-  params: [{ name: "text", type: rt.text, hasDefault: false }, { name: "x", type: rt.int, hasDefault: false }, { name: "y", type: rt.int, hasDefault: false }, { name: "size", type: rt.int, hasDefault: false }, { name: "color", type: model.Rgb, hasDefault: false }],
+  params: [
+    { name: "text", type: rt.text, hasDefault: false },
+    { name: "x", type: rt.int, hasDefault: false },
+    { name: "y", type: rt.int, hasDefault: false },
+    { name: "size", type: rt.int, hasDefault: false },
+    { name: "color", type: model.Rgb, hasDefault: false },
+  ],
   result: rt.unit,
 };
 
@@ -231,26 +259,20 @@ export function present(w: World): null {
     beginMode3d(w, f.eye, f.target);
     beginLit(w, f.time);
     for (const d of f.world) {
-      match: {
-        if (d.kind === "Cube") {
-          const b = d.box;
-          const color = d.color;
-          drawCube(w, b, color);
-          break match;
-        }
-        if (d.kind === "Wires") {
-          const b2 = d.box;
-          const color2 = d.color;
-          drawCubeWires(w, b2, color2);
-          break match;
-        }
-        if (d.kind === "Mesh") {
-          const asset = d.asset;
-          const at = d.at;
-          const yaw = d.yaw;
-          drawModel(w, asset, at, yaw);
-          break match;
-        }
+      if (d.kind === "Cube") {
+        const b = d.box;
+        const color = d.color;
+        drawCube(w, b, color);
+      } else if (d.kind === "Wires") {
+        const b = d.box;
+        const color = d.color;
+        drawCubeWires(w, b, color);
+      } else if (d.kind === "Mesh") {
+        const asset = d.asset;
+        const at = d.at;
+        const yaw = d.yaw;
+        drawModel(w, asset, at, yaw);
+      } else {
         rt.noMatch();
       }
     }

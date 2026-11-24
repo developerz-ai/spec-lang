@@ -1,6 +1,6 @@
 # 009 One compiler, any language
 
-**Status:** accepted, 2026-11-24. The four emitters that exist were written for the todo POC and know its shape; none of this is built yet.
+**Status:** accepted, 2026-11-24. Built for Rust, TypeScript, Ruby and C++: each printer agrees with the engine on the 40 programs of the judge, and builds the todo app and the platformer. Not built: the optimizer, which the old emitters had in part.
 
 **Decision.** `spec-lang build` compiles any program the engine runs, into any language that has a printer, with three parts and one judge:
 

@@ -114,11 +114,7 @@ pub fn text(rng: &mut Rng) -> String {
 
 /// A value of a range type: one of its ends one time in five, else uniform.
 pub fn in_range(rng: &mut Rng, lo: Int, hi: Int) -> Int {
-    if rng.chance(1, 5) {
-        if rng.chance(1, 2) { lo } else { hi }
-    } else {
-        rng.between(lo, hi)
-    }
+    if rng.chance(1, 5) { if rng.chance(1, 2) { lo } else { hi } } else { rng.between(lo, hi) }
 }
 
 /// Half the time, when the pool holds values, one of them: the draws the engine makes for a pooled type.

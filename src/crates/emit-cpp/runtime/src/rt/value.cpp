@@ -46,7 +46,9 @@ Int pow(Int base, Int exponent) {
   return result * base;
 }
 
-Int div(Int, Int) { stop("E-OPEN", "`/` on Int is an open choice: say how to round"); }
+Int div(Int, Int) {
+  stop("E-OPEN", "`/` on Int is an open choice: say how to round");
+}
 
 Int band(Int a, Int b) {
   both_natural(a, b, "int.band");
@@ -97,10 +99,18 @@ std::string to_string(Int n) {
   return digits;
 }
 
-Text show(Unit) { return "()"; }
-Text show(bool value) { return value ? "true" : "false"; }
-Text show(Int value) { return to_string(value); }
-Text show(const Range& value) { return to_string(value.lo) + (value.inclusive ? "..=" : "..<") + to_string(value.hi); }
+Text show(Unit) {
+  return "()";
+}
+Text show(bool value) {
+  return value ? "true" : "false";
+}
+Text show(Int value) {
+  return to_string(value);
+}
+Text show(const Range& value) {
+  return to_string(value.lo) + (value.inclusive ? "..=" : "..<") + to_string(value.hi);
+}
 
 Text show(const Text& value) {
   static const char* const hex = "0123456789ABCDEF";
@@ -143,15 +153,26 @@ Text show(const Event& e) {
   return out + ")";
 }
 
-void name_rules(std::vector<RuleName> names) { rule_names() = std::move(names); }
-
-Never missing() { throw Failure{"Missing"}; }
-Never hole(const char* name) { throw Blocked{"F-BLOCKED", Text{"reached ?"} + name}; }
-Never no_arm(const Text& shown) { throw Stop{"E-RUNTIME", "no arm matches " + shown}; }
-Never foreign(const char* decl, const char* written) {
-  throw Blocked{"B-FOREIGN", Text{"reached "} + decl + ", which is " + written + ": only a build with its library runs it"};
+void name_rules(std::vector<RuleName> names) {
+  rule_names() = std::move(names);
 }
-Never stop(const char* code, const Text& message) { throw Stop{code, message}; }
+
+Never missing() {
+  throw Failure{"Missing"};
+}
+Never hole(const char* name) {
+  throw Blocked{"F-BLOCKED", Text{"reached ?"} + name};
+}
+Never no_arm(const Text& shown) {
+  throw Stop{"E-RUNTIME", "no arm matches " + shown};
+}
+Never foreign(const char* decl, const char* written) {
+  throw Blocked{"B-FOREIGN",
+                Text{"reached "} + decl + ", which is " + written + ": only a build with its library runs it"};
+}
+Never stop(const char* code, const Text& message) {
+  throw Stop{code, message};
+}
 
 void claim(bool holds, const char* what) {
   if (!holds) throw Stop{"E-CLAIM", Text{what} + " breaks its declared type"};

@@ -2,7 +2,7 @@
 
 A programming language for AI authors. **The AI writes logic and tests, the interpreter runs them at once, the compiler generates the software.** Existing languages and frameworks are the compiler's intermediate representation.
 
-**Status `As of 2026-11-24`:** design, plus a first toolchain in `src/`: `spec-lang test` parses, checks, lints and tests the todo POC; emitters for Rust, TypeScript, Ruby and C++ are in progress. Describe nothing beyond what `src/bin/check` and `pocs/*/bin/check` show running.
+**Status `As of 2026-11-24`:** design, plus a first toolchain in `src/`: `spec-lang test` checks and tests a program; `spec-lang build` prints it as Rust, TypeScript, Ruby and C++, judged on the 40 programs of `src/bin/corpus` and both POCs, not optimised. Forms the engine does not run (`task`, `flow`, `event`, units, `@access`) are refused. Describe nothing beyond what `src/bin/check` and `pocs/*/bin/check` show running.
 
 ## Response rules
 Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End summary: 2 sentences at most.
@@ -26,7 +26,7 @@ Execute, no preamble. Read before speculating. Disagree when wrong. Terse. End s
 | `docs/idea/` | the design; index in `docs/idea/README.md` |
 | `docs/decisions/` | one record per one-way door |
 | `docs/pocs/` | proofs of concept, one folder each, written for an agent with no other context |
-| `src/` | the toolchain, Rust: parser, engine, then emitters slg → Rust, TypeScript, Ruby, C++; own `CLAUDE.md` |
+| `src/` | the toolchain, Rust: parser, engine, LIR, and a printer each for Rust, TypeScript, Ruby, C++; own `CLAUDE.md` |
 | `pocs/` | runnable proofs: spec-lang source, hand-projected backends, their gate; each has its own `CLAUDE.md` |
 | `libs/` | libraries a program `use`s: `vocab.slg`, `contract.slg`, `pretend.slg`, `real/<lang>/` runtimes ([009](docs/decisions/009-one-compiler-any-language.md)) |
 

@@ -48,7 +48,11 @@ fn sig(cx: &Cx<'_>, params: &[Param], module: Option<ModuleId>) -> Vec<String> {
         .iter()
         .map(|p| {
             let t = cx.ty(&p.ty, module);
-            if p.default.is_some() { format!("{}: Option<{t}>", local(&p.name)) } else { format!("{}: {t}", local(&p.name)) }
+            if p.default.is_some() {
+                format!("{}: Option<{t}>", local(&p.name))
+            } else {
+                format!("{}: {t}", local(&p.name))
+            }
         })
         .collect()
 }
@@ -90,7 +94,14 @@ fn prologue(fx: &mut Fx<'_, '_>, params: &[Param], decl: &str) -> Vec<String> {
 }
 
 /// The body, then the result checked.
-fn body(fx: &mut Fx<'_, '_>, info: &Info, params: &[Param], body: &Body, result: &LTy, check: Option<&DTy>) -> Vec<String> {
+fn body(
+    fx: &mut Fx<'_, '_>,
+    info: &Info,
+    params: &[Param],
+    body: &Body,
+    result: &LTy,
+    check: Option<&DTy>,
+) -> Vec<String> {
     let mut out = Vec::new();
     let e = match body {
         Body::Extern(x) => {
@@ -185,8 +196,14 @@ fn type_items(cx: &mut Cx<'_>, module: ModuleId) -> Vec<String> {
                         format!("pub {}: {t},", ident(&f.name))
                     })
                     .collect();
-                out.push(format!("{}\n{}\npub struct {name} {{ {} }}", doc(cx, &decl.info, "Record"), derive(), fs.join(" ")));
-                let shown: Vec<String> = fields.iter().map(|f| format!("({:?}, self.{}.show())", f.name, ident(&f.name))).collect();
+                out.push(format!(
+                    "{}\n{}\npub struct {name} {{ {} }}",
+                    doc(cx, &decl.info, "Record"),
+                    derive(),
+                    fs.join(" ")
+                ));
+                let shown: Vec<String> =
+                    fields.iter().map(|f| format!("({:?}, self.{}.show())", f.name, ident(&f.name))).collect();
                 out.push(format!(
                     "impl Show for {name} {{ fn show(&self) -> String {{ rt::show::record({:?}, &[{}]) }} }}",
                     decl.info.name,
@@ -220,7 +237,8 @@ fn type_items(cx: &mut Cx<'_>, module: ModuleId) -> Vec<String> {
                         .collect();
                     vs.push(format!("{vn} {{ {} }},", fs.join(" ")));
                     let names: Vec<String> = v.fields.iter().map(|f| ident(&f.name)).collect();
-                    let shown: Vec<String> = v.fields.iter().map(|f| format!("({:?}, {}.show())", f.name, ident(&f.name))).collect();
+                    let shown: Vec<String> =
+                        v.fields.iter().map(|f| format!("({:?}, {}.show())", f.name, ident(&f.name))).collect();
                     shows.push(format!(
                         "{name}::{vn} {{ {} }} => rt::show::record({:?}, &[{}]),",
                         names.join(", "),
@@ -232,8 +250,16 @@ fn type_items(cx: &mut Cx<'_>, module: ModuleId) -> Vec<String> {
                         ctors.push(constructor(cx, module, id, vi as u32, &ctor_name(&vn), &path, &v.fields));
                     }
                 }
-                out.push(format!("{}\n{}\npub enum {name} {{ {} }}", doc(cx, &decl.info, "Sum"), derive(), vs.join(" ")));
-                out.push(format!("impl Show for {name} {{ fn show(&self) -> String {{ match self {{ {} }} }} }}", shows.join(" ")));
+                out.push(format!(
+                    "{}\n{}\npub enum {name} {{ {} }}",
+                    doc(cx, &decl.info, "Sum"),
+                    derive(),
+                    vs.join(" ")
+                ));
+                out.push(format!(
+                    "impl Show for {name} {{ fn show(&self) -> String {{ match self {{ {} }} }} }}",
+                    shows.join(" ")
+                ));
                 if !ctors.is_empty() {
                     out.push(format!("impl {name} {{ {} }}", ctors.join("\n\n")));
                 }
@@ -244,13 +270,25 @@ fn type_items(cx: &mut Cx<'_>, module: ModuleId) -> Vec<String> {
 }
 
 /// A checked constructor: given fields in order, a left-out one (`None`) takes its default; each checked.
-fn constructor(cx: &mut Cx<'_>, module: ModuleId, id: spec_lang_ir::TypeId, variant: u32, fname: &str, path: &str, fields: &[Field]) -> String {
+fn constructor(
+    cx: &mut Cx<'_>,
+    module: ModuleId,
+    id: spec_lang_ir::TypeId,
+    variant: u32,
+    fname: &str,
+    path: &str,
+    fields: &[Field],
+) -> String {
     let m = new_m(cx, fields);
     let mut params: Vec<String> = fields
         .iter()
         .map(|f| {
             let t = cx.ty(&f.ty, Some(module));
-            if f.default.is_some() { format!("{}: Option<{t}>", ident(&f.name)) } else { format!("{}: {t}", ident(&f.name)) }
+            if f.default.is_some() {
+                format!("{}: Option<{t}>", ident(&f.name))
+            } else {
+                format!("{}: {t}", ident(&f.name))
+            }
         })
         .collect();
     if m {
@@ -281,6 +319,11 @@ fn constructor(cx: &mut Cx<'_>, module: ModuleId, id: spec_lang_ir::TypeId, vari
         lines.join(" "),
         inits.join(", ")
     )
+}
+
+/// A rule's parameters: `m` always (the step is the machine's), the rest as its body reads them.
+fn rule_params(params: &[String], body: &str) -> String {
+    format!("{}, {}", params[0], crate::code::params(&params[1..], body)).trim_end_matches(", ").to_string()
 }
 
 pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
@@ -327,7 +370,12 @@ pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
         let mut fx = fx_for(cx, module, m, &[], &[&c.value]);
         let v = fx.value(&c.value);
         let mp = if m { "m: &mut Machine" } else { "" };
-        out.push(format!("{d}\npub fn {}({mp}) -> R<{t}> {{ {} {} }}", ident(&c.info.name), v.pre.join(" "), crate::code::ok(&v.text)));
+        out.push(format!(
+            "{d}\npub fn {}({mp}) -> R<{t}> {{ {} {} }}",
+            ident(&c.info.name),
+            v.pre.join(" "),
+            crate::code::ok(&v.text)
+        ));
     }
 
     for (i, f) in lir.fns.iter().enumerate() {
@@ -348,7 +396,12 @@ pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
         let mut fx = fx_for(cx, module, m, &f.params, &exprs);
         let mut lines = prologue(&mut fx, &f.params, &f.info.qualified);
         lines.extend(body(&mut fx, &f.info, &f.params, &f.body, &f.result, f.result_check.as_ref()));
-        out.push(format!("{d}\npub fn {}({}) -> R<{ret}> {{ {} }}", ident(&f.info.name), params.join(", "), lines.join(" ")));
+        out.push(format!(
+            "{d}\npub fn {}({}) -> R<{ret}> {{ {} }}",
+            ident(&f.info.name),
+            crate::code::params(&params, &lines.join(" ")),
+            lines.join(" ")
+        ));
     }
 
     for r in &lir.rules {
@@ -376,9 +429,10 @@ pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
         }
         lines.extend(body(&mut fx, &r.info, &r.params, &r.body, &r.result, r.result_check.as_ref()));
         out.push(format!(
-            "{d}\n///\n/// One atomic step: on a refusal or any halt the world goes back to what it was before the call.\npub fn {}({}) -> R<{ret}> {{ m.atomic(|m| {{ {} }}) }}",
+            "{d}\n///\n/// One atomic step: on a refusal or any halt the world goes back to what it was before the call.\npub fn {}({}) -> R<{ret}> {{ m.atomic(|{}| {{ {} }}) }}",
             ident(&r.info.name),
-            params.join(", "),
+            rule_params(&params, &lines.join(" ")),
+            crate::code::declared("m", &lines.join(" ")),
             lines.join(" ")
         ));
     }
@@ -394,7 +448,12 @@ pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
         let mut fx = fx_for(cx, module, true, &t.params, &[&wrap]);
         fx.discard = true;
         let lines = fx.fn_body(&t.body, &LTy::Unit);
-        out.push(format!("{d}\npub fn {}({}) -> R<()> {{ {} }}", ident(&t.info.name), params.join(", "), lines.join(" ")));
+        out.push(format!(
+            "{d}\npub fn {}({}) -> R<()> {{ {} }}",
+            ident(&t.info.name),
+            crate::code::params(&params, &lines.join(" ")),
+            lines.join(" ")
+        ));
     }
 
     for l in &lir.laws {
@@ -406,12 +465,11 @@ pub fn module_file(cx: &mut Cx<'_>, module: ModuleId) -> String {
         params.insert(0, "m: &mut Machine".into());
         let mut fx = fx_for(cx, module, true, &l.params, &[&l.body]);
         let v = fx.value(&l.body);
+        let body = format!("{} {}", v.pre.join(" "), crate::code::ok(&v.text));
         out.push(format!(
-            "{d}\n#[allow(unused_variables)]\npub fn {}({}) -> R<bool> {{ {} {} }}",
+            "{d}\npub fn {}({}) -> R<bool> {{ {body} }}",
             ident(&l.info.name),
-            params.join(", "),
-            v.pre.join(" "),
-            crate::code::ok(&v.text)
+            crate::code::params(&params, &body)
         ));
     }
     out.join("\n\n")

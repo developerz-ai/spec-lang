@@ -42,12 +42,19 @@ pub fn script(path: &str, text: &str) -> OutFile {
 
 /// A runtime file with the line that says where it comes from.
 pub fn runtime_file(path: &str, text: &str) -> OutFile {
-    file(path, &format!("// The C++ printer's runtime, the same in every project `spec-lang build` prints. Do not edit.\n{text}"))
+    file(
+        path,
+        &format!(
+            "// The C++ printer's runtime, the same in every project `spec-lang build` prints. Do not edit.\n{text}"
+        ),
+    )
 }
 
 /// One file through `clang-format`.
 fn format(unit: &Unit) -> Result<String, Diag> {
-    let fail = |why: String| Diag::load(format!("clang-format on {}: {why} (the C++ printer formats what it prints)", unit.path));
+    let fail = |why: String| {
+        Diag::load(format!("clang-format on {}: {why} (the C++ printer formats what it prints)", unit.path))
+    };
     let mut child = Command::new("clang-format")
         .arg(format!("--style={{{}}}", STYLE.trim_end().replace('\n', ", ")))
         .arg(format!("--assume-filename={}", unit.path))
@@ -58,7 +65,8 @@ fn format(unit: &Unit) -> Result<String, Diag> {
         .map_err(|e| fail(e.to_string()))?;
     let Some(mut stdin) = child.stdin.take() else { return Err(fail("no standard input".into())) };
     // A mark no body settled stands before a name the printer could not follow: it stays quiet.
-    let text = unit.text.replace('\u{2}', "\u{1}").split('\u{1}').step_by(2).collect::<Vec<_>>().join("[[maybe_unused]] ");
+    let text =
+        unit.text.replace('\u{2}', "\u{1}").split('\u{1}').step_by(2).collect::<Vec<_>>().join("[[maybe_unused]] ");
     // Written from another thread: a large file would fill the pipe before the formatter reads it.
     let writer = std::thread::spawn(move || stdin.write_all(text.as_bytes()));
     let out = child.wait_with_output().map_err(|e| fail(e.to_string()))?;

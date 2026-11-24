@@ -59,11 +59,19 @@ impl<'g, 'a> Fx<'g, 'a> {
                 let mut refs: Vec<&Expr> = vec![callee];
                 refs.extend(args.iter());
                 self.ordered(&refs, &e.ty, |a| {
-                    Code::atom(format!("{}({})", a[0].at(16), a[1..].iter().map(|x| x.at(2)).collect::<Vec<_>>().join(", ")))
+                    Code::atom(format!(
+                        "{}({})",
+                        a[0].at(16),
+                        a[1..].iter().map(|x| x.at(2)).collect::<Vec<_>>().join(", ")
+                    ))
                 })
             }
-            ExprKind::Field { recv, ty, index, .. } => Code::atom(self.g.field(&self.expr(recv).at(16), *ty, None, *index)),
-            ExprKind::VariantField { recv, name, .. } => Code::atom(format!("{}.{}()", self.expr(recv).at(16), ident(name))),
+            ExprKind::Field { recv, ty, index, .. } => {
+                Code::atom(self.g.field(&self.expr(recv).at(16), *ty, None, *index))
+            }
+            ExprKind::VariantField { recv, name, .. } => {
+                Code::atom(format!("{}.{}()", self.expr(recv).at(16), ident(name)))
+            }
             ExprKind::WorldState { recv, state } => {
                 Code::atom(format!("{}.{}", self.expr(recv).at(16), self.g.state_field(*state)))
             }
@@ -348,7 +356,8 @@ impl<'g, 'a> Fx<'g, 'a> {
             return self.ordered(&[first, right], &whole.ty, |a| link(*op, a[0].clone(), a[1].clone()));
         }
         // A chain: each right side runs once, and only while every earlier link held.
-        let repeatable = |e: &Expr| matches!(e.kind, ExprKind::Local(_) | ExprKind::Int(_) | ExprKind::Text(_) | ExprKind::Const(_));
+        let repeatable =
+            |e: &Expr| matches!(e.kind, ExprKind::Local(_) | ExprKind::Int(_) | ExprKind::Text(_) | ExprKind::Const(_));
         let mut body = String::new();
         let mut left = self.expr(first);
         if !repeatable(first) {
@@ -382,7 +391,15 @@ impl<'g, 'a> Fx<'g, 'a> {
             return v;
         }
         let simple = |e: &Expr| {
-            matches!(e.kind, ExprKind::Local(_) | ExprKind::Int(_) | ExprKind::Text(_) | ExprKind::Bool(_) | ExprKind::Const(_) | ExprKind::Variant { .. })
+            matches!(
+                e.kind,
+                ExprKind::Local(_)
+                    | ExprKind::Int(_)
+                    | ExprKind::Text(_)
+                    | ExprKind::Bool(_)
+                    | ExprKind::Const(_)
+                    | ExprKind::Variant { .. }
+            )
         };
         if unwrap && !fx.can_fail() && simple(fallback) {
             return Code::atom(format!("{}.value_or({})", v.at(16), self.expr(fallback).at(2)));

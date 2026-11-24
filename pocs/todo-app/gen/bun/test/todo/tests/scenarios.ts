@@ -8,18 +8,33 @@ import * as check from "../../support/checks.ts";
 
 /** test numbers_start_at_one (todo/tests/scenarios.slg:8) */
 export function numbersStartAtOne(w: World): null {
-  check.expect(() => board.add(w, "milk"), () => 1n);
-  check.expect(() => board.add(w, "bread", undefined, rt.OrdSet.of(rt.text, ["shop", "home"])), () => 2n);
+  check.expect(
+    () => board.add(w, "milk"),
+    () => 1n,
+  );
+  check.expect(
+    () => board.add(w, "bread", undefined, rt.OrdSet.of(rt.text, ["shop", "home"])),
+    () => 2n,
+  );
   check.assert(w.fx.out.text() === "added 1\nadded 2\n");
   return null;
 }
 
 /** test numbers_are_never_reused (todo/tests/scenarios.slg:14) */
 export function numbersAreNeverReused(w: World): null {
-  check.expect(() => board.add(w, "a"), () => 1n);
-  check.expect(() => board.add(w, "b"), () => 2n);
+  check.expect(
+    () => board.add(w, "a"),
+    () => 1n,
+  );
+  check.expect(
+    () => board.add(w, "b"),
+    () => 2n,
+  );
   board.remove(w, 2n);
-  check.expect(() => board.add(w, "c"), () => 3n);
+  check.expect(
+    () => board.add(w, "c"),
+    () => 3n,
+  );
   return null;
 }
 
@@ -58,13 +73,21 @@ export function doneAndReopenMoveOnce(w: World): null {
 /** test rename_keeps_the_rest (todo/tests/scenarios.slg:48) */
 export function renameKeepsTheRest(w: World): null {
   board.rename(w, 3n, "urgent, really");
-  check.assert(rt.equal(w.tasks.at(3n), model.Task.make([3n, "urgent, really", undefined, model.Priority.make("High"), rt.OrdSet.of(rt.text, ["work"])])));
+  check.assert(
+    rt.equal(
+      w.tasks.at(3n),
+      model.Task.make([3n, "urgent, really", undefined, model.Priority.make("High"), rt.OrdSet.of(rt.text, ["work"])]),
+    ),
+  );
   return null;
 }
 
 /** test clear_removes_only_done (todo/tests/scenarios.slg:54) */
 export function clearRemovesOnlyDone(w: World): null {
-  check.expect(() => board.clear(w), () => 1n);
+  check.expect(
+    () => board.clear(w),
+    () => 1n,
+  );
   board.stats(w);
   check.assert(w.fx.out.text() === "cleared 1\n3 open, 0 done\n");
   check.assert(!w.tasks.has(4n));

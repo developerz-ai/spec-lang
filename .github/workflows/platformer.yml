@@ -36,6 +36,8 @@ jobs:
           bundler-cache: false
       - name: C++ and C toolchain (cmake, g++, gcc from the runner image)
         run: cmake --version && g++ --version && gcc --version
+      - name: clang-format, pinned (the C++ printer's output depends on its version)
+        run: uv tool install clang-format==22.1.8 && clang-format --version
       - name: raylib build deps, a virtual X server and software GL
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxinerama-dev libxcursor-dev libxrandr-dev libxi-dev libgl-dev libgl1-mesa-dri xvfb
       - name: setup

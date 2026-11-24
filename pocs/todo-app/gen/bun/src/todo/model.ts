@@ -4,26 +4,32 @@ import * as rt from "../runtime/index.ts";
 
 /** type Title (todo/model.slg:14) */
 export type Title = string;
-export const Title = rt.alias<string>("todo.model.Title", () => rt.where(rt.text, (self: string) => isTitle(self), "is_title(self)", 0));
+export const Title: rt.AliasType<string> = rt.alias<string>("todo.model.Title", () =>
+  rt.where(rt.text, (self: string) => isTitle(self), "is_title(self)", 0),
+);
 
 /** type Tag (todo/model.slg:15) */
 export type Tag = string;
-export const Tag = rt.alias<string>("todo.model.Tag", () => rt.where(rt.text, (self: string) => isTag(self), "is_tag(self)", 1));
+export const Tag: rt.AliasType<string> = rt.alias<string>("todo.model.Tag", () =>
+  rt.where(rt.text, (self: string) => isTag(self), "is_tag(self)", 1),
+);
 
 /** type TaskNo (todo/model.slg:16) */
 export type TaskNo = bigint;
-export const TaskNo = rt.alias<bigint>("todo.model.TaskNo", () => rt.where(rt.int, (self: bigint) => self >= 1n, "self >= 1", 2));
+export const TaskNo: rt.AliasType<bigint> = rt.alias<bigint>("todo.model.TaskNo", () =>
+  rt.where(rt.int, (self: bigint) => self >= 1n, "self >= 1", 2),
+);
 
 /** type Status (todo/model.slg:18) */
 export type Status = { readonly kind: "Open" } | { readonly kind: "Done" };
-export const Status = rt.oneOf<Status>("todo.model.Status", () => [
+export const Status: rt.SumType<Status> = rt.oneOf<Status>("todo.model.Status", () => [
   rt.variant("Open"),
   rt.variant("Done"),
 ]);
 
 /** type Priority (todo/model.slg:19) */
 export type Priority = { readonly kind: "Low" } | { readonly kind: "Normal" } | { readonly kind: "High" };
-export const Priority = rt.oneOf<Priority>("todo.model.Priority", () => [
+export const Priority: rt.SumType<Priority> = rt.oneOf<Priority>("todo.model.Priority", () => [
   rt.variant("Low"),
   rt.variant("Normal"),
   rt.variant("High"),
@@ -38,7 +44,7 @@ export interface Task {
   readonly tags: rt.OrdSet<string>;
 }
 
-export const Task = rt.record<Task>("todo.model.Task", () => [
+export const Task: rt.RecordType<Task> = rt.record<Task>("todo.model.Task", () => [
   rt.field("no", "no", TaskNo),
   rt.field("title", "title", Title),
   rt.field("status", "status", Status, () => Status.make("Open")),
@@ -48,17 +54,28 @@ export const Task = rt.record<Task>("todo.model.Task", () => [
 
 /** fn is_title (todo/model.slg:3): a title fits on one line of a terminal list */
 export function isTitle(t: string): boolean {
-  return rt.textSize(rt.trim(t)) >= 1n && rt.textSize(t) <= 200n && rt.bytes(t).every((it: bigint) => it >= 32n && it !== 127n) && !t.includes("") && !t.includes("\u2028") && !t.includes("\u2029");
+  return (
+    rt.textSize(rt.trim(t)) >= 1n &&
+    rt.textSize(t) <= 200n &&
+    rt.bytes(t).every((it: bigint) => it >= 32n && it !== 127n) &&
+    !t.includes("") &&
+    !t.includes("\u2028") &&
+    !t.includes("\u2029")
+  );
 }
 
 /** fn is_tag (todo/model.slg:9): a tag is typed in a shell without quotes, and never reads as a flag */
 export function isTag(t: string): boolean {
-  return (() => {
-    const left = 1n;
-    const right = rt.textSize(t);
-    if (!(left <= right)) return false;
-    const right2 = 32n;
-    if (!(right <= right2)) return false;
-    return true;
-  })() && rt.bytes(t).every((it: bigint) => ((97n <= it && it <= 122n) || (48n <= it && it <= 57n)) || it === 45n) && !t.startsWith("-");
+  return (
+    (() => {
+      const left = 1n;
+      const right = rt.textSize(t);
+      if (!(left <= right)) return false;
+      const right2 = 32n;
+      if (!(right <= right2)) return false;
+      return true;
+    })() &&
+    rt.bytes(t).every((it: bigint) => (97n <= it && it <= 122n) || (48n <= it && it <= 57n) || it === 45n) &&
+    !t.startsWith("-")
+  );
 }

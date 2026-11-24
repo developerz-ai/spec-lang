@@ -60,9 +60,15 @@ impl<'g, 'a> Gens<'g, 'a> {
                     crate::emit::int_literal(hi).s
                 )
             }
-            DTy::Option(inner) => format!("if (g.rng.chance(1, 3)) {{\nreturn {{}};\n}}\nreturn {ty}{{{}}};", self.call(inner)),
-            DTy::List(t) => format!("return rt::test::draw_list<{}>(g.rng, [&] {{ return {}; }});", g.dty(t), self.call(t)),
-            DTy::Set(t) => format!("return rt::test::draw_set<{}>(g.rng, [&] {{ return {}; }});", g.dty(t), self.call(t)),
+            DTy::Option(inner) => {
+                format!("if (g.rng.chance(1, 3)) {{\nreturn {{}};\n}}\nreturn {ty}{{{}}};", self.call(inner))
+            }
+            DTy::List(t) => {
+                format!("return rt::test::draw_list<{}>(g.rng, [&] {{ return {}; }});", g.dty(t), self.call(t))
+            }
+            DTy::Set(t) => {
+                format!("return rt::test::draw_set<{}>(g.rng, [&] {{ return {}; }});", g.dty(t), self.call(t))
+            }
             DTy::Map(k, v) => format!(
                 "return rt::test::draw_map<{}, {}>(g.rng, [&] {{ return {}; }}, [&] {{ return {}; }});",
                 g.dty(k),
@@ -90,7 +96,12 @@ impl<'g, 'a> Gens<'g, 'a> {
                     for (i, v) in variants.iter().enumerate() {
                         let items: Vec<String> = v.fields.iter().map(|f| self.call(&f.check)).collect();
                         let label = if i + 1 == variants.len() { "default".to_string() } else { format!("case {i}") };
-                        let _ = writeln!(s, "{label}:\nreturn {ty}{{{}{{{}}}}};", g.variant_name(*t, i as u32), items.join(", "));
+                        let _ = writeln!(
+                            s,
+                            "{label}:\nreturn {ty}{{{}{{{}}}}};",
+                            g.variant_name(*t, i as u32),
+                            items.join(", ")
+                        );
                     }
                     s + "}"
                 }
@@ -126,7 +137,9 @@ impl<'g, 'a> Gens<'g, 'a> {
             bodies.push(format!("{ty} draw_{i}([[maybe_unused]] Gen& g) {{\n{body}\n}}\n"));
             i += 1;
         }
-        let mut out = String::from("// One generator per declared type a property or a law draws: the engine's algorithm, step for step.\n");
+        let mut out = String::from(
+            "// One generator per declared type a property or a law draws: the engine's algorithm, step for step.\n",
+        );
         for (i, d) in self.types.iter().enumerate() {
             let _ = writeln!(out, "{} draw_{i}(Gen& g);", g.dty(d));
         }
@@ -148,7 +161,8 @@ impl<'g, 'a> Gens<'g, 'a> {
             match &st.check {
                 DTy::Map(k, _) => {
                     let p = self.pools.iter().position(|x| x == &**k).unwrap_or(0);
-                    let _ = writeln!(s, "for (const auto& entry : world.{field}) {{\npool_{p}.insert(entry.first);\n}}");
+                    let _ =
+                        writeln!(s, "for (const auto& entry : world.{field}) {{\npool_{p}.insert(entry.first);\n}}");
                 }
                 DTy::Set(k) => {
                     let p = self.pools.iter().position(|x| x == &**k).unwrap_or(0);
@@ -215,7 +229,11 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
                     let v = fx.fresh("value");
                     let _ = writeln!(given, "{} {v} = {};", g.dty(&s.check), fx.expr_typed(value));
                     if let Some(c) = fx.conform(&s.check, &v) {
-                        let _ = writeln!(given, "rt::claim({c}, {});", string_literal(&format!("this `@given` value of {}", s.info.qualified)));
+                        let _ = writeln!(
+                            given,
+                            "rt::claim({c}, {});",
+                            string_literal(&format!("this `@given` value of {}", s.info.qualified))
+                        );
                     }
                     let _ = writeln!(given, "ctx.world.{field} = std::move({v});");
                 }
@@ -224,12 +242,24 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
                     if !p.params.is_empty() {
                         given.push_str("rt::stop(\"E-TYPE-MISMATCH\", \"`@given` names a test with parameters; it has no one end world\");\n");
                     } else if !given_cycle(g, id) {
-                        let _ = writeln!(given, "ctx.world = suite.end_world({}, {}, run_{});", parent.0, string_literal(&p.info.qualified), test_fn(g, *parent));
+                        let _ = writeln!(
+                            given,
+                            "ctx.world = suite.end_world({}, {}, run_{});",
+                            parent.0,
+                            string_literal(&p.info.qualified),
+                            test_fn(g, *parent)
+                        );
                     }
                 }
             }
         }
-        let _ = writeln!(tests, "{}", fx.resolve(&format!("void given_{name}([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {{\n{given}}}")));
+        let _ = writeln!(
+            tests,
+            "{}",
+            fx.resolve(&format!(
+                "void given_{name}([[maybe_unused]] Suite& suite, [[maybe_unused]] Machine& ctx) {{\n{given}}}"
+            ))
+        );
         let mut fx = Fx::new(g, Some("ctx"), t.info.span);
         fx.reserve("suite");
         let mut params = vec!["[[maybe_unused]] Machine& ctx".to_string()];
@@ -246,7 +276,12 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
         let _ = writeln!(tests, "{}", fx.resolve(&format!("void steps_{name}({}) {{\n{body}}}", params.join(", "))));
         let mut args = vec!["ctx".to_string()];
         args.extend(names);
-        let _ = writeln!(tests, "Run run_{name}({}) {{\nreturn suite.run(given_{name}, [&](Machine& ctx) {{ steps_{name}({}); }});\n}}\n", run_params.join(", "), args.join(", "));
+        let _ = writeln!(
+            tests,
+            "Run run_{name}({}) {{\nreturn suite.run(given_{name}, [&](Machine& ctx) {{ steps_{name}({}); }});\n}}\n",
+            run_params.join(", "),
+            args.join(", ")
+        );
     }
 
     // Laws and the rules their traces call.
@@ -269,7 +304,11 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
         let ids = |rs: &[spec_lang_ir::RuleId]| rs.iter().map(|r| g.rule_const(*r)).collect::<Vec<_>>().join(", ");
         laws.push_str(&origin(g, lines, "law", &l.info).replace("// ", "    // "));
         let name = string_literal(&l.info.qualified);
-        let text = format!("suite.laws.push_back({{{name}, {name}, []([[maybe_unused]] Gen& g) -> Suite::Bound {{\n{draws}return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& {trace}) -> bool {{\n{body}}};\n}}, {{{}}}, {{{}}}}});", ids(&l.traced), ids(&l.start_rules));
+        let text = format!(
+            "suite.laws.push_back({{{name}, {name}, []([[maybe_unused]] Gen& g) -> Suite::Bound {{\n{draws}return [=]([[maybe_unused]] Machine& ctx, [[maybe_unused]] const rt::Trace<World>& {trace}) -> bool {{\n{body}}};\n}}, {{{}}}, {{{}}}}});",
+            ids(&l.traced),
+            ids(&l.start_rules)
+        );
         let _ = writeln!(laws, "{}", fx.resolve(&text));
         for r in l.traced.iter().chain(&l.start_rules) {
             if !driven.contains(r) {
@@ -288,7 +327,13 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
         let id = g.rule_const(*r);
         let give = if d.result == LTy::Unit { "" } else { "return " };
         // A braced list is evaluated in order: the arguments are drawn left to right.
-        let _ = writeln!(drivers, "suite.rules[{id}] = {{[]([[maybe_unused]] Gen& g) {{ return rt::Event{{{id}, {{{}}}}}; }},\n[](Machine& ctx, [[maybe_unused]] const rt::Event& e) {{ return rt::reply_of([&] {{ {give}{}({}); }}); }}}};", draws.join(", "), g.rule_name(*r), args.join(", "));
+        let _ = writeln!(
+            drivers,
+            "suite.rules[{id}] = {{[]([[maybe_unused]] Gen& g) {{ return rt::Event{{{id}, {{{}}}}}; }},\n[](Machine& ctx, [[maybe_unused]] const rt::Event& e) {{ return rt::reply_of([&] {{ {give}{}({}); }}); }}}};",
+            draws.join(", "),
+            g.rule_name(*r),
+            args.join(", ")
+        );
     }
     let mut world = String::from("suite.draw_world = []([[maybe_unused]] Gen& g) {\nWorld world;\n");
     for (i, st) in lir.states.iter().enumerate() {
@@ -299,7 +344,13 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
     for r in &lir.rules {
         let module = lir.modules[r.info.module.index()].name.rsplit('.').next().unwrap_or("").to_string();
         let ps: Vec<String> = r.params.iter().map(|p| string_literal(&p.name)).collect();
-        let _ = writeln!(rule_names, "{{{}, {}, {{{}}}}},", string_literal(&module), string_literal(&r.info.name), ps.join(", "));
+        let _ = writeln!(
+            rule_names,
+            "{{{}, {}, {{{}}}}},",
+            string_literal(&module),
+            string_literal(&r.info.name),
+            ps.join(", ")
+        );
     }
     rule_names.push_str("});\n");
 
@@ -319,7 +370,13 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
                     let _ = writeln!(body, "const auto arg_{i} = {};", gens.call(&p.check));
                     args.push(format!("arg_{i}"));
                 }
-                let _ = writeln!(main, "suite.property({name}, {}, [](Suite& suite, [[maybe_unused]] Gen& g) {{\n{body}return run_{}({});\n}});", string_literal(&test.info.qualified), test_fn(g, *t), args.join(", "));
+                let _ = writeln!(
+                    main,
+                    "suite.property({name}, {}, [](Suite& suite, [[maybe_unused]] Gen& g) {{\n{body}return run_{}({});\n}});",
+                    string_literal(&test.info.qualified),
+                    test_fn(g, *t),
+                    args.join(", ")
+                );
             }
             CheckWhat::Law(_) => {
                 let _ = writeln!(main, "suite.law({law_index});");
@@ -342,7 +399,10 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
                         let mut all = vec!["suite".to_string()];
                         all.extend(given.iter().flatten().map(|a| fx.expr(a).s));
                         let test = test_fn(g, *t);
-                        let text = format!("suite.case_test({name}, given_{test}, [](Suite& suite, [[maybe_unused]] Machine& ctx) {{\n{body}return run_{test}({});\n}});", all.join(", "));
+                        let text = format!(
+                            "suite.case_test({name}, given_{test}, [](Suite& suite, [[maybe_unused]] Machine& ctx) {{\n{body}return run_{test}({});\n}});",
+                            all.join(", ")
+                        );
                         let _ = writeln!(main, "{}", fx.resolve(&text));
                     }
                     CaseTarget::Fn(f) => {
@@ -358,7 +418,9 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
                                 format!("rt::test::refuses([&] {{\n{stmts}}}, {})", string_literal(error))
                             }
                         };
-                        let text = format!("suite.case_fn({name}, [] {{\n[[maybe_unused]] Machine ctx;\n{body}return {row};\n}});");
+                        let text = format!(
+                            "suite.case_fn({name}, [] {{\n[[maybe_unused]] Machine ctx;\n{body}return {row};\n}});"
+                        );
                         let _ = writeln!(main, "{}", fx.resolve(&text));
                     }
                 }
@@ -374,14 +436,20 @@ pub fn checks(g: &Gen<'_>, lines: &Lines) -> Unit {
         }
     }
     let gens_text = gens.print();
-    let _ = writeln!(text, "\nnamespace {{\n\nusing program::Machine;\nusing program::World;\n\n{}\nusing Suite = rt::test::Suite<Machine, World, Pools>;\nusing Gen = rt::test::Gen<Machine, Pools>;\nusing Run = rt::test::Run<World>;\n", gens.pools_struct());
+    let _ = writeln!(
+        text,
+        "\nnamespace {{\n\nusing program::Machine;\nusing program::World;\n\n{}\nusing Suite = rt::test::Suite<Machine, World, Pools>;\nusing Gen = rt::test::Gen<Machine, Pools>;\nusing Run = rt::test::Run<World>;\n",
+        gens.pools_struct()
+    );
     let _ = writeln!(text, "{gens_text}");
-    for i in 0..lir.tests.len() {
-        let t = &lir.tests[i];
+    for (i, t) in lir.tests.iter().enumerate() {
         let mut ps = vec!["Suite& suite".to_string()];
         ps.extend(t.params.iter().map(|p| format!("{} {}", g.param_dty(&p.ty, &p.check), ident(&p.name))));
         let _ = writeln!(text, "Run run_{}({});", test_fn(g, TestId(i as u32)), ps.join(", "));
     }
-    let _ = writeln!(text, "\n{tests}}}  // namespace\n\nint main() {{\nSuite suite;\n{rule_names}{world}{drivers}{laws}\n{main}return 0;\n}}");
+    let _ = writeln!(
+        text,
+        "\n{tests}}}  // namespace\n\nint main() {{\nSuite suite;\n{rule_names}{world}{drivers}{laws}\n{main}return rt::test::exit_code();\n}}"
+    );
     Unit { path: "tests/checks.cpp".into(), text }
 }

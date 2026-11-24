@@ -13,7 +13,12 @@ impl Fx<'_, '_> {
     }
 
     /// Owned values of arguments, each `Some(x)`/`None` where the parameter has a default.
-    fn call_args(&mut self, params: &[(bool, String)], args: &[Option<Expr>], span: spec_lang_syntax::Span) -> Vec<Code> {
+    fn call_args(
+        &mut self,
+        params: &[(bool, String)],
+        args: &[Option<Expr>],
+        span: spec_lang_syntax::Span,
+    ) -> Vec<Code> {
         let mut out = Vec::new();
         for ((has_default, name), a) in params.iter().zip(args) {
             out.push(match (a, has_default) {
@@ -48,14 +53,16 @@ impl Fx<'_, '_> {
             ExprKind::Int(n) => int_lit(*n),
             ExprKind::Text(t) => Code::lit(format!("String::from({t:?})")),
             ExprKind::Interp(parts) => self.interp(parts),
-            ExprKind::Local(n) => {
-                Code { place: true, copy: self.cx.copy(&e.ty), ..Code::lit(local(n)) }
-            }
+            ExprKind::Local(n) => Code { place: true, copy: self.cx.copy(&e.ty), ..Code::lit(local(n)) },
             ExprKind::Const(c) => {
                 let d = lir.constant(*c);
                 if self.cx.const_literal(*c) {
                     let p = self.item(d.info.module, &screaming(&d.info.name));
-                    return if matches!(d.value.kind, ExprKind::Text(_)) { Code::val(format!("{p}.to_string()")) } else { Code::lit(p) };
+                    return if matches!(d.value.kind, ExprKind::Text(_)) {
+                        Code::val(format!("{p}.to_string()"))
+                    } else {
+                        Code::lit(p)
+                    };
                 }
                 let p = self.item(d.info.module, &ident(&d.info.name));
                 let m = self.cx.const_m[c.index()];
@@ -83,7 +90,8 @@ impl Fx<'_, '_> {
             ExprKind::Construct { ty, tag, args } => self.construct(*ty, *tag, args, e.span),
             ExprKind::CallFn { func, args } => {
                 let f = lir.func(*func);
-                let params: Vec<(bool, String)> = f.params.iter().map(|p| (p.default.is_some(), p.name.clone())).collect();
+                let params: Vec<(bool, String)> =
+                    f.params.iter().map(|p| (p.default.is_some(), p.name.clone())).collect();
                 let args = self.call_args(&params, args, e.span);
                 let p = self.item(f.info.module, &ident(&f.info.name));
                 let m = self.cx.fn_m[func.index()];
@@ -91,7 +99,8 @@ impl Fx<'_, '_> {
             }
             ExprKind::CallRule { rule, args } => {
                 let r = lir.rule(*rule);
-                let params: Vec<(bool, String)> = r.params.iter().map(|p| (p.default.is_some(), p.name.clone())).collect();
+                let params: Vec<(bool, String)> =
+                    r.params.iter().map(|p| (p.default.is_some(), p.name.clone())).collect();
                 let args = self.call_args(&params, args, e.span);
                 let p = self.item(r.info.module, &ident(&r.info.name));
                 self.call(p, true, args)
@@ -112,7 +121,14 @@ impl Fx<'_, '_> {
                 items.extend(args.iter().map(|a| self.value(a)));
                 let (pre, items) = self.args(items, true);
                 let tuple = tuple_text(items[1..].iter().map(|c| c.text.clone()).collect());
-                Code { pre, text: format!("{}.call(m, {tuple})?", items[0].operand()), atomic: true, m: true, fail: true, ..Code::default() }
+                Code {
+                    pre,
+                    text: format!("{}.call(m, {tuple})?", items[0].operand()),
+                    atomic: true,
+                    m: true,
+                    fail: true,
+                    ..Code::default()
+                }
             }
             ExprKind::Field { recv, ty, index, name } => {
                 let r = self.expr(recv);
@@ -129,14 +145,33 @@ impl Fx<'_, '_> {
                 for (tag, i) in by_tag.iter().enumerate() {
                     let Some(i) = i else { continue };
                     let boxed = self.cx.is_boxed(*ty, tag as u32, *i);
-                    let read = if boxed { "(**x).clone()".to_string() } else if self.cx.copy(&e.ty) { "*x".into() } else { "x.clone()".into() };
-                    arms.push(format!("{path}::{} {{ {}: x, .. }} => {read},", self.variant_name(*ty, tag as u32), ident(name)));
+                    let read = if boxed {
+                        "(**x).clone()".to_string()
+                    } else if self.cx.copy(&e.ty) {
+                        "*x".into()
+                    } else {
+                        "x.clone()".into()
+                    };
+                    arms.push(format!(
+                        "{path}::{} {{ {}: x, .. }} => {read},",
+                        self.variant_name(*ty, tag as u32),
+                        ident(name)
+                    ));
                 }
                 if !all {
-                    arms.push(format!("_ => return Err(rt::stop(\"E-TYPE-MISMATCH\", \"this variant has no `{name}`\")),"));
+                    arms.push(format!(
+                        "_ => return Err(rt::stop(\"E-TYPE-MISMATCH\", \"this variant has no `{name}`\")),"
+                    ));
                 }
                 let fail = !all;
-                Code { pre: r.pre.clone(), text: format!("match {} {{ {} }}", r.reference(), arms.join(" ")), atomic: true, m: r.m, fail: r.fail || fail, ..Code::default() }
+                Code {
+                    pre: r.pre.clone(),
+                    text: format!("match {} {{ {} }}", r.reference(), arms.join(" ")),
+                    atomic: true,
+                    m: r.m,
+                    fail: r.fail || fail,
+                    ..Code::default()
+                }
             }
             ExprKind::WorldState { recv, state } => {
                 let r = self.expr(recv);
@@ -151,10 +186,21 @@ impl Fx<'_, '_> {
                         continue;
                     }
                     let read = if self.cx.copy(&e.ty) { "*x" } else { "x.clone()" };
-                    arms.push(format!("crate::machine::Event::{} {{ {}: x, .. }} => {read},", self.cx.names.event(*rule), ident(name)));
+                    arms.push(format!(
+                        "crate::machine::Event::{} {{ {}: x, .. }} => {read},",
+                        self.cx.names.event(*rule),
+                        ident(name)
+                    ));
                 }
                 arms.push(format!("#[allow(unreachable_patterns)] _ => return Err(rt::stop(\"E-TYPE-MISMATCH\", \"the event has no argument `{name}`\")),"));
-                Code { pre: r.pre.clone(), text: format!("match {} {{ {} }}", r.reference(), arms.join(" ")), atomic: true, m: r.m, fail: true, ..Code::default() }
+                Code {
+                    pre: r.pre.clone(),
+                    text: format!("match {} {{ {} }}", r.reference(), arms.join(" ")),
+                    atomic: true,
+                    m: r.m,
+                    fail: true,
+                    ..Code::default()
+                }
             }
             ExprKind::With { recv, ty, changes } => self.with(recv, *ty, changes),
             ExprKind::Is { value, pat } => self.is(value, pat),
@@ -162,8 +208,12 @@ impl Fx<'_, '_> {
                 let c = self.value(cond);
                 let t = self.value(then);
                 let f = self.value(els);
-                Code { pre: c.pre.clone(), text: format!("if {} {{ {} }} else {{ {} }}", c.text, t.seal(), f.seal()), ..Code::op("") }
-                    .with(&[&c, &t, &f])
+                Code {
+                    pre: c.pre.clone(),
+                    text: format!("if {} {{ {} }} else {{ {} }}", c.text, t.seal(), f.seal()),
+                    ..Code::op("")
+                }
+                .with(&[&c, &t, &f])
             }
             ExprKind::Logic { op, left, right } => {
                 let l = self.value(left);
@@ -182,16 +232,28 @@ impl Fx<'_, '_> {
                 let (pre, items) = self.args(items, false);
                 let data: Vec<String> = items.iter().map(|c| format!("{}.show()", c.operand())).collect();
                 let m = items.iter().any(|c| c.m);
-                Code { pre, text: format!("return Err(rt::fail({name:?}, vec![{}]))", data.join(", ")), atomic: false, m, fail: true, ..Code::default() }
+                Code {
+                    pre,
+                    text: format!("return Err(rt::fail({name:?}, vec![{}]))", data.join(", ")),
+                    atomic: false,
+                    m,
+                    fail: true,
+                    ..Code::default()
+                }
             }
-            ExprKind::Match { scrutinee, arms } => self.match_(scrutinee, arms, &e.ty),
+            ExprKind::Match { scrutinee, arms } => self.match_(scrutinee, arms),
             ExprKind::Block(b) => self.block_value(b),
             ExprKind::Hole(h) => Code { text: format!("return Err(rt::hole({h:?}))"), fail: true, ..Code::op("") },
             ExprKind::Tuple(xs) => {
                 let items = xs.iter().map(|x| self.value(x)).collect();
                 let (pre, items) = self.args(items, false);
-                Code { pre, text: tuple_text(items.iter().map(|c| c.text.clone()).collect()), atomic: true, ..Code::default() }
-                    .with(&items.iter().collect::<Vec<_>>())
+                Code {
+                    pre,
+                    text: tuple_text(items.iter().map(|c| c.text.clone()).collect()),
+                    atomic: true,
+                    ..Code::default()
+                }
+                .with(&items.iter().collect::<Vec<_>>())
             }
             ExprKind::List(xs) => self.collection(xs, &e.ty, "vec![{}]", "Vec::<{}>::new()"),
             ExprKind::SetOf(xs) => self.collection(xs, &e.ty, "BTreeSet::from([{}])", "BTreeSet::<{}>::new()"),
@@ -230,7 +292,9 @@ impl Fx<'_, '_> {
 
     pub fn variant_name(&self, ty: spec_lang_ir::TypeId, tag: u32) -> String {
         match &self.cx.lir.ty(ty).def {
-            TypeDef::Sum { variants } => variants.get(tag as usize).map_or_else(|| "Unknown".into(), |v| ident(&camel(&v.name))),
+            TypeDef::Sum { variants } => {
+                variants.get(tag as usize).map_or_else(|| "Unknown".into(), |v| ident(&camel(&v.name)))
+            }
             _ => "Unknown".into(),
         }
     }
@@ -264,7 +328,13 @@ impl Fx<'_, '_> {
                         let c = if x.ty == LTy::Text {
                             c
                         } else {
-                            Code { text: format!("{}.show()", c.operand()), atomic: true, place: false, simple: false, ..c }
+                            Code {
+                                text: format!("{}.show()", c.operand()),
+                                atomic: true,
+                                place: false,
+                                simple: false,
+                                ..c
+                            }
                         };
                         items.push(c);
                     }
@@ -275,12 +345,22 @@ impl Fx<'_, '_> {
             return Code::lit(format!("String::from({fmt:?})"));
         }
         let (pre, items) = self.args(items, false);
+        if let ("{}", [one]) = (fmt.as_str(), items.as_slice()) {
+            let text = if one.place { format!("{}.clone()", one.operand()) } else { one.text.clone() };
+            return Code { pre, text, atomic: true, ..Code::default() }.with(&[one]);
+        }
         let args: Vec<String> = items.iter().map(|c| c.text.clone()).collect();
         Code { pre, text: format!("format!({fmt:?}, {})", args.join(", ")), atomic: true, ..Code::default() }
             .with(&items.iter().collect::<Vec<_>>())
     }
 
-    fn construct(&mut self, ty: spec_lang_ir::TypeId, tag: Option<u32>, args: &[Option<Expr>], span: spec_lang_syntax::Span) -> Code {
+    fn construct(
+        &mut self,
+        ty: spec_lang_ir::TypeId,
+        tag: Option<u32>,
+        args: &[Option<Expr>],
+        span: spec_lang_syntax::Span,
+    ) -> Code {
         let lir = self.cx.lir;
         let fields = match (&lir.ty(ty).def, tag) {
             (TypeDef::Record { fields }, None) => fields,
@@ -384,7 +464,11 @@ impl Fx<'_, '_> {
     fn compare(&mut self, first: &Expr, links: &[(spec_lang_lir::Prim, Expr)]) -> Code {
         // One link: the primitive itself. More: each right side runs only while the earlier links held.
         if let [(op, right)] = links {
-            let args = if op.is_containment() { vec![right.clone(), first.clone()] } else { vec![first.clone(), right.clone()] };
+            let args = if op.is_containment() {
+                vec![right.clone(), first.clone()]
+            } else {
+                vec![first.clone(), right.clone()]
+            };
             return self.prim(*op, &args, &LTy::Bool);
         }
         let l = self.value(first);
@@ -401,7 +485,11 @@ impl Fx<'_, '_> {
             inner.push(format!("let {rt} = {};", r.text));
             let lhs = Code { place: true, copy: self.cx.copy(&left.1), ..Code::lit(left.0.clone()) };
             let rhs = Code { place: true, copy: self.cx.copy(&right.ty), ..Code::lit(rt.clone()) };
-            let (a, b) = if op.is_containment() { ((rhs, right.ty.clone()), (lhs, left.1.clone())) } else { ((lhs, left.1.clone()), (rhs, right.ty.clone())) };
+            let (a, b) = if op.is_containment() {
+                ((rhs, right.ty.clone()), (lhs, left.1.clone()))
+            } else {
+                ((lhs, left.1.clone()), (rhs, right.ty.clone()))
+            };
             let held = self.prim_on(*op, vec![a, b], &LTy::Bool);
             m |= r.m || held.m;
             conds.push((inner, held.seal()));
@@ -429,20 +517,29 @@ impl Fx<'_, '_> {
         let fb = f.seal();
         let text = match (v.fail, is_opt) {
             (false, true) => format!("match {} {{ Opt::Some(x) => x, Opt::None => {fb} }}", v.seal()),
-            (true, true) => format!("match rt::handled(rt::catch(|| {}))? {{ Some(Opt::Some(x)) => x, _ => {fb} }}", crate::code::ok(&v.seal())),
-            _ => format!("match rt::handled(rt::catch(|| {}))? {{ Some(x) => x, None => {fb} }}", crate::code::ok(&v.seal())),
+            (true, true) => format!(
+                "match rt::handled(rt::catch(|| {}))? {{ Some(Opt::Some(x)) => x, _ => {fb} }}",
+                crate::code::ok(&v.seal())
+            ),
+            _ => format!(
+                "match rt::handled(rt::catch(|| {}))? {{ Some(x) => x, None => {fb} }}",
+                crate::code::ok(&v.seal())
+            ),
         };
         Code { text, atomic: true, m: v.m || f.m, fail: true, ..Code::default() }
     }
 
     /// A lambda as a value: its captured locals copied now.
     fn lambda_value(&mut self, l: &Lambda) -> Code {
-        let params: Vec<String> = l.params.iter().map(|(n, _)| local(n)).collect();
         let tys: Vec<LTy> = l.params.iter().map(|(_, t)| t.clone()).collect();
-        let pat = tuple_text(params);
         let pty = self.cx.tuple_ty(&tys, self.module);
         let body = self.lambda_body(l, true);
-        let head = format!("Fun::new(move |m: &mut crate::machine::Machine, {pat}: {pty}| -> R<{}> {{ {body} }})", self.ty(&l.result));
+        let pat = tuple_text(l.params.iter().map(|(n, _)| crate::code::declared(&local(n), &body)).collect());
+        let m = crate::code::declared("m", &body);
+        let head = format!(
+            "Fun::new(move |{m}: &mut crate::machine::Machine, {pat}: {pty}| -> R<{}> {{ {body} }})",
+            self.ty(&l.result)
+        );
         if l.captures.is_empty() {
             return Code::val(head);
         }
@@ -460,15 +557,28 @@ impl Fx<'_, '_> {
 
     /// A lambda written where a primitive calls it: a closure over the body's locals, `m` included.
     pub fn lambda_inline(&mut self, l: &Lambda) -> Code {
-        let params: Vec<String> =
-            l.params.iter().map(|(n, t)| format!("{}: {}", local(n), self.ty(t))).collect();
         let m = self.cx.lambda_m(l);
         let body = self.lambda_body(l, false);
-        Code { text: format!("|{}| -> R<{}> {{ {body} }}", params.join(", "), self.ty(&l.result)), atomic: false, m, simple: true, ..Code::default() }
+        let params: Vec<String> = l
+            .params
+            .iter()
+            .map(|(n, t)| format!("{}: {}", crate::code::declared(&local(n), &body), self.ty(t)))
+            .collect();
+        Code {
+            text: format!("|{}| -> R<{}> {{ {body} }}", params.join(", "), self.ty(&l.result)),
+            atomic: false,
+            m,
+            simple: true,
+            ..Code::default()
+        }
     }
 
     fn lambda_body(&mut self, l: &Lambda, own_m: bool) -> String {
-        let saved = (std::mem::replace(&mut self.targets, vec![Target::Fn]), self.has_m, std::mem::replace(&mut self.discard, false));
+        let saved = (
+            std::mem::replace(&mut self.targets, vec![Target::Fn]),
+            self.has_m,
+            std::mem::replace(&mut self.discard, false),
+        );
         if own_m {
             self.has_m = true;
         }

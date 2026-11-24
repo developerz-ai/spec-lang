@@ -20,7 +20,10 @@ import type * as check from "./support/checks.ts";
 const tests: Readonly<Record<string, check.Test<World>>> = {
   "hop.tests.edge.touch_matches_raylib": {
     id: "hop.tests.edge.touch_matches_raylib",
-    params: [{ name: "a", type: geom.Box, hasDefault: false }, { name: "b", type: geom.Box, hasDefault: false }],
+    params: [
+      { name: "a", type: geom.Box, hasDefault: false },
+      { name: "b", type: geom.Box, hasDefault: false },
+    ],
     given: [],
     body: (w, a) => testsEdgeTests.touchMatchesRaylib(w, a[0] as geom.Box, a[1] as geom.Box),
   },
@@ -171,91 +174,223 @@ const tests: Readonly<Record<string, check.Test<World>>> = {
   "hop.world.past_the_first_ledge": {
     id: "hop.world.past_the_first_ledge",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1090n, 0n, 0n]), undefined, true, 6n]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([1090n, 0n, 0n]), undefined, true, 6n]),
+      },
+    ],
     body: (w, _a) => worldTests.pastTheFirstLedge(w),
   },
   "hop.world.running_at_the_step": {
     id: "hop.world.running_at_the_step",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([2400n, 0n, 0n]), geom.Vec3.make([16n, 0n, 0n]), true]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([2400n, 0n, 0n]), geom.Vec3.make([16n, 0n, 0n]), true]),
+      },
+    ],
     body: (w, _a) => worldTests.runningAtTheStep(w),
   },
   "hop.world.under_a_low_ceiling": {
     id: "hop.world.under_a_low_ceiling",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => model.Level.make(["box", geom.Vec3.make([0n, 0n, 0n]), [model.Solid.make([geom.Box.make([geom.Vec3.make([-512n, -256n, -512n]), geom.Vec3.make([512n, 0n, 512n])]), model.Rgb.make([0n, 0n, 0n])]), model.Solid.make([geom.Box.make([geom.Vec3.make([-512n, 400n, -512n]), geom.Vec3.make([512n, 600n, 512n])]), model.Rgb.make([0n, 0n, 0n])])], undefined, undefined, undefined, geom.Vec3.make([100000n, 0n, 0n])]) }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([0n, 0n, 0n]), undefined, true]) }],
+    given: [
+      {
+        state: states[0] as check.State<World>,
+        value: (_w) =>
+          model.Level.make([
+            "box",
+            geom.Vec3.make([0n, 0n, 0n]),
+            [
+              model.Solid.make([
+                geom.Box.make([geom.Vec3.make([-512n, -256n, -512n]), geom.Vec3.make([512n, 0n, 512n])]),
+                model.Rgb.make([0n, 0n, 0n]),
+              ]),
+              model.Solid.make([
+                geom.Box.make([geom.Vec3.make([-512n, 400n, -512n]), geom.Vec3.make([512n, 600n, 512n])]),
+                model.Rgb.make([0n, 0n, 0n]),
+              ]),
+            ],
+            undefined,
+            undefined,
+            undefined,
+            geom.Vec3.make([100000n, 0n, 0n]),
+          ]),
+      },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([0n, 0n, 0n]), undefined, true]),
+      },
+    ],
     body: (w, _a) => worldTests.underALowCeiling(w),
   },
   "hop.world.riding_the_mover": {
     id: "hop.world.riding_the_mover",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.ridge() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1600n, 0n, 0n]), undefined, true, undefined, undefined, rt.some(1n)]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.ridge() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) =>
+          model.Player.make([geom.Vec3.make([1600n, 0n, 0n]), undefined, true, undefined, undefined, rt.some(1n)]),
+      },
+    ],
     body: (w, _a) => worldTests.ridingTheMover(w),
   },
   "hop.world.above_the_mover": {
     id: "hop.world.above_the_mover",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.ridge() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1600n, 200n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.ridge() },
+      { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1600n, 200n, 0n])]) },
+    ],
     body: (w, _a) => worldTests.aboveTheMover(w),
   },
   "hop.world.at_the_third_gem": {
     id: "hop.world.at_the_third_gem",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([4608n, 0n, 0n]), undefined, true]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([4608n, 0n, 0n]), undefined, true]),
+      },
+    ],
     body: (w, _a) => worldTests.atTheThirdGem(w),
   },
   "hop.world.falling_on_the_crawler": {
     id: "hop.world.falling_on_the_crawler",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[4] as check.State<World>, value: (_w) => rt.OrdMap.of<bigint, model.Crawler>(rt.int, [[1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])]]) }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([3072n, 400n, 0n]), geom.Vec3.make([0n, -20n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[4] as check.State<World>,
+        value: (_w) =>
+          rt.OrdMap.of<bigint, model.Crawler>(rt.int, [
+            [1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])],
+          ]),
+      },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([3072n, 400n, 0n]), geom.Vec3.make([0n, -20n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.fallingOnTheCrawler(w),
   },
   "hop.world.running_at_the_crawler": {
     id: "hop.world.running_at_the_crawler",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[4] as check.State<World>, value: (_w) => rt.OrdMap.of<bigint, model.Crawler>(rt.int, [[1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])]]) }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([2900n, 256n, 0n]), geom.Vec3.make([16n, 0n, 0n]), true]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[4] as check.State<World>,
+        value: (_w) =>
+          rt.OrdMap.of<bigint, model.Crawler>(rt.int, [
+            [1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])],
+          ]),
+      },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([2900n, 256n, 0n]), geom.Vec3.make([16n, 0n, 0n]), true]),
+      },
+    ],
     body: (w, _a) => worldTests.runningAtTheCrawler(w),
   },
   "hop.world.about_to_fall_out": {
     id: "hop.world.about_to_fall_out",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.aboutToFallOut(w),
   },
   "hop.world.about_to_fall_out_for_the_last_time": {
     id: "hop.world.about_to_fall_out_for_the_last_time",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[5] as check.State<World>, value: (_w) => 1n }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      { state: states[5] as check.State<World>, value: (_w) => 1n },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.aboutToFallOutForTheLastTime(w),
   },
   "hop.world.beside_the_flag": {
     id: "hop.world.beside_the_flag",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([5000n, 0n, 0n]), undefined, true]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([5000n, 0n, 0n]), undefined, true]),
+      },
+    ],
     body: (w, _a) => worldTests.besideTheFlag(w),
   },
   "hop.world.about_to_fall_out_holding_a_gem": {
     id: "hop.world.about_to_fall_out_holding_a_gem",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[3] as check.State<World>, value: (_w) => rt.OrdSet.of(rt.int, [1n]) }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      { state: states[3] as check.State<World>, value: (_w) => rt.OrdSet.of(rt.int, [1n]) },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([1280n, -2040n, 0n]), geom.Vec3.make([0n, -48n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.aboutToFallOutHoldingAGem(w),
   },
   "hop.world.rising_beside_the_crawler": {
     id: "hop.world.rising_beside_the_crawler",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[4] as check.State<World>, value: (_w) => rt.OrdMap.of<bigint, model.Crawler>(rt.int, [[1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])]]) }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([2920n, 330n, 0n]), geom.Vec3.make([0n, 20n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[4] as check.State<World>,
+        value: (_w) =>
+          rt.OrdMap.of<bigint, model.Crawler>(rt.int, [
+            [1n, model.Crawler.make([1n, geom.Vec3.make([3072n, 256n, 0n]), 2752n, 3392n, 1n, 2n])],
+          ]),
+      },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([2920n, 330n, 0n]), geom.Vec3.make([0n, 20n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.risingBesideTheCrawler(w),
   },
   "hop.world.under_the_mover": {
     id: "hop.world.under_the_mover",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.ridge() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([1600n, -200n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.ridge() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([1600n, -200n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.underTheMover(w),
   },
   "hop.world.falling_fast_onto_the_floor": {
     id: "hop.world.falling_fast_onto_the_floor",
     params: [],
-    given: [{ state: states[0] as check.State<World>, value: (_w) => levels.meadow() }, { state: states[2] as check.State<World>, value: (_w) => model.Player.make([geom.Vec3.make([0n, 400n, 0n]), geom.Vec3.make([0n, -48n, 0n])]) }],
+    given: [
+      { state: states[0] as check.State<World>, value: (_w) => levels.meadow() },
+      {
+        state: states[2] as check.State<World>,
+        value: (_w) => model.Player.make([geom.Vec3.make([0n, 400n, 0n]), geom.Vec3.make([0n, -48n, 0n])]),
+      },
+    ],
     body: (w, _a) => worldTests.fallingFastOntoTheFloor(w),
   },
 };
@@ -270,23 +405,158 @@ export const suite: check.Program<World, WorldValue> = {
 };
 
 export const checks: readonly check.Check<World, WorldValue>[] = [
-  { name: "hop.geom.plus case[0]", run: (r) => r.fnCase((_w) => geom.plus(geom.Vec3.make([1n, 2n, 3n]), geom.Vec3.make([10n, 20n, 30n])), (_w) => geom.Vec3.make([11n, 22n, 33n])) },
-  { name: "hop.geom.around_feet case[0]", run: (r) => r.fnCase((_w) => geom.aroundFeet(geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([64n, 192n, 64n])), (_w) => geom.Box.make([geom.Vec3.make([-64n, 0n, -64n]), geom.Vec3.make([64n, 192n, 64n])])) },
-  { name: "hop.geom.overlaps case[0]", run: (r) => r.fnCase((_w) => geom.overlaps(geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]), geom.Box.make([geom.Vec3.make([1n, 1n, 1n]), geom.Vec3.make([3n, 3n, 3n])])), (_w) => true) },
-  { name: "hop.geom.overlaps case[1]", run: (r) => r.fnCase((_w) => geom.overlaps(geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]), geom.Box.make([geom.Vec3.make([2n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])])), (_w) => false) },
-  { name: "hop.geom.touches case[0]", run: (r) => r.fnCase((_w) => geom.touches(geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]), geom.Box.make([geom.Vec3.make([2n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])])), (_w) => true) },
-  { name: "hop.geom.touches case[1]", run: (r) => r.fnCase((_w) => geom.touches(geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]), geom.Box.make([geom.Vec3.make([3n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])])), (_w) => false) },
-  { name: "hop.geom.triangle case[0]", run: (r) => r.fnCase((_w) => geom.triangle(0n, 4n), (_w) => 0n) },
-  { name: "hop.geom.triangle case[1]", run: (r) => r.fnCase((_w) => geom.triangle(3n, 4n), (_w) => 3n) },
-  { name: "hop.geom.triangle case[2]", run: (r) => r.fnCase((_w) => geom.triangle(4n, 4n), (_w) => 4n) },
-  { name: "hop.geom.triangle case[3]", run: (r) => r.fnCase((_w) => geom.triangle(5n, 4n), (_w) => 3n) },
-  { name: "hop.geom.triangle case[4]", run: (r) => r.fnCase((_w) => geom.triangle(8n, 4n), (_w) => 0n) },
-  { name: "hop.geom.triangle case[5]", run: (r) => r.fnCase((_w) => geom.triangle(9n, 4n), (_w) => 1n) },
-  { name: "hop.geom.approach case[0]", run: (r) => r.fnCase((_w) => geom.approach(0n, 3n, 2n), (_w) => 2n) },
-  { name: "hop.geom.approach case[1]", run: (r) => r.fnCase((_w) => geom.approach(5n, 3n, 2n), (_w) => 3n) },
-  { name: "hop.geom.approach case[2]", run: (r) => r.fnCase((_w) => geom.approach(5n, 0n, 2n), (_w) => 3n) },
-  { name: "hop.geom.approach case[3]", run: (r) => r.fnCase((_w) => geom.approach(-5n, 0n, 1n), (_w) => -4n) },
-  { name: "hop.geom.vec_text case[0]", run: (r) => r.fnCase((_w) => geom.vecText(geom.Vec3.make([1n, -2n, 3n])), (_w) => "1,-2,3") },
+  {
+    name: "hop.geom.plus case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.plus(geom.Vec3.make([1n, 2n, 3n]), geom.Vec3.make([10n, 20n, 30n])),
+        (_w) => geom.Vec3.make([11n, 22n, 33n]),
+      ),
+  },
+  {
+    name: "hop.geom.around_feet case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.aroundFeet(geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([64n, 192n, 64n])),
+        (_w) => geom.Box.make([geom.Vec3.make([-64n, 0n, -64n]), geom.Vec3.make([64n, 192n, 64n])]),
+      ),
+  },
+  {
+    name: "hop.geom.overlaps case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          geom.overlaps(
+            geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]),
+            geom.Box.make([geom.Vec3.make([1n, 1n, 1n]), geom.Vec3.make([3n, 3n, 3n])]),
+          ),
+        (_w) => true,
+      ),
+  },
+  {
+    name: "hop.geom.overlaps case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          geom.overlaps(
+            geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]),
+            geom.Box.make([geom.Vec3.make([2n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])]),
+          ),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "hop.geom.touches case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          geom.touches(
+            geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]),
+            geom.Box.make([geom.Vec3.make([2n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])]),
+          ),
+        (_w) => true,
+      ),
+  },
+  {
+    name: "hop.geom.touches case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          geom.touches(
+            geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([2n, 2n, 2n])]),
+            geom.Box.make([geom.Vec3.make([3n, 0n, 0n]), geom.Vec3.make([4n, 2n, 2n])]),
+          ),
+        (_w) => false,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(0n, 4n),
+        (_w) => 0n,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(3n, 4n),
+        (_w) => 3n,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(4n, 4n),
+        (_w) => 4n,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(5n, 4n),
+        (_w) => 3n,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[4]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(8n, 4n),
+        (_w) => 0n,
+      ),
+  },
+  {
+    name: "hop.geom.triangle case[5]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.triangle(9n, 4n),
+        (_w) => 1n,
+      ),
+  },
+  {
+    name: "hop.geom.approach case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.approach(0n, 3n, 2n),
+        (_w) => 2n,
+      ),
+  },
+  {
+    name: "hop.geom.approach case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.approach(5n, 3n, 2n),
+        (_w) => 3n,
+      ),
+  },
+  {
+    name: "hop.geom.approach case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.approach(5n, 0n, 2n),
+        (_w) => 3n,
+      ),
+  },
+  {
+    name: "hop.geom.approach case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.approach(-5n, 0n, 1n),
+        (_w) => -4n,
+      ),
+  },
+  {
+    name: "hop.geom.vec_text case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => geom.vecText(geom.Vec3.make([1n, -2n, 3n])),
+        (_w) => "1,-2,3",
+      ),
+  },
   { name: "hop.laws.never_inside_a_solid", run: (r) => r.law("hop.laws.never_inside_a_solid") },
   { name: "hop.laws.speed_is_bounded", run: (r) => r.law("hop.laws.speed_is_bounded") },
   { name: "hop.laws.taken_only_grows", run: (r) => r.law("hop.laws.taken_only_grows") },
@@ -295,56 +565,308 @@ export const checks: readonly check.Check<World, WorldValue>[] = [
   { name: "hop.laws.over_is_final", run: (r) => r.law("hop.laws.over_is_final") },
   { name: "hop.laws.one_tick_per_step", run: (r) => r.law("hop.laws.one_tick_per_step") },
   { name: "hop.laws.taken_are_real_gems", run: (r) => r.law("hop.laws.taken_are_real_gems") },
-  { name: "hop.levels.q case[0]", run: (r) => r.fnCase((_w) => levels.q(4n), (_w) => 256n) },
-  { name: "hop.levels.q case[1]", run: (r) => r.fnCase((_w) => levels.q(-2n), (_w) => -128n) },
-  { name: "hop.physics.walk_target case[0]", run: (r) => r.fnCase((_w) => physics.walkTarget(model.Pad.make([])), (_w) => geom.Vec3.make([0n, 0n, 0n])) },
-  { name: "hop.physics.walk_target case[1]", run: (r) => r.fnCase((_w) => physics.walkTarget(model.Pad.make([undefined, true])), (_w) => geom.Vec3.make([16n, 0n, 0n])) },
-  { name: "hop.physics.walk_target case[2]", run: (r) => r.fnCase((_w) => physics.walkTarget(model.Pad.make([true, undefined, true])), (_w) => geom.Vec3.make([-11n, 0n, -11n])) },
-  { name: "hop.physics.walk_target case[3]", run: (r) => r.fnCase((_w) => physics.walkTarget(model.Pad.make([true, true])), (_w) => geom.Vec3.make([0n, 0n, 0n])) },
-  { name: "hop.physics.facing case[0]", run: (r) => r.fnCase((_w) => physics.facing(model.Pad.make([]), 90n), (_w) => 90n) },
-  { name: "hop.physics.facing case[1]", run: (r) => r.fnCase((_w) => physics.facing(model.Pad.make([undefined, true]), 90n), (_w) => 0n) },
-  { name: "hop.physics.facing case[2]", run: (r) => r.fnCase((_w) => physics.facing(model.Pad.make([undefined, undefined, true]), 0n), (_w) => 90n) },
-  { name: "hop.physics.facing case[3]", run: (r) => r.fnCase((_w) => physics.facing(model.Pad.make([true, undefined, undefined, true]), 0n), (_w) => 225n) },
-  { name: "hop.physics.patrol case[0]", run: (r) => r.fnCase((_w) => physics.patrol(model.Crawler.make([1n, geom.Vec3.make([0n, 0n, 0n]), -10n, 10n, 1n, 4n])), (_w) => model.Crawler.make([1n, geom.Vec3.make([4n, 0n, 0n]), -10n, 10n, 1n, 4n])) },
-  { name: "hop.physics.patrol case[1]", run: (r) => r.fnCase((_w) => physics.patrol(model.Crawler.make([1n, geom.Vec3.make([8n, 0n, 0n]), -10n, 10n, 1n, 4n])), (_w) => model.Crawler.make([1n, geom.Vec3.make([10n, 0n, 0n]), -10n, 10n, -1n, 4n])) },
-  { name: "hop.render.asset_name case[0]", run: (r) => r.fnCase((_w) => render.assetName(render.Asset.make("PipMesh")), (_w) => "pip") },
-  { name: "hop.render.asset_name case[1]", run: (r) => r.fnCase((_w) => render.assetName(render.Asset.make("CrawlerMesh")), (_w) => "crawler") },
-  { name: "hop.render.asset_name case[2]", run: (r) => r.fnCase((_w) => render.assetName(render.Asset.make("GemMesh")), (_w) => "gem") },
-  { name: "hop.render.asset_name case[3]", run: (r) => r.fnCase((_w) => render.assetName(render.Asset.make("FlagMesh")), (_w) => "flag") },
-  { name: "hop.render.bob case[0]", run: (r) => r.fnCase((_w) => render.bob(0n), (_w) => -32n) },
-  { name: "hop.render.bob case[1]", run: (r) => r.fnCase((_w) => render.bob(16n), (_w) => 0n) },
-  { name: "hop.render.bob case[2]", run: (r) => r.fnCase((_w) => render.bob(32n), (_w) => 32n) },
-  { name: "hop.render.bob case[3]", run: (r) => r.fnCase((_w) => render.bob(48n), (_w) => 0n) },
-  { name: "hop.render.draw_text case[0]", run: (r) => r.fnCase((w) => render.drawText(render.Draw.make("Cube", [geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([64n, 64n, 64n])]), model.Rgb.make([1n, 2n, 3n])])), (_w) => "cube 0,0,0 64,64,64 1,2,3") },
-  { name: "hop.render.draw_text case[1]", run: (r) => r.fnCase((w) => render.drawText(render.Draw.make("Mesh", [render.Asset.make("PipMesh"), geom.Vec3.make([1n, 2n, 3n]), 90n])), (_w) => "mesh pip 1,2,3 90") },
+  {
+    name: "hop.levels.q case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => levels.q(4n),
+        (_w) => 256n,
+      ),
+  },
+  {
+    name: "hop.levels.q case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => levels.q(-2n),
+        (_w) => -128n,
+      ),
+  },
+  {
+    name: "hop.physics.walk_target case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([]);
+          return () => physics.walkTarget(a0);
+        },
+        (_w) => geom.Vec3.make([0n, 0n, 0n]),
+      ),
+  },
+  {
+    name: "hop.physics.walk_target case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([undefined, true]);
+          return () => physics.walkTarget(a0);
+        },
+        (_w) => geom.Vec3.make([16n, 0n, 0n]),
+      ),
+  },
+  {
+    name: "hop.physics.walk_target case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([true, undefined, true]);
+          return () => physics.walkTarget(a0);
+        },
+        (_w) => geom.Vec3.make([-11n, 0n, -11n]),
+      ),
+  },
+  {
+    name: "hop.physics.walk_target case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([true, true]);
+          return () => physics.walkTarget(a0);
+        },
+        (_w) => geom.Vec3.make([0n, 0n, 0n]),
+      ),
+  },
+  {
+    name: "hop.physics.facing case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([]);
+          const a1 = 90n;
+          return () => physics.facing(a0, a1);
+        },
+        (_w) => 90n,
+      ),
+  },
+  {
+    name: "hop.physics.facing case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([undefined, true]);
+          const a1 = 90n;
+          return () => physics.facing(a0, a1);
+        },
+        (_w) => 0n,
+      ),
+  },
+  {
+    name: "hop.physics.facing case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([undefined, undefined, true]);
+          const a1 = 0n;
+          return () => physics.facing(a0, a1);
+        },
+        (_w) => 90n,
+      ),
+  },
+  {
+    name: "hop.physics.facing case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => {
+          const a0 = model.Pad.make([true, undefined, undefined, true]);
+          const a1 = 0n;
+          return () => physics.facing(a0, a1);
+        },
+        (_w) => 225n,
+      ),
+  },
+  {
+    name: "hop.physics.patrol case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => physics.patrol(model.Crawler.make([1n, geom.Vec3.make([0n, 0n, 0n]), -10n, 10n, 1n, 4n])),
+        (_w) => model.Crawler.make([1n, geom.Vec3.make([4n, 0n, 0n]), -10n, 10n, 1n, 4n]),
+      ),
+  },
+  {
+    name: "hop.physics.patrol case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => physics.patrol(model.Crawler.make([1n, geom.Vec3.make([8n, 0n, 0n]), -10n, 10n, 1n, 4n])),
+        (_w) => model.Crawler.make([1n, geom.Vec3.make([10n, 0n, 0n]), -10n, 10n, -1n, 4n]),
+      ),
+  },
+  {
+    name: "hop.render.asset_name case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.assetName(render.Asset.make("PipMesh")),
+        (_w) => "pip",
+      ),
+  },
+  {
+    name: "hop.render.asset_name case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.assetName(render.Asset.make("CrawlerMesh")),
+        (_w) => "crawler",
+      ),
+  },
+  {
+    name: "hop.render.asset_name case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.assetName(render.Asset.make("GemMesh")),
+        (_w) => "gem",
+      ),
+  },
+  {
+    name: "hop.render.asset_name case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.assetName(render.Asset.make("FlagMesh")),
+        (_w) => "flag",
+      ),
+  },
+  {
+    name: "hop.render.bob case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.bob(0n),
+        (_w) => -32n,
+      ),
+  },
+  {
+    name: "hop.render.bob case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.bob(16n),
+        (_w) => 0n,
+      ),
+  },
+  {
+    name: "hop.render.bob case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.bob(32n),
+        (_w) => 32n,
+      ),
+  },
+  {
+    name: "hop.render.bob case[3]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => render.bob(48n),
+        (_w) => 0n,
+      ),
+  },
+  {
+    name: "hop.render.draw_text case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          render.drawText(
+            render.Draw.make("Cube", [
+              geom.Box.make([geom.Vec3.make([0n, 0n, 0n]), geom.Vec3.make([64n, 64n, 64n])]),
+              model.Rgb.make([1n, 2n, 3n]),
+            ]),
+          ),
+        (_w) => "cube 0,0,0 64,64,64 1,2,3",
+      ),
+  },
+  {
+    name: "hop.render.draw_text case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () =>
+          render.drawText(render.Draw.make("Mesh", [render.Asset.make("PipMesh"), geom.Vec3.make([1n, 2n, 3n]), 90n])),
+        (_w) => "mesh pip 1,2,3 90",
+      ),
+  },
   { name: "hop.tests.edge.touch_matches_raylib", run: (r) => r.property("hop.tests.edge.touch_matches_raylib") },
   { name: "hop.tests.moves.standing_still_stays_put", run: (r) => r.test("hop.tests.moves.standing_still_stays_put") },
-  { name: "hop.tests.moves.running_reaches_full_speed", run: (r) => r.test("hop.tests.moves.running_reaches_full_speed") },
+  {
+    name: "hop.tests.moves.running_reaches_full_speed",
+    run: (r) => r.test("hop.tests.moves.running_reaches_full_speed"),
+  },
   { name: "hop.tests.moves.a_held_jump_peaks_at_380", run: (r) => r.test("hop.tests.moves.a_held_jump_peaks_at_380") },
   { name: "hop.tests.moves.a_short_hop_peaks_at_94", run: (r) => r.test("hop.tests.moves.a_short_hop_peaks_at_94") },
-  { name: "hop.tests.moves.a_jump_needs_a_fresh_press", run: (r) => r.test("hop.tests.moves.a_jump_needs_a_fresh_press") },
-  { name: "hop.tests.moves.a_jump_just_after_the_edge_still_counts", run: (r) => r.test("hop.tests.moves.a_jump_just_after_the_edge_still_counts") },
-  { name: "hop.tests.moves.a_jump_long_after_the_edge_does_not", run: (r) => r.test("hop.tests.moves.a_jump_long_after_the_edge_does_not") },
-  { name: "hop.tests.moves.a_wall_stops_the_body_flush", run: (r) => r.test("hop.tests.moves.a_wall_stops_the_body_flush") },
+  {
+    name: "hop.tests.moves.a_jump_needs_a_fresh_press",
+    run: (r) => r.test("hop.tests.moves.a_jump_needs_a_fresh_press"),
+  },
+  {
+    name: "hop.tests.moves.a_jump_just_after_the_edge_still_counts",
+    run: (r) => r.test("hop.tests.moves.a_jump_just_after_the_edge_still_counts"),
+  },
+  {
+    name: "hop.tests.moves.a_jump_long_after_the_edge_does_not",
+    run: (r) => r.test("hop.tests.moves.a_jump_long_after_the_edge_does_not"),
+  },
+  {
+    name: "hop.tests.moves.a_wall_stops_the_body_flush",
+    run: (r) => r.test("hop.tests.moves.a_wall_stops_the_body_flush"),
+  },
   { name: "hop.tests.moves.a_ceiling_stops_a_jump", run: (r) => r.test("hop.tests.moves.a_ceiling_stops_a_jump") },
-  { name: "hop.tests.moves.a_rider_moves_with_the_mover", run: (r) => r.test("hop.tests.moves.a_rider_moves_with_the_mover") },
-  { name: "hop.tests.moves.a_mover_catches_a_falling_body", run: (r) => r.test("hop.tests.moves.a_mover_catches_a_falling_body") },
-  { name: "hop.tests.moves.a_mover_never_catches_from_below", run: (r) => r.test("hop.tests.moves.a_mover_never_catches_from_below") },
+  {
+    name: "hop.tests.moves.a_rider_moves_with_the_mover",
+    run: (r) => r.test("hop.tests.moves.a_rider_moves_with_the_mover"),
+  },
+  {
+    name: "hop.tests.moves.a_mover_catches_a_falling_body",
+    run: (r) => r.test("hop.tests.moves.a_mover_catches_a_falling_body"),
+  },
+  {
+    name: "hop.tests.moves.a_mover_never_catches_from_below",
+    run: (r) => r.test("hop.tests.moves.a_mover_never_catches_from_below"),
+  },
   { name: "hop.tests.moves.a_fast_fall_lands", run: (r) => r.test("hop.tests.moves.a_fast_fall_lands") },
-  { name: "hop.tests.runs.pad_of case[0]", run: (r) => r.fnCase((_w) => runs.padOf("-"), (_w) => model.Pad.make([])) },
-  { name: "hop.tests.runs.pad_of case[1]", run: (r) => r.fnCase((_w) => runs.padOf("RJ"), (_w) => model.Pad.make([undefined, true, undefined, undefined, true])) },
-  { name: "hop.tests.runs.pad_of case[2]", run: (r) => r.fnCase((_w) => runs.padOf("LFB"), (_w) => model.Pad.make([true, undefined, true, true])) },
+  {
+    name: "hop.tests.runs.pad_of case[0]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => runs.padOf("-"),
+        (_w) => model.Pad.make([]),
+      ),
+  },
+  {
+    name: "hop.tests.runs.pad_of case[1]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => runs.padOf("RJ"),
+        (_w) => model.Pad.make([undefined, true, undefined, undefined, true]),
+      ),
+  },
+  {
+    name: "hop.tests.runs.pad_of case[2]",
+    run: (r) =>
+      r.fnCase(
+        (_w) => () => runs.padOf("LFB"),
+        (_w) => model.Pad.make([true, undefined, true, true]),
+      ),
+  },
   { name: "hop.tests.runs.the_meadow_can_be_won", run: (r) => r.test("hop.tests.runs.the_meadow_can_be_won") },
   { name: "hop.tests.runs.the_ridge_can_be_won", run: (r) => r.test("hop.tests.runs.the_ridge_can_be_won") },
   { name: "hop.tests.touches.a_gem_is_taken_once", run: (r) => r.test("hop.tests.touches.a_gem_is_taken_once") },
   { name: "hop.tests.touches.a_fall_keeps_the_gems", run: (r) => r.test("hop.tests.touches.a_fall_keeps_the_gems") },
-  { name: "hop.tests.touches.rising_into_a_crawler_hurts", run: (r) => r.test("hop.tests.touches.rising_into_a_crawler_hurts") },
-  { name: "hop.tests.touches.a_stomp_removes_the_crawler", run: (r) => r.test("hop.tests.touches.a_stomp_removes_the_crawler") },
-  { name: "hop.tests.touches.a_crawler_hurts_from_the_side", run: (r) => r.test("hop.tests.touches.a_crawler_hurts_from_the_side") },
-  { name: "hop.tests.touches.falling_out_costs_a_life", run: (r) => r.test("hop.tests.touches.falling_out_costs_a_life") },
-  { name: "hop.tests.touches.the_last_life_ends_the_game", run: (r) => r.test("hop.tests.touches.the_last_life_ends_the_game") },
+  {
+    name: "hop.tests.touches.rising_into_a_crawler_hurts",
+    run: (r) => r.test("hop.tests.touches.rising_into_a_crawler_hurts"),
+  },
+  {
+    name: "hop.tests.touches.a_stomp_removes_the_crawler",
+    run: (r) => r.test("hop.tests.touches.a_stomp_removes_the_crawler"),
+  },
+  {
+    name: "hop.tests.touches.a_crawler_hurts_from_the_side",
+    run: (r) => r.test("hop.tests.touches.a_crawler_hurts_from_the_side"),
+  },
+  {
+    name: "hop.tests.touches.falling_out_costs_a_life",
+    run: (r) => r.test("hop.tests.touches.falling_out_costs_a_life"),
+  },
+  {
+    name: "hop.tests.touches.the_last_life_ends_the_game",
+    run: (r) => r.test("hop.tests.touches.the_last_life_ends_the_game"),
+  },
   { name: "hop.tests.touches.reaching_the_flag_wins", run: (r) => r.test("hop.tests.touches.reaching_the_flag_wins") },
-  { name: "hop.tests.touches.starting_again_resets_everything", run: (r) => r.test("hop.tests.touches.starting_again_resets_everything") },
+  {
+    name: "hop.tests.touches.starting_again_resets_everything",
+    run: (r) => r.test("hop.tests.touches.starting_again_resets_everything"),
+  },
   { name: "hop.world.past_the_first_ledge", run: (r) => r.test("hop.world.past_the_first_ledge") },
   { name: "hop.world.running_at_the_step", run: (r) => r.test("hop.world.running_at_the_step") },
   { name: "hop.world.under_a_low_ceiling", run: (r) => r.test("hop.world.under_a_low_ceiling") },
@@ -354,9 +876,15 @@ export const checks: readonly check.Check<World, WorldValue>[] = [
   { name: "hop.world.falling_on_the_crawler", run: (r) => r.test("hop.world.falling_on_the_crawler") },
   { name: "hop.world.running_at_the_crawler", run: (r) => r.test("hop.world.running_at_the_crawler") },
   { name: "hop.world.about_to_fall_out", run: (r) => r.test("hop.world.about_to_fall_out") },
-  { name: "hop.world.about_to_fall_out_for_the_last_time", run: (r) => r.test("hop.world.about_to_fall_out_for_the_last_time") },
+  {
+    name: "hop.world.about_to_fall_out_for_the_last_time",
+    run: (r) => r.test("hop.world.about_to_fall_out_for_the_last_time"),
+  },
   { name: "hop.world.beside_the_flag", run: (r) => r.test("hop.world.beside_the_flag") },
-  { name: "hop.world.about_to_fall_out_holding_a_gem", run: (r) => r.test("hop.world.about_to_fall_out_holding_a_gem") },
+  {
+    name: "hop.world.about_to_fall_out_holding_a_gem",
+    run: (r) => r.test("hop.world.about_to_fall_out_holding_a_gem"),
+  },
   { name: "hop.world.rising_beside_the_crawler", run: (r) => r.test("hop.world.rising_beside_the_crawler") },
   { name: "hop.world.under_the_mover", run: (r) => r.test("hop.world.under_the_mover") },
   { name: "hop.world.falling_fast_onto_the_floor", run: (r) => r.test("hop.world.falling_fast_onto_the_floor") },

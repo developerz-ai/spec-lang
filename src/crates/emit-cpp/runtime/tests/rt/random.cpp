@@ -62,8 +62,9 @@ Int draw_int(Rng& rng) {
 // and astral characters, or empty.
 Text draw_text(Rng& rng) {
   static const std::string_view word = "abcdefghijklmnopqrstuvwxyz0123456789-";
-  static const std::array<char32_t, 22> mix = {U'a', U'Z', U' ', U'\t', U'\n', 0xE9, 0xDF, 0x4E2D, 0x1F600, 0x3000, 0x85,
-                                               0xA0, 0x200B, 0xFEFF, 0x7F, 0x1, U'"', U'\\', U'{', U'}', U'#', U'-'};
+  static const std::array<char32_t, 22> mix = {U'a',    U'Z',   U' ', U'\t', U'\n',  0xE9,   0xDF, 0x4E2D,
+                                               0x1F600, 0x3000, 0x85, 0xA0,  0x200B, 0xFEFF, 0x7F, 0x1,
+                                               U'"',    U'\\',  U'{', U'}',  U'#',   U'-'};
   Text out;
   switch (rng.below(4)) {
     case 0:

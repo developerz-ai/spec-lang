@@ -13,7 +13,9 @@ pub enum Kind {
     Positional,
     Switch,
     /// A value, at most once; `wrap` when the parameter is an `Option` (the value is `Some`).
-    Single { wrap: bool },
+    Single {
+        wrap: bool,
+    },
     /// A value, repeatable; repeats collapse.
     Repeat,
 }
@@ -40,7 +42,9 @@ pub fn commands(app: &'static App) -> Vec<Command> {
     for d in app.param("rules") {
         let Decl::Rule(i) = d else { continue };
         let Some(rule) = app.rules.get(*i) else { continue };
-        let Some(name) = rule.triggers.iter().find(|t| t.name == "cli").and_then(|t| t.text("command")) else { continue };
+        let Some(name) = rule.triggers.iter().find(|t| t.name == "cli").and_then(|t| t.text("command")) else {
+            continue;
+        };
         let args = rule
             .params
             .iter()
@@ -93,25 +97,28 @@ pub fn help(bin: &str, commands: &[Command]) -> String {
 /// `Int`, which no world holds), `Text` as given, `Bool` as `true`/`false`, a sum without data by a variant's
 /// name in lower case.
 pub fn value(ty: &'static Ty, word: &str) -> Option<Data> {
-    let d = match &ty.shape {
-        Shape::Int => {
-            if word.is_empty() || !word.bytes().all(|b| b.is_ascii_digit()) {
-                return None;
+    let d =
+        match &ty.shape {
+            Shape::Int => {
+                if word.is_empty() || !word.bytes().all(|b| b.is_ascii_digit()) {
+                    return None;
+                }
+                Data::Int(word.bytes().fold(0, |n: crate::rt::Int, b| {
+                    n.saturating_mul(10).saturating_add(crate::rt::Int::from(b - b'0'))
+                }))
             }
-            Data::Int(word.bytes().fold(0, |n: crate::rt::Int, b| n.saturating_mul(10).saturating_add(crate::rt::Int::from(b - b'0'))))
-        }
-        Shape::Text => Data::Text(word.to_string()),
-        Shape::Bool => match word {
-            "true" => Data::Bool(true),
-            "false" => Data::Bool(false),
+            Shape::Text => Data::Text(word.to_string()),
+            Shape::Bool => match word {
+                "true" => Data::Bool(true),
+                "false" => Data::Bool(false),
+                _ => return None,
+            },
+            Shape::Sum(vs) => {
+                let (n, _) = vs.iter().find(|(n, f)| f.is_empty() && n.to_lowercase() == word)?;
+                Data::Variant(n, Vec::new())
+            }
             _ => return None,
-        },
-        Shape::Sum(vs) => {
-            let (n, _) = vs.iter().find(|(n, f)| f.is_empty() && n.to_lowercase() == word)?;
-            Data::Variant(n, Vec::new())
-        }
-        _ => return None,
-    };
+        };
     (ty.admits)(&d).then_some(d)
 }
 
@@ -186,7 +193,8 @@ pub fn parse(arguments: Vec<OsString>, commands: &[Command]) -> Result<Invocatio
             values[i] = Some(v);
             continue;
         };
-        let Some((i, a)) = command.args.iter().enumerate().find(|(_, a)| a.kind != Kind::Positional && a.name == flag) else {
+        let Some((i, a)) = command.args.iter().enumerate().find(|(_, a)| a.kind != Kind::Positional && a.name == flag)
+        else {
             return Err(Usage::UnknownFlag(word));
         };
         if a.kind == Kind::Switch {

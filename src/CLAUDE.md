@@ -14,7 +14,7 @@ Rust workspace: parser, IR, check, lint, interpreter, test engine, CLI. Read `RE
 | One concern per module | small files; library code does not `unwrap`, `expect` or `panic` (workspace lints deny them) |
 | A failing program is a finding | if the todo POC fails a check, suspect the engine first; if the program is wrong, report it, do not edit it |
 | Mutants stay listed | `crates/cli/tests/mutations.rs`: a mutant's fate changing fails the test; update its list and the README table together |
-| Owned elsewhere | `crates/emit-*` and `crates/view` belong to other agents; the IR is their API: change it additively and say so |
+| The LIR is the printers' API | `crates/emit-*` read only `crates/lir`; change it additively, and judge with `bin/corpus` |
 
 ## Commands
 ```bash

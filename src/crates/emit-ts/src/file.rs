@@ -122,14 +122,13 @@ impl TsFile {
                     .values
                     .iter()
                     .map(|v| (v.clone(), v.clone()))
-                    .chain(imp.types.iter().filter(|t| !imp.values.contains(*t)).map(|t| (t.clone(), format!("type {t}"))))
+                    .chain(
+                        imp.types.iter().filter(|t| !imp.values.contains(*t)).map(|t| (t.clone(), format!("type {t}"))),
+                    )
                     .collect();
                 names.sort_by(|a, b| natural(&a.0, &b.0));
                 let all_types = imp.values.is_empty();
-                let list: Vec<String> = names
-                    .into_iter()
-                    .map(|(n, shown)| if all_types { n } else { shown })
-                    .collect();
+                let list: Vec<String> = names.into_iter().map(|(n, shown)| if all_types { n } else { shown }).collect();
                 let kw = if all_types { "import type" } else { "import" };
                 out.push_str(&format!("{kw} {{ {} }} from \"{spec}\";\n", list.join(", ")));
             }
@@ -159,7 +158,10 @@ fn import_rank(spec: &str) -> (u8, usize, String) {
     (2, usize::MAX - ups, spec.to_string())
 }
 
-/// Names compared as the formatter sorts them: case-insensitive first.
+/// Names compared as the formatter sorts them: letter by letter, the upper case of a letter before its lower case.
 fn natural(a: &str, b: &str) -> std::cmp::Ordering {
-    a.to_lowercase().cmp(&b.to_lowercase()).then_with(|| a.cmp(b))
+    let key = |s: &str| -> Vec<(String, bool)> {
+        s.chars().map(|c| (c.to_lowercase().to_string(), c.is_lowercase())).collect()
+    };
+    key(a).cmp(&key(b))
 }

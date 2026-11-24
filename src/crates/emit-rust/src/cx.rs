@@ -4,7 +4,7 @@
 use crate::names::{Names, ident};
 use spec_lang_diag::Diag;
 use spec_lang_ir::{ModuleId, TypeId};
-use spec_lang_lir::node::{Expr, ExprKind, LambdaBody, Lambda};
+use spec_lang_lir::node::{Expr, ExprKind, Lambda, LambdaBody};
 use spec_lang_lir::{Body, DTy, LTy, Lir, TypeDef, walk};
 use std::collections::BTreeSet;
 

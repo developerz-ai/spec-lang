@@ -8,6 +8,7 @@ use crate::plan::Plan;
 use crate::types::{Out, trivial};
 use spec_lang_diag::Diag;
 use spec_lang_ir::ModuleId;
+use spec_lang_lir::node::ExprKind;
 use spec_lang_lir::program::{Body, Extern, Info, Param, TypeDef};
 use spec_lang_lir::{DTy, LTy};
 
@@ -50,6 +51,7 @@ pub fn module_file(plan: &Plan<'_>, m: ModuleId) -> Result<(String, String), Vec
             law_decl(&mut out, i, &mut errors);
         }
     }
+    errors.append(&mut out.errors);
     if !errors.is_empty() {
         return Err(errors);
     }
@@ -78,7 +80,7 @@ fn type_decl(out: &mut Out<'_, '_>, i: usize, errors: &mut Vec<Diag>) {
             let ts = out.d_ts_type(of);
             out.file.line(format!("export type {name} = {ts};"));
             let d = out.d_desc(of);
-            out.file.line(format!("export const {name} = {rt}.alias<{ts}>({q}, () => {d});"));
+            out.file.line(format!("export const {name}: {rt}.AliasType<{ts}> = {rt}.alias<{ts}>({q}, () => {d});"));
         }
         TypeDef::Record { fields } => {
             doc(out, "type", &t.info);
@@ -89,7 +91,7 @@ fn type_decl(out: &mut Out<'_, '_>, i: usize, errors: &mut Vec<Diag>) {
             }
             out.file.close("}");
             out.file.blank();
-            out.file.open(format!("export const {name} = {rt}.record<{name}>({q}, () => ["));
+            out.file.open(format!("export const {name}: {rt}.RecordType<{name}> = {rt}.record<{name}>({q}, () => ["));
             for (f, prop) in fields.iter().zip(&plan.field_prop[i][0]) {
                 let line = field_desc(out, f, prop, errors);
                 out.file.line(format!("{line},"));
@@ -118,7 +120,7 @@ fn type_decl(out: &mut Out<'_, '_>, i: usize, errors: &mut Vec<Diag>) {
                 }
                 out.file.line(text);
             }
-            out.file.open(format!("export const {name} = {rt}.oneOf<{name}>({q}, () => ["));
+            out.file.open(format!("export const {name}: {rt}.SumType<{name}> = {rt}.oneOf<{name}>({q}, () => ["));
             for (v, props) in variants.iter().zip(&plan.field_prop[i]) {
                 if v.fields.is_empty() {
                     out.file.line(format!("{rt}.variant({}),", string_literal(&v.name)));
@@ -181,6 +183,15 @@ fn params(out: &mut Out<'_, '_>, world: bool, ps: &[Param], errors: &mut Vec<Dia
     let mut names = Vec::new();
     for p in ps {
         let t = fx.out.ts_type(&p.ty);
+        if let Some(d) = &p.default {
+            let mut calls = false;
+            spec_lang_lir::walk::exprs(d, &mut |x| {
+                calls |= matches!(x.kind, ExprKind::CallRule { .. } | ExprKind::Effect { .. });
+            });
+            if calls {
+                fx.unsupported(Some(d.span), "a parameter default that calls a rule or sends an effect");
+            }
+        }
         let default = p.default.as_ref().map(|d| fx.expr(d).at(P_ARROW));
         let ts = fx.bind(&p.name);
         names.push(ts.clone());
@@ -229,7 +240,7 @@ fn result_check(fx: &mut Fx<'_, '_, '_>, check: &Option<DTy>) {
     if let Some(c) = check
         && !trivial(fx.out.plan, c)
     {
-        fx.result = Some(fx.out.d_desc(c));
+        fx.result = Some(c.clone());
     }
 }
 
@@ -288,10 +299,22 @@ fn extern_info(out: &mut Out<'_, '_>, name: &str, info: &Info, x: &Extern, ps: &
     out.file.blank();
 }
 
-/// `{ name, type, hasDefault }` of a parameter.
+/// A parameter as data; its default too, when it reads nothing (no earlier parameter, no state).
 pub fn param_info(out: &mut Out<'_, '_>, p: &Param) -> String {
     let d = out.d_desc(&p.check);
-    format!("{{ name: {}, type: {d}, hasDefault: {} }}", string_literal(&p.name), p.default.is_some())
+    let mut default = String::new();
+    if let Some(e) = &p.default {
+        let mut reads = out.plan.needs_world(e);
+        spec_lang_lir::walk::exprs(e, &mut |x| reads |= matches!(x.kind, ExprKind::Local(_)));
+        if !reads {
+            let mut fx = Fx::new(out, false);
+            let v = fx.expr(e).at(P_ARROW);
+            let mut errors = std::mem::take(&mut fx.errors);
+            out.errors.append(&mut errors);
+            default = format!(", default: () => {v}");
+        }
+    }
+    format!("{{ name: {}, type: {d}, hasDefault: {}{default} }}", string_literal(&p.name), p.default.is_some())
 }
 
 fn rule_decl(out: &mut Out<'_, '_>, i: usize, errors: &mut Vec<Diag>) {
@@ -319,8 +342,13 @@ fn rule_decl(out: &mut Out<'_, '_>, i: usize, errors: &mut Vec<Diag>) {
             let c = fx.expr(&g.cond).at(P_ARROW);
             fx.line(format!("if (!{rt}.holds(() => {c})) {rt}.fail({error});"));
         } else {
-            let c = fx.expr(&g.cond).at(P_UNARY);
-            fx.line(format!("if (!{c}) {rt}.fail({error});"));
+            let c = fx.expr(&g.cond);
+            // `not x` guards print as `if (x)`.
+            let refused = match c.text.strip_prefix('!') {
+                Some(x) if c.prec == P_UNARY => x.to_string(),
+                _ => format!("!{}", c.at(P_UNARY)),
+            };
+            fx.line(format!("if ({refused}) {rt}.fail({error});"));
         }
     }
     result_check(&mut fx, &r.result_check);

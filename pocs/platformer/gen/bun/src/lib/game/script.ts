@@ -13,7 +13,9 @@ export interface Hold {
 export const MAX_HOLD = 100_000;
 export const MAX_TICKS = 1_000_000;
 
-export type Read = { readonly ok: true; readonly script: readonly Hold[] } | { readonly ok: false; readonly message: string };
+export type Read =
+  | { readonly ok: true; readonly script: readonly Hold[] }
+  | { readonly ok: false; readonly message: string };
 
 /** The controls: a record of Bool fields, by key letter. */
 export class Keys {
@@ -21,7 +23,8 @@ export class Keys {
 
   constructor(private readonly pad: rt.RecordType<unknown>) {
     this.letters = new Map(pad.fields.map((f, i) => [f.name.charAt(0).toUpperCase(), i]));
-    if (this.letters.size !== pad.fields.length) rt.stop("E-UNSUPPORTED", `the fields of ${pad.name} share a first letter`);
+    if (this.letters.size !== pad.fields.length)
+      rt.stop("E-UNSUPPORTED", `the fields of ${pad.name} share a first letter`);
   }
 
   /** Nothing held. */

@@ -75,20 +75,42 @@ impl Names {
                 if m.id.index() == 0 {
                     return vec!["core_".to_string()];
                 }
-                m.name.split('.').map(ident).map(|s| if s == "rt" || s == "machine" || s == "checks" || s == "conform" || s == "draw" || s == "lib" || s == "main" || s == "bin" { format!("{s}_") } else { s }).collect()
+                m.name
+                    .split('.')
+                    .map(ident)
+                    .map(|s| {
+                        if s == "rt"
+                            || s == "machine"
+                            || s == "checks"
+                            || s == "conform"
+                            || s == "draw"
+                            || s == "lib"
+                            || s == "main"
+                            || s == "bin"
+                        {
+                            format!("{s}_")
+                        } else {
+                            s
+                        }
+                    })
+                    .collect()
             })
             .collect();
         let mut seen: BTreeMap<String, usize> = BTreeMap::new();
         for s in &lir.states {
             *seen.entry(s.info.name.clone()).or_default() += 1;
         }
-        let states = lir
-            .states
-            .iter()
-            .map(|s| {
-                if seen[&s.info.name] > 1 { ident(&s.info.qualified.replace('.', "_")) } else { ident(&s.info.name) }
-            })
-            .collect();
+        let states =
+            lir.states
+                .iter()
+                .map(|s| {
+                    if seen[&s.info.name] > 1 {
+                        ident(&s.info.qualified.replace('.', "_"))
+                    } else {
+                        ident(&s.info.name)
+                    }
+                })
+                .collect();
         let mut seen: BTreeMap<String, usize> = BTreeMap::new();
         for r in &lir.rules {
             *seen.entry(camel(&r.info.name)).or_default() += 1;

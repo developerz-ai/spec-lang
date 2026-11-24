@@ -40,8 +40,15 @@ pub fn lower_source(template: &str) -> String {
             for (cell, x) in cells.iter_mut().zip(&to) {
                 *cell = *x;
             }
-            let _ = writeln!(lowered, "    {{0x{:X}, {{0x{:X}, 0x{:X}, 0x{:X}}}}},", c as u32, cells[0], cells[1], cells[2]);
+            let _ = writeln!(
+                lowered,
+                "    {{0x{:X}, {{0x{:X}, 0x{:X}, 0x{:X}}}}},",
+                c as u32, cells[0], cells[1], cells[2]
+            );
         }
     }
-    template.replace("@LOWERED@", &lowered).replace("@CASED@", &ranges(cased)).replace("@IGNORABLE@", &ranges(ignorable))
+    template
+        .replace("@LOWERED@", &lowered)
+        .replace("@CASED@", &ranges(cased))
+        .replace("@IGNORABLE@", &ranges(ignorable))
 }

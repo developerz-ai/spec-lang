@@ -58,7 +58,9 @@ export interface Program<W extends Machine, V> {
 }
 
 /** A declaration an app parameter names. */
-export type Named<W> = { readonly kind: "rule"; readonly rule: RuleInfo<W> } | { readonly kind: "fn"; readonly fn: FnInfo<W> };
+export type Named<W> =
+  | { readonly kind: "rule"; readonly rule: RuleInfo<W> }
+  | { readonly kind: "fn"; readonly fn: FnInfo<W> };
 
 /** An `app`: its notes and parameters, as written; what its libraries' runtimes do with them is theirs. */
 export interface App<W> {
@@ -77,9 +79,7 @@ export interface App<W> {
 
 /** The laws a world alone must meet: each law whose one parameter is its trace, on a trace of no steps. */
 export function lawful<W extends Machine, V>(program: Program<W, V>, w: W, still: (v: V) => Trace<V>): boolean {
-  return program.laws
-    .filter((l) => l.params.length === 1)
-    .every((l) => l.body(w, [still(program.value(w))]));
+  return program.laws.filter((l) => l.params.length === 1).every((l) => l.body(w, [still(program.value(w))]));
 }
 
 type Implementation = (args: readonly unknown[], decl: ExternInfo) => unknown;

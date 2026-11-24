@@ -1,6 +1,6 @@
 # `cli` runtimes
 
-Empty: one directory per language goes here, `real/<lang>/` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)). Until one exists, the todo printers in `src/crates/emit-*` embed this runtime themselves.
+One directory per language: `rust`, `ts`, `ruby`, `cpp` ([decision 009](../../../docs/decisions/009-one-compiler-any-language.md)).
 
 ## What a runtime implements
 
@@ -19,5 +19,4 @@ The bytes are the [contract](../../../pocs/todo-app/docs/contract.md)'s. A runti
 
 ## Limits
 
-- The manifest's exact format is not fixed yet; it comes with the LIR (`src/crates/lir`). This table names what it must carry, not its shape.
-- Nothing here has been built from this description; the four embedded runtimes predate it.
+- The manifest's shape is each printer's own data; the LIR fixes what it carries, not how a runtime reads it. The four runtimes were lifted from the todo POC's hand-written backends, so a second `cli` program will find what they lack.
