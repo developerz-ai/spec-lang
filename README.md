@@ -225,6 +225,18 @@ fn price(base: Money[USD], early: Time) -> Money[USD] = ?price;
 
 A strong model writes the types, the cases and the laws. A small model fills `?price`, and the cases say whether it is right. More: [whole programs](docs/idea/24-examples.md), [one program per domain](docs/idea/15-domain-tour.md).
 
+## Platform independent
+
+A module names no language, framework, database, operating system or chip. Integers, text, time, order and rounding mean the same everywhere, so the logic and its tests run unchanged in the interpreter on any machine, and on every backend that keeps the meaning. Only three places may know a platform:
+
+| Place | Knows |
+|---|---|
+| `app` | which targets, places and handlers |
+| `foreign` | one symbol in one language, behind a contract |
+| `machine` | layout, memory order, registers |
+
+Independent meaning does not promise equal speed or equal reach: a backend that cannot keep a guarantee refuses to build, and a phone screen is still not a console screen.
+
 ## The ideas
 
 Design goals. None has been demonstrated.
