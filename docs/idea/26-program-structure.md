@@ -88,7 +88,7 @@ law never_negative(t: Trace[reserve], i: Id[Item]) =
 3 domains         app.slg
                   sales/orders.slg   sales/invoices.slg
                   stock/items.slg    stock/counts.slg
-                  vocab/house.slg    foreign/bank.slg
+                  vocab/house.slg    foreign/bank/contract.slg
                   spec-lang.lock
 4 many apps       apps/web.slg  apps/admin.slg  apps/mobile.slg  apps/worker.slg
                   domains/...    one set of modules, several apps
@@ -104,6 +104,92 @@ law never_negative(t: Trace[reserve], i: Id[Item]) =
 | generated output | per backend, in the place its framework expects | never edited |
 
 Moving from 1 to 4 renames paths and changes no logic. Declarations keep their identity, so tests, evidence and history follow ([07](07-agent-loop.md)).
+
+## Directories to copy
+
+A path is a name: `sales/orders.slg` is `sales.orders`. So the tree is the table of contents, and a model can guess where a thing is before it searches.
+
+**SaaS on Ultimate**
+
+```text
+shop/
+  spec-lang.lock
+  apps/       web.slg  admin.slg  worker.slg
+  people/     users.slg  orgs.slg  invites.slg  roles.slg
+  sales/      orders.slg  carts.slg  refunds.slg
+  billing/    plans.slg  seats.slg  invoices.slg
+  notify/     mail.slg  webhooks.slg
+  screens/    dashboard.slg  orders.slg  settings.slg
+  vocab/      house.slg
+  foreign/
+    payments/ contract.slg  pretend.slg  real.ts  real.rb
+    storage/  contract.slg  pretend.slg  real.ts
+  out/        generated, ignored by git
+```
+
+**Game**
+
+```text
+trains/
+  apps/       desktop.slg  server.slg  headless.slg
+  world/      map.slg  terrain.slg  time.slg
+  track/      segments.slg  signals.slg  building.slg
+  trains/     movement.slg  orders.slg  breakdowns.slg
+  economy/    cash.slg  cargo.slg  companies.slg
+  players/    commands.slg  ai.slg
+  data/       engines.slg  cargo_types.slg
+  foreign/    render/  audio/
+```
+
+**Database or kernel**
+
+```text
+store/
+  apps/       server.slg  embedded.slg
+  pages/      layout.slg  cache.slg
+  log/        records.slg  recovery.slg
+  tx/         locks.slg  snapshots.slg
+  query/      plan.slg  run.slg
+  machine/    allocator.slg  checksum.slg
+  foreign/    disk/  boot/
+```
+
+**A module inside an existing app**
+
+```text
+existing-app/
+  apps/web/...                 hand-written, unchanged
+  spec/   webhooks.slg  seats.slg  app.slg
+  spec/foreign/  orgs.slg      what the old code offers
+  spec-lang.lock
+```
+
+**Many products, one repository**
+
+```text
+company/
+  spec-lang.lock               one set of versions for all
+  shared/     money.slg  users.slg  audit.slg
+  shop/       apps/  sales/  billing/
+  support/    apps/  tickets/  replies/
+```
+
+| Rule | Why |
+|---|---|
+| folders are areas of the business or the machine, two levels deep at most | deeper paths cost tokens and hide things |
+| a folder has a reason to exist at two modules | one module needs no folder |
+| no `utils`, `common`, `helpers`, `types`, `models`, `services`, `tests` | they name a kind of file and not a subject, and everything drifts there |
+| `shared/` only for what three products use | before that, copy or leave it |
+| screens are apart from logic | a screen changes for reasons the logic does not |
+| one contract folder per outside provider, with its pretend version beside the real ones | [35](35-packages.md) |
+| fixed names: `apps` `vocab` `foreign` `out` | a model finds them in any project |
+| no barrel or index files | a path already says what to `use` |
+| data tables are modules of `const` | checked like anything else |
+| nothing generated outside `out/`, except the embedded layout | [32](32-build-layout.md) |
+
+`spec-lang view map` prints the tree with a line per module: its first `@why`, its states, its `pub` names and its size in tokens. That is the first thing an agent reads ([07](07-agent-loop.md)). Nobody maintains it.
+
+Moving a file is an edit to a name: every `use` follows, and identity, tests and evidence stay.
 
 ## The app
 
