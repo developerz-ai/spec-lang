@@ -92,8 +92,25 @@ fn an_unknown_strategy_is_an_error() {
 fn syntax_check(files: &[OutFile], name: &str) {
     let dir = scratch(name);
     write(files, &dir);
+    // The compiler that builds the project, as CMake picks it: `CXX`, else the system `c++`.
+    // A fixed `clang++` fails where clang is older than the C++ library (clang 18 cannot use GCC 13's <expected>).
+    let cxx = std::env::var("CXX").unwrap_or_else(|_| "c++".to_string());
     for f in files.iter().filter(|f| f.path.ends_with(".cpp") || f.path.ends_with(".hpp")) {
-        let out = Command::new("clang++")
+        // A header is checked as build systems check it: through a file that includes it, so it is
+        // self-contained and `#pragma once` is not in the main file.
+        let unit = if f.path.ends_with(".hpp") {
+            let probe = format!("{}.probe.cpp", f.path);
+            std::fs::write(
+                dir.join(&probe),
+                format!("#include \"{}\"\n", Path::new(&f.path).file_name().unwrap().to_string_lossy()),
+            )
+            .unwrap();
+            probe
+        } else {
+            f.path.clone()
+        };
+        let header_dir = Path::new(&f.path).parent().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default();
+        let out = Command::new(&cxx)
             .args([
                 "-std=c++23",
                 "-fsyntax-only",
@@ -105,11 +122,11 @@ fn syntax_check(files: &[OutFile], name: &str) {
                 "-Itests",
                 "-Itests/rt",
             ])
-            .arg(if f.path.ends_with(".hpp") { "-xc++-header" } else { "-xc++" })
-            .arg(&f.path)
+            .arg(format!("-I{header_dir}"))
+            .arg(&unit)
             .current_dir(&dir)
             .output()
-            .expect("clang++");
+            .unwrap_or_else(|e| panic!("{cxx}: {e}"));
         assert!(out.status.success(), "{}:\n{}", f.path, String::from_utf8_lossy(&out.stderr));
     }
 }
