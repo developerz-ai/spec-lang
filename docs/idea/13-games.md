@@ -80,10 +80,12 @@ rule settle(batch: Id[Batch]) = {
   world.set(Batch, id: batch, units: 0);
 }
 
+@access(world.get(Station, id: from).owner == by)
 @guard(cash[by] >= work.whole * 50 else Broke)
 @guard(not world.get(Station, id: from).next.is(Some(_)) else Occupied)
 pub rule extend(by: Id[Owner], from: Id[Station], work: Fixed[s]) -> Id[Station] = {
-  let made = world.spawn(Station(by, work: work, next: none));
+  let made = Id.fresh();
+  world.spawn(made, Station(by, work: work, next: none));
   world.set(Station, id: from, next: Some(made));
   book(by, amount: 0 - work.whole * 50, why: "new station");
   return made;
@@ -102,7 +104,7 @@ test same_seed_same_world = {
 }
 ```
 
-What the author did not write: the command variant and its wire codec, save and load for two components, the replay entry, the system order, the validation that `by` owns `from` (missing above on purpose: `extend` has a guard on `by`, but none on the station, so the gap is the author's to see in the guarantee diff), or any registration.
+What the author did not write: the command variant and its wire codec, save and load for two components, the replay entry, the system order, or any registration. Who may extend a station is one `@access` line, checked on every path a command can arrive by.
 
 ## Lowering today: the in-house engine
 

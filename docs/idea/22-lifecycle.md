@@ -10,26 +10,34 @@ The unit is one action, entity or job inside an existing Ultimate app, never the
 
 | Step | What happens | Evidence at the end |
 |---|---|---|
-| 1 observe | registry facts (entities, actions, policies) become interfaces; bodies stay `foreign` | `assumed`, some monitored |
-| 2 characterise | redacted traces are recorded; candidate laws mined from them are labelled `observed` | `sampled` about what *is* |
-| 3 intend | a person accepts, rejects or edits each candidate; a bug that traffic always showed must not become a law | laws with a human origin |
-| 4 shadow | the new logic runs on the same inputs in the simulated world; replies and effects are compared, nothing is written twice | differences, each a question |
-| 5 replace | the declaration goes live behind the same typed boundary; the old tests are black-box oracles | parity for what was exercised |
-| 6 count | behaviour that had to be added back is listed | the honest cost |
+| 1 observe | registry facts (entities, actions, policies) become a module contract; bodies stay `foreign` | `assumed`, some monitored |
+| 2 characterise | redacted traces are recorded; laws mined from them arrive with origin `import` | `sampled` (recorded traces) |
+| 3 intend | a person accepts, rejects or edits each; a bug that traffic always showed must not become a law | same level; origin becomes `person` |
+| 4 shadow | the new logic runs on the same inputs in the simulated world; replies and effects are compared, nothing is written twice; each difference is a question | `sampled` (differential) |
+| 5 replace | the declaration goes live behind the same typed boundary; the old tests are black-box oracles | its own level; transfer `sampled` for what was exercised |
+| 6 count | behaviour that had to be added back is listed | unchanged |
+
+Level and origin are separate facts: how a claim is known, and who meant it ([04](04-evidence.md), [08](08-approval-and-anti-cheating.md)). A mined law can be `sampled` a million times and still be nobody's intent.
 
 ```slg
+fn may_charge(by: Id[User], order: Id[Order]) -> Bool = foreign ts "billing/policies/mayCharge";
+
+@access(may_charge(by, order) else NotFound)
 @uses(http.call, store.write)
 @fails(Declined, Unreachable)
+@assume("the provider treats one key as one charge")
 @idempotent(key)
-task charge(order: Id[Order], key: Text) -> Receipt = foreign ts "billing/actions/charge";
+task charge(by: Id[User], order: Id[Order], key: Text) -> Receipt = foreign ts "billing/actions/charge";
 
 @given(http.reply(503))
 test legacy_charge_reports_unreachable = {
-  charge(Id(1), key: "k1") -> fail Unreachable;
+  charge(ana, order: Id(1), key: "k1") -> fail Unreachable;
 }
 ```
 
-Callers, tests and laws are written against this now and do not change when the body does. Calls the old code makes around the boundary are a **coverage hole**, reported, not green. Importing meaning from arbitrary TypeScript is not solved: step 1 reads what a framework already declares, and the logic is drafted by a model and accepted by a person.
+The old policy arrives as a `foreign` predicate inside `@access`, the only access mechanism, so it is `assumed` until written as logic ([27](27-authorization.md)). Where an old entity is also written by code outside the module, the module does not own it yet: the lifted state is read-only, writes go through `foreign`, and no state law about it can be better than `assumed`. Ownership moves when the last outside writer does.
+
+Callers, tests and laws are written against this now and do not change when the body does. Calls the old code makes around the boundary are listed as uncovered, never counted green. Importing meaning from arbitrary TypeScript is not solved: step 1 reads what a framework already declares, and the logic is drafted by a model and accepted by a person.
 
 ## Data changes
 
@@ -43,6 +51,8 @@ A type with stored values has a history. The compiler compares the deployed sche
 | lossy | drop a field | a signed irreversible step |
 | contradictory | a law no stored row satisfies | a question; no plan |
 | ambiguous | a field gone and a field new: rename, or not? | pick one of two edits |
+| due | a flow's `after:` shortened; rows already past it would all move at once | which rows, how fast, or from when |
+| moved | a `state` given to another module | nothing if its laws travel; else a question |
 
 ```json
 {"code":"E-DATA","type":"Order","from":"s:71","to":"s:80","class":"partial",
@@ -67,6 +77,8 @@ test repair_keeps_money(o: before.Order where self.email != none) = {
 ```
 
 Obligations, checked like any other: every old value maps or is quarantined; the backfill resumes after a crash at any point and is idempotent; laws hold on the result; if old and new versions overlap, traces mix them. If overlap cannot hold a law, the plan says downtime. The transition is generated and deleted after `contract`; no compatibility code stays in source. A business mapping is never inferred from a schema diff.
+
+**Runs in flight.** A `task` run may outlive a release, and its finished steps were steps of the old body. A run finishes on the body it started with, pinned by hash, and new runs use the new one. The state between steps is shared, so the laws are explored with both bodies in one trace; if that refutes a law, the plan drains old runs first. Events wait the same way: an event emitted before the release must still decode after it, so an event type changes under the same classes as stored data.
 
 ## Release
 
@@ -105,8 +117,8 @@ A candidate arrives as source, blocked by a hole:
 @why("incident: the reply was lost and the card was charged again")
 @given(clock.at(0s), http.reply(200), net.drop(1))
 test lost_reply_then_retry = {
-  charge(Id(1), key: "k1") -> ?expected_first;
-  charge(Id(1), key: "k1") -> ?expected_second;
+  charge(ana, order: Id(1), key: "k1") -> ?expected_first;
+  charge(ana, order: Id(1), key: "k1") -> ?expected_second;
 }
 ```
 
@@ -116,9 +128,9 @@ Production shows what happened, not what should have. A hole in an expectation m
 |---|---|
 | private data | `@pii` and `@secret` values are replaced while shrinking, keeping the path; if the path needs the value, it stays in the protected environment behind a handle |
 | hostile data | the replay is typed values; its text is untrusted, never placed in a slice ([07](07-agent-loop.md)) |
-| nondeterminism in the target | the replay may not reproduce: that is reported as `diverges`, a backend lead |
-| a `proven` claim fails | becomes `contradicted`; suspects are listed: assumptions, backend, compiler, hardware, the monitor |
-| no violation seen | sampling says nothing about absence, and the report does not either |
+| nondeterminism in the target | the replay may not reproduce: parity result `diverges`, a backend lead |
+| a claim reported `proven` fails | if the replay reproduces in the interpreter, the claim is `refuted`: the prover or a law was wrong. If not, a token it trusts is refuted (backend, store, hardware, `@assume`): the claim is reported `stated` until that token is repaired, and release is blocked |
+| no violation seen | the claim stays at its level; `monitored` never raises it |
 
 Debugging stays in source: stack frames, logs and profiles map back to declarations, and a recorded effect trace replays in the interpreter. Opening generated code is reading disassembly, allowed and a sign of a suspected backend bug ([10](10-compiler-and-ir.md)).
 
@@ -128,7 +140,7 @@ Debugging stays in source: stack frames, logs and profiles map back to declarati
 |---|---|
 | a package or vocabulary | a guarantee diff; its proofs are re-checked, not trusted |
 | a default policy | a listed behaviour change, even with no source edit |
-| the compiler or solver | evidence that named the old one is re-earned; a claim that becomes `unknown` is shown as a lost rung |
+| the compiler or solver | evidence that named the old one is re-earned; a claim the new one cannot decide drops to the level still earned, shown in the diff |
 | a framework version | its backend re-runs conformance; attestation is per version |
 | the card | printed by `view card`, versioned with the compiler; old source is rewritten by a formatter step that preserves IR, or the change is a break |
 
@@ -137,14 +149,14 @@ Debugging stays in source: stack frames, logs and profiles map back to declarati
 | Budget | Declared on | When exceeded |
 |---|---|---|
 | runtime: `@within`, `@alloc`, size | declaration | checked where it can be, else monitored; the default only reports |
-| verification: solver steps | obligation | `unknown`, reproducibly |
+| verification: solver steps | obligation | the claim stays at the level already earned, reproducibly |
 | context: `editCost` | declaration, tracked | a report that this declaration has become expensive to change |
 
 Agents have no work budget. A stall is handled by [07](07-agent-loop.md).
 
 ## The way out
 
-`edit --eject` can eject one declaration: its generated code becomes hand-owned and the declaration's body becomes `foreign`. Types, contract and tests remain and keep running; evidence drops to what tests and monitors support. It is one-way, per declaration, and the reason is recorded.
+`edit --eject` can eject one declaration: its generated code becomes hand-owned and the declaration's body becomes `foreign`. Types, contract and tests remain and keep running; claims resting on it drop to `sampled` where tests cover them, else `assumed`. It is one-way, per declaration, and the reason is recorded.
 
 If the language itself is stopped ([19](19-density-and-experiments.md), K3), every module can be ejected, or its IR printed as the embedded TypeScript form. That printer is part of the E0 work, so the exit exists before there is anything to leave.
 
@@ -154,5 +166,6 @@ If the language itself is stopped ([19](19-density-and-experiments.md), K3), eve
 - Shadowing effects needs the simulated world to behave like the real one.
 - Expand and contract multiplies states during a rollout; mixed-version exploration may only reach small bounds.
 - Redaction that preserves a failing path is not always possible.
+- Pinning runs keeps old bodies, and their bugs, alive for as long as the longest run.
 - `before` needs a decision in the card, and long-lived data may need more than one past version at once.
 - Ejected code is generated code; nobody has yet had to live with it.

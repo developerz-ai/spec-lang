@@ -102,8 +102,8 @@ const ana: Id[User] = Id(1);
 
 @why("money moves; it is never created or destroyed")
 @uses(accounts.write)
-@access(user -> all)
-@guard(accounts[from].owner == by else NotFound, to in accounts else NotFound, from != to else SameAccount)
+@access(accounts[from].owner == by)
+@guard(to in accounts else NotFound, from != to else SameAccount)
 @guard(n > 0USD else NotPositive, accounts[from].balance >= n else Insufficient)
 @idempotent(key)
 pub rule transfer(by: Id[User], key: Id[Transfer], from: Id[Account], to: Id[Account], n: Money[USD]) = {

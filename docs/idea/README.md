@@ -32,6 +32,14 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | [`23-memory-concurrency-distribution.md`](23-memory-concurrency-distribution.md) | Immutable by default, compile time for free, no async colouring, parallel by purity, places and replicas in the types. |
 | [`24-examples.md`](24-examples.md) | Whole programs, all designer-written, all parsing. |
 | [`25-grammar.md`](25-grammar.md) | The grammar: the one part that has been run. |
+| [`26-program-structure.md`](26-program-structure.md) | How to lay out a program, from one file to a fleet: modules, ownership, boundaries, apps. |
+| [`27-authorization.md`](27-authorization.md) | One model for who may do what, on every surface. |
+| [`28-standard-library.md`](28-standard-library.md) | Every core name with its signature. |
+| [`29-first-vocabularies.md`](29-first-vocabularies.md) | The exact kinds and notes of `web`, `jobs`, `errors`, `game` and `storage`. |
+| [`30-type-rules.md`](30-type-rules.md) | Typing, effects and evaluation, precise enough to build one checker twice. |
+| [`31-dropping-down.md`](31-dropping-down.md) | A little backend code behind a contract, as C keeps a little assembly. |
+| [`32-build-layout.md`](32-build-layout.md) | Where generated software goes, compared with TypeScript. |
+| [`33-data-structures-and-algorithms.md`](33-data-structures-and-algorithms.md) | The collection is meaning, its storage is a plan; cost as a tested claim; what is taken from Haskell. |
 
 ## Reading paths
 

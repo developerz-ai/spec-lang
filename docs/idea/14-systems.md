@@ -19,8 +19,8 @@ layout Uart(@ro rbr: u8, @wo @at(0) thr: u8, @ro @at(5) lsr: u8) {
 }
 
 @on(syscall(3))
-@access(anyone -> call)
-@guard(len <= 1MiB else TooBig, fd in files[by] else BadFd)
+@access(fd in files[by] else BadFd)
+@guard(len <= 1MiB else TooBig)
 @fails(WouldBlock)
 @uses(files.write, user.read)
 pub rule write(by: Pid, fd: Fd, buf: UserPtr[u8], len: u64) -> u64 = machine {
@@ -37,7 +37,7 @@ rule uart_rx() = machine { rx.push(Uart.rbr.read()); }
 @order(runqueue, zones, uart_tx)
 locks Kernel;
 
-fn pick(q: RunQueue) -> Option[Pid] = q.ready.sort(it.vruntime).first;
+fn pick(q: RunQueue) -> Option[Pid] = q.ready.sort(it.vruntime).get(0);
 
 law no_starvation(t: Trace[tick | block | wake], p: Pid) =
   t.steps.all(s => p in s.before.ready implies t.within(100ms, ran(p)));

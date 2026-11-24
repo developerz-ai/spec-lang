@@ -16,9 +16,9 @@ The spec-lang version is the [webhooks example](24-examples.md#webhooks-tasks-re
 | Registration lines in four shared files | 27 | 258 |
 | TypeScript tests, 3 files, comments stripped | 252 | 2,863 |
 | **TypeScript total** | **631** | **6,705** |
-| `webhooks.slg`: types, errors, rules, one task, eight `@why` lines | 162 | 1,665 |
-| `webhooks.slg`: two laws, seven tests | 67 | 834 |
-| **spec-lang total** | **229** | **2,499** |
+| `webhooks.slg`: types, errors, rules, one task, eight `@why` lines | 161 | 1,678 |
+| `webhooks.slg`: two laws, seven tests | 67 | 832 |
+| **spec-lang total** | **228** | **2,510** |
 
 **Ratio: 2.7x tokens, 2.8x lines.** Source and wiring alone are 2.3x. Tests are 3.4x.
 
@@ -91,16 +91,16 @@ Paths are in the Ultimate repository.
 | `entity`, `where` claims, `@unique`, `@index` | `entity()`, `invariant()` | `packages/entity/src/entity.ts` |
 | `@tenant(org)` | `.tenant()` column | `packages/entity/src/entity.ts` |
 | `@secret` field | `.sealed()` | `packages/entity/src/sealed-column.ts` |
-| `@guard(... else Forbidden)` on who, `@access` | a named `can()` policy, shared by every surface | `packages/policy/src/policy.ts` |
+| `@access(p else Err)` | a named `can()` policy, shared by every surface | `packages/policy/src/policy.ts` |
 | `pub rule` | `action()`, one per file | `packages/action/src/action.ts` |
 | `query`, `@live` | `query()`, `live: true` | `packages/query/src/query.ts` |
-| `event`, `.emit` inside a rule | an enqueue in the emitting action's transaction, one statement for many | `packages/jobs/src/job-enqueue-many.ts` |
+| `task.start(...)` or `event.emit(...)` inside a rule | an enqueue in the calling action's transaction, one statement for many | `packages/jobs/src/job-enqueue-many.ts` |
 | `task` | `job()` with durable steps (next section) | `packages/jobs/src/steps-api.ts` |
 | `@on(every(6h))` | Ultimate's `task()`, a cron trigger that enqueues a job | `packages/jobs/src/task.ts` |
 | `page` with `@at` | a route and `page.tsx` | `packages/render/src/route.ts` |
 | `error` with `@status`, `@fix` | `defineError` | `packages/core` |
 | `test`, `law` | the framework's test kinds (below) | `packages/testing` |
-| `app` with `@target(ultimate)` | registry entries | `apps/web/api/index.ts` in the app |
+| `app` with `@target(ultimate)`, its `http:` and `tools:` lists | registry entries, and `mcp.expose` per action | `apps/web/api/index.ts` in the app |
 | a schema change | nothing emitted: the backend runs `x db gen` | `packages/db` |
 | module facts | nothing emitted: `x.manifest.json` stays the framework's | `packages/manifest` |
 
@@ -152,7 +152,7 @@ Committing output bends "generated software is a build output". The framework's 
 A foreign binding is one line, and its evidence starts at `assumed`:
 
 ```slg
-fn administers(by: orgs.Member, org: Id[orgs.Org]) -> Bool = foreign ts "@postly/core#mayAdministerOrg";
+fn administers(by: Id[orgs.Member], org: Id[orgs.Org]) -> Bool = foreign ts "@postly/core#mayAdministerOrg";
 ```
 
 Generated code must pass the app's own lint guards with no exemption.
@@ -194,7 +194,7 @@ bunx spec-lang build webhooks           # rewrites generated files, runs x db ge
 bunx spec-lang land webhooks            # hashes match, then x verify with the lowered tests
 ```
 
-The edit adds `enabled_at: Option[Instant] = none` to `Endpoint`, and:
+The edit adds `enabled_at: Option[Instant] = none` to `Endpoint`, adds `enable` to the app's `http:` list, and:
 
 ```slg
 @status(429)
@@ -204,10 +204,9 @@ error EnableTooSoon(id: Id[Endpoint], retry_at: Instant) =
 
 @why("an owner who fixed the receiver should not wait for support, and should not flap it")
 @uses(Endpoint.write, clock.read)
-@guard(administers(by, org) else Forbidden)
+@access(administers(by, org) else Forbidden)
 @guard(id in Endpoint and Endpoint[id].org == org else NotFound(id))
-@surface(http)
-pub rule enable(by: orgs.Member, org: Id[orgs.Org], id: Id[Endpoint]) -> Id[Endpoint] = {
+pub rule enable(by: Id[orgs.Member], org: Id[orgs.Org], id: Id[Endpoint]) -> Id[Endpoint] = {
   match Endpoint[id].enabled_at {
     Some(t) => { if t + 1h > clock.instant() { fail EnableTooSoon(id, retry_at: t + 1h); } }
     none => {}
@@ -247,8 +246,8 @@ Choose per module. Go below a framework when there is no framework process, when
 ## Limits
 
 - **The measured win is 2.7x and mostly not a framework win.** It comes from removing layers and wiring. Declarations and fan-out are where Ultimate was already dense.
-- **Atomic rules on Postgres are unsolved here.** A guard that reads a count is only safe if the backend adds a lock, a serialisable transaction with retry, or a constraint it invents. Choosing among them deterministically, and knowing when to refuse, is the hardest job this backend has. The interpreter must also model Postgres closely enough that a green run predicts a green target.
-- **Four things the feature needed that the card does not define**, written here as vocabulary: an `error` kind with status, cause and fix; returning a `@secret` once (`@reveals`); the current attempt number inside a retried task (`retry.attempt`); and running pending tasks to completion in a scenario (`tasks.drain()`).
+- **Atomic rules on Postgres are designed, not shown.** A guard that reads a count is safe only with a constraint, a conditional counter, a lock or a serialisable retry; [11](11-backends-and-parity.md) gives the choice and when to refuse. No line of it has run against Postgres.
+- **Four things the feature needed beyond the card** are vocabulary, specified in [`29-first-vocabularies.md`](29-first-vocabularies.md): an `error` kind with status, cause and fix; returning a `@secret` once (`@reveals`); the attempt number inside a task (`run.attempt`); and running started tasks to completion in a scenario (`tasks.drain()`).
 - **Retry against replay.** See the task section: attempt-numbered step names are a design, not a tested answer.
 - **Registries.** Ultimate apps register features in hand-maintained files. Either the app adds one import per registry, or Ultimate accepts a fragment.
 - **Lifted logic is only as faithful as the tests that accept it.** No screen was measured.

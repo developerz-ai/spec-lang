@@ -228,7 +228,7 @@ A prediction from the [corpus](docs/idea/16-corpus.md) and the trials; nothing h
 | **Not for** | SIMD kernels, boot code, lock-free internals | hand-written behind a contract |
 | **Not for** | a small app that already works | rewriting costs more than it saves |
 
-**Break-even.** The language card costs about 4,700 tokens to load; the measured feature saved about 4,200. One feature of that size does not pay for the card, so the gain must come from several features per session, caching, or fewer wrong attempts. The last is unmeasured.
+**Break-even.** The language card costs about 4,900 tokens to load; the measured feature saved about 4,200. One feature of that size does not pay for the card, so the gain must come from several features per session, caching, or fewer wrong attempts. The last is unmeasured.
 
 Rule of thumb: if the same rule would be written in three or more places, or getting it wrong costs money, data or safety, use it.
 
@@ -236,11 +236,13 @@ Rule of thumb: if the same rule would be written in three or more places, or get
 
 | Finding | Caveat |
 |---|---|
-| One real feature (webhooks in Ultimate's example app): 6,705 tokens of TypeScript, 2,499 of spec-lang, **2.7x** | one feature, no UI, parsed but never run ([12](docs/idea/12-frameworks.md)) |
+| One real feature (webhooks in Ultimate's example app): 6,705 tokens of TypeScript, 2,510 of spec-lang, **2.7x** | one feature, no UI, parsed but never run ([12](docs/idea/12-frameworks.md)) |
 | Two models given only the card wrote 20 modules: **16 parsed first try** | syntax only; the first author marked 183 lines as guesses. A small model's later 10 of 10 is not comparable: its card held near-answers ([02](docs/idea/02-syntax.md)) |
 | In a private corpus, one opinion per person per item took about 2k lines in about 50 files; 10 to 20% of the production code was judged essential | one reader's judgement, one organisation ([16](docs/idea/16-corpus.md)) |
 | Maths symbols often cost more tokens than words, and only `² ³ ± °C` cost fewer | tokens are not accuracy; no current Claude tokenizer was measured ([02](docs/idea/02-syntax.md)) |
 | Simulations, codecs and kernels are expected to barely shrink | unmeasured; there the gain would be checking, not size ([14](docs/idea/14-systems.md), [16](docs/idea/16-corpus.md)) |
+
+Where to go next: [structure a program](docs/idea/26-program-structure.md) · [who may do what](docs/idea/27-authorization.md) · [standard library](docs/idea/28-standard-library.md) · [first vocabularies](docs/idea/29-first-vocabularies.md) · [type rules](docs/idea/30-type-rules.md) · [a little backend code](docs/idea/31-dropping-down.md) · [build layout](docs/idea/32-build-layout.md)
 
 The first milestone tries to kill the idea: the same semantics embedded in TypeScript is the control. If the bespoke language does not beat it, we ship the embedded form ([19](docs/idea/19-density-and-experiments.md), [20](docs/idea/20-roadmap.md)).
 

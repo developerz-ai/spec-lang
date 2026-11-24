@@ -27,7 +27,7 @@ Grammar never grows per domain. A vocabulary adds kinds and notes, nothing else.
 |---|---|
 | `type` | a set of values: range, record, sum (`A \| B(x: T)`), or `T where claim` |
 | `const` `state` | a fixed value · a place that rules change |
-| `fn` | pure computation |
+| `fn` | writes nothing; may read state. Pure, for `@memo` and the build, means it reads none |
 | `rule` | **state + event -> new state + effects + reply.** Parameters are the event. Atomic; never waits on the outside world |
 | `task` | steps over many commits: each rule it calls commits alone; may call out and use the reply; resumes after a crash |
 | `event` | a fact a rule emits and `@on` listens to |
@@ -65,8 +65,8 @@ Callers never change when the body does.
 | `@given(state -> value, handler, other_test)` | starting world of a test; a test name starts from its end state |
 | `@retry(n, on: E, exhausted: rule)` `@idempotent(key)` | delivery policy; `exhausted` runs when the last try fails |
 | `@pii` `@secret` `@tenant(x)` | information-flow labels, also on parameters |
-| `@access(who -> ops)` | who may: `anyone`, `user`, a role, or a field holding an `Id[User]`; with a caller and neither this nor a guard on `by`, **denied** |
-| `@edge(A -> B, via: rule, by: who, after: t)` | one legal move of a `flow`; any other fails `IllegalMove`; a self-move restarts `after`; `by` adds to `@access` |
+| `@access(p else Err)` | may this caller call at all: a Bool over `by` and the parameters, default `NotFound`. On an entity: `@access(owner -> all, admin -> read)`. Absent where there is a caller: **denied**. Whether the call is legal now is a `@guard` |
+| `@edge(A -> B, via: rule, by: who, after: t)` | one legal move of a `flow`; any other fails `IllegalMove`; a self-move restarts `after`; `by` names a subject `fn` and adds to `@access` |
 | `@assume("reason")` | admits a claim unproven; always listed in reports |
 | `@target(x)` | choose a backend |
 | `@memo` `@mmio` `@place` `@allows` | see below; `@allows` says where a new note may go |
@@ -105,26 +105,26 @@ rule pay(id: Id[Account], n: Cents) = {
 | Errors | a name after `fail` or `else` declares itself; give it data with `type Held(by: Id[User]);` |
 | Integers | `Int` is exact and unbounded; `u8 ... u64`, `i8 ... i64` wrap and belong to layouts. `.round(half_even)` is how `Decimal` and `Money` come back to their scale |
 
-**Core library.** Collections: `size filter map flat_map fold sum min max all any find position distinct sort(key) reversed take drop zip group_by first last contains push insert remove keys values entries`. Text: `size split join trim lower starts_with replace bytes`. Numbers: `abs min max clamp div round`. Option: `Some none else is`. Anything not listed comes from a `use`d vocabulary.
+**Core library.** Collections: `size filter map flat_map fold sum min max all any find position distinct sort(key) reversed take drop zip group_by first last contains push insert remove keys values entries`. Text: `size split join trim lower starts_with replace bytes`. Numbers: `abs min max clamp div round`. Option: `Some none else is`. A name that changes a place (`push insert remove`) is a statement and returns nothing; every other name returns a new value. Signatures: [28](28-standard-library.md). Anything not listed comes from a `use`d vocabulary.
 
 ## How it runs
 
-1. **A rule is atomic**: all its writes happen or none; a failure leaves the world unchanged. A rule called inside a rule joins it.
+1. **A rule is atomic**: all its writes happen or none; a failure leaves the world unchanged. A store that cannot order it within its retry bound fails it with `Contended`. A rule called inside a rule joins it.
 2. Rules interleave; traces explore every order the triggers allow. A trace starts from `@given`, or from any world its types, flows and laws allow; a counterexample that starts where no rule can reach says so and offers the missing law.
 3. Guards run first, top to bottom. The first that fails gives the error. Names a guard pattern binds are in scope after it.
    `x else fail E` propagates; `match try_call(f) { Ok(v) => ...; Err(e) => ...; }` handles a failure here.
-4. `by` is the caller; a test passes it as an ordinary argument. `@access` is required where someone can call in (http, client, agent tool); timers, events and interrupts have no caller and need none.
+4. `by` is the caller; a test passes it as an ordinary argument. `@access` is required where someone can call in (http, client, agent tool), as `@access(true)` if there is no `by`. Timers, events, interrupts and the local user of a script have no caller. A direct call in a test checks it too.
 5. Replies may be omitted; `return;` leaves early.
 6. `@idempotent(key)`: same key and payload replays the first reply; same key, different payload is `fail KeyReused`.
-7. In a test, `clock.advance(d)` fires every `every`, `tick` and flow deadline that falls due. `@on` rules can also be called directly.
+7. In a test, `clock.advance(d)` fires every `every`, `tick`, flow deadline and retry backoff that falls due. `@on` rules can also be called directly.
 8. In a `rule`, outside effects (mail, http) are sent after commit, at least once, and have no reply. A reply needs a `task`, started by `@on` or by `name.start(...)` after the caller commits.
-   A run has one key. After a crash, finished steps of the attempt are not run again. `@retry` starts a new attempt, which repeats every step with the same key, so a step that is not safe to repeat is `E-OPEN`. A direct call in a test is one attempt. `@idempotent` replays successes only. Exactly once across a third party is `assumed`.
+   A run has one key. After a crash, finished steps of the attempt are not run again; `now()`, ids and random values are steps. How long that survives is the backend's claim. `@retry` starts a new attempt, which repeats every step with the same key, so a step that is not safe to repeat is `E-OPEN`. A direct call in a test is one attempt. `@idempotent` replays successes only, also across attempts. Exactly once across a third party is `assumed`.
    Events reach each listener after commit, at least once, in its own commit, in the order one rule emitted them.
 9. `@within` is a claim, checked where it can be and monitored where it cannot; `over: stop` or `over: refuse` acts on overrun, the default only reports.
 10. On an exposed rule, `Missing` and a denied `@access` give the same `NotFound`, so existence does not leak. A direct call in a test sees `Missing`.
 11. The local disk, clock and device registers are part of the world; another machine or person is outside.
 
-**Traces.** `t.steps` gives `event`, `reply`, `at`, `before`, `after`; with several states write `it.before.accounts[k]`. `t.states` gives whole states. Liveness: `t.eventually(p)`, `t.within(5s, p)`; they assume fair scheduling and say so.
+**Traces.** `t.steps` gives `event`, `reply`, `at`, `before`, `after`; with several states write `it.before.accounts[k]`. `t.states` gives whole states, each with `at`. Liveness: `t.eventually(p)`, `t.within(5s, p)`; they assume fair scheduling and say so.
 
 ## Each remaining form, once
 
@@ -292,4 +292,4 @@ Full programs: [24](24-examples.md) (seats, todo, webhooks, movement, k8s servic
 
 ## Names
 
-Language and CLI `spec-lang`, files `.slg`, code fence `slg`. Path is the module: `seats/core.slg` is `seats.core`. `use seats.core;` gives `core.hold`; `use seats.core.hold;` gives `hold`; `use web;` gives a vocabulary's kinds and notes. Six verbs: `view edit test prove build land`.
+Language and CLI `spec-lang`, files `.slg`, code fence `slg`. Path is the module: `seats/core.slg` is `seats.core`. `use seats.core;` gives `core.hold`; `use seats.core.hold;` gives `hold`; `use web;` gives a vocabulary's kinds and notes. A module owns its `state`: only its rules write it. `use` has no cycles; an `event` breaks one. Only `app` names targets, places and handlers. Six verbs: `view edit test prove build land`.

@@ -26,7 +26,7 @@ The [card](01-language-card.md) is the syntax. This file is the argument for it.
 
 ## Grammar facts
 
-[the grammar](25-grammar.md) builds in Lark's strict mode as LALR(1) with zero conflicts and a lexer that needs no parser state. 31 reserved words, 41 nonterminals. Strict mode finds conflicts, not wrong trees (Limits).
+[The grammar](25-grammar.md) builds in Lark's strict mode as LALR(1) with zero conflicts and a lexer that needs no parser state. 31 reserved words, 41 nonterminals. Strict mode finds conflicts, not wrong trees: it missed that `x²` lexed as one name (fixed).
 
 The same file can drive constrained decoding. Mask with the complete base grammar, never with a vocabulary's closed list unless that list is complete: [a 2026 preprint](https://arxiv.org/abs/2606.21619) reports that constrainers rejecting valid programs cut functional correctness by up to 97% (read in summary only).
 
@@ -69,19 +69,19 @@ Extra tokens for the symbol inside `x _ y`, or whole-expression counts where sho
 
 spec-lang is 32 to 41% below Ruby. Without tests and contracts the gap is 16 to 25%. Maths saves 5% of the characters and costs more tokens on seven of nine.
 
-**Caveats.** One program, chosen and written on both sides by the language's designer. A library could shorten Ruby's generators and trace loop. Ruby needs no card: ours is 4,667 o200k tokens on 2026-11-24, so at 369 saved per module of this size it takes thirteen modules to break even, before prompt caching and before any repair. [19](19-density-and-experiments.md) owns the real comparison.
+**Caveats.** One program, chosen and written on both sides by the language's designer. A library could shorten Ruby's generators and trace loop. Ruby needs no card: ours is 4,868 o200k tokens on 2026-11-24, so at 369 saved per module of this size it takes fourteen modules to break even, before prompt caching and any repair. The [library reference](28-standard-library.md), if loaded whole, is another 5,000. [19](19-density-and-experiments.md) owns the real comparison.
 
 ### Layout
 
-Text transforms of the eight example files on 2026-11-24 (4,665 o200k tokens), change against the canonical form, range over nine.
+Text transforms of the eight programs in [24](24-examples.md) on 2026-11-24 (5,065 o200k tokens), change against the canonical form, range over nine.
 
 | Variant | Change |
 |---|---|
 | Unicode operators | 0.0 to +0.9% |
 | no line-end `;` | -1.1 to 0.0% |
-| offside (no block braces, no `;`) | -2.7 to -1.2% |
+| offside (no block braces, no `;`) | -2.8 to -1.2% |
 | one-space indent | -3.4 to 0.0% (0.0% on Claude 2) |
-| tab indent | -2.2 to +3.0% |
+| tab indent | -2.1 to +3.0% |
 
 None pays for a less familiar form whose edit accuracy is unmeasured. For scale, [Pan et al.](https://arxiv.org/abs/2508.13666) stripped formatting from existing languages: 24.5% fewer input tokens on average, worst Pass@1 drop 4.2%, on fill-in-the-middle tasks.
 
@@ -91,9 +91,9 @@ Run against the current grammar and examples. Synthetic faults, not model mistak
 
 | Probe | Result |
 |---|---|
-| delete each `}` in code | 42 of 42 fail to parse; reparsing from each declaration at column 0 pins all 42 to the right declaration |
+| delete each `}` in code | 50 of 50 fail to parse; reparsing from each declaration at column 0 pins all 50 to the right declaration |
 | delete each `}` inside text | 0 of 9 fail: interpolation is opaque to the grammar |
-| remove one line's indentation | 163 of 163 give the same tree |
+| remove one line's indentation | 182 of 182 give the same tree |
 | 20 habits from mainstream languages | 18 fail to parse |
 
 The 18 include `List<Int>`, `a % 2`, `&&`, `? :`, `+=`, `0..10`, a tail expression, `-> T { ... }` without `=`, `enum A { }` and `entity T { title: Text; }`. The two that parse are legal text: `const A = 3;` and an ill-typed lambda. The dangerous class parses and means something else; 20 hand-picked probes cannot show it is empty.
@@ -102,7 +102,7 @@ Writing the first seven programs, the designer made six syntax errors: three gra
 
 ## Blind trial
 
-**Method.** An author sees the card and nothing else: no parser, no examples directory, no other doc. It writes ten programs: ratings, invitations, retention, ledger, elevator, rate limiter, ring buffer, train, text diff, webhook retry. It marks each guess with a comment. The grammar runs once, afterwards.
+**Method.** An author sees the card and nothing else: no parser, no other doc. It writes ten programs: ratings, invitations, retention, ledger, elevator, rate limiter, ring buffer, train, text diff, webhook retry. It marks each guess with a comment. The grammar runs once, afterwards.
 
 **First author (Opus).** 9 of 10 files parsed first try. The failure was a bare `return;`, which the grammar then gained, making the same files 10 of 10. The first number is the result. The second only says the fix works: those files chose it.
 
@@ -138,4 +138,4 @@ Thresholds are proposals, to be fixed before each run.
 - **Regular is not learnable.** Zero conflicts says the text is unambiguous. It says nothing about whether models write correct programs in a language with no training data.
 - **Uniformity moves errors.** One shape means an invented `@retry_count(3)` parses. The vocabulary checker, which does not exist, must catch it.
 - **Text is opaque.** A broken `{name}` inside a literal parses; the checker must look inside.
-- **Small samples everywhere.** Eight programs, one Ruby comparison, synthetic faults. The examples and the card are still changing, so every count here is dated, not live.
+- **Small samples everywhere.** Eight programs, one Ruby comparison, synthetic faults. Examples and card still change: counts are dated, not live.

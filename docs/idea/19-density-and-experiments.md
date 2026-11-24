@@ -12,7 +12,7 @@
 | behaviour per source token | "behaviour" has no unit; whoever counts it decides the winner |
 | pass rate on small functions | models are near the ceiling there in familiar languages ([18](18-prior-art.md)) |
 
-**Static size is a diagnostic only.** It is reported, never ranked, and never in a headline. One measurement shows why (`o200k_base`, a proxy; counts say nothing about accuracy): [`seats.slg`](24-examples.md#seats-pure-logic-scenarios-laws) is 578 tokens, and the [language card](01-language-card.md) is 4,667 (2026-11-24, still changing). The card is as long as about eight such modules, before the first one is written. One program cannot pay for a language; a year of changes might.
+**Static size is a diagnostic only.** It is reported, never ranked, and never in a headline. One measurement shows why (`o200k_base`, a proxy; counts say nothing about accuracy): [`seats.slg`](24-examples.md#seats-pure-logic-scenarios-laws) is 578 tokens, and the [language card](01-language-card.md) is 4,868 (2026-11-24, still changing). The card is as long as about eight such modules, before the first one is written. One program cannot pay for a language; a year of changes might.
 
 ## Half one: cost per accepted change
 
@@ -27,7 +27,7 @@ cost = (uncached-equivalent input + output tokens, all turns, all attempts, fail
 | generator scripts an agent writes to avoid the language | agents [do this](https://arxiv.org/abs/2606.10933) in unfamiliar languages; the share is reported |
 | cached input | a second figure at provider prices, never the first |
 
-Beside it, always: escaped defects by severity, first-correct time, human review minutes and errors, verification and build time, generated-code performance, dollars. None is folded in. 
+Beside it, always: escaped defects by severity, first-correct time, human review minutes and errors, verification and build time, generated-code performance, dollars. None is folded in.
 
 ## Half two: sufficiency
 
@@ -35,8 +35,8 @@ A change is **admissible** only if it leaves no behaviour undecided. There are t
 
 | Kind | Example | Found by |
 |---|---|---|
-| **open**: the language allows two behaviours | a derived body with two solutions; a tie in a promised order | `E-OPEN`, from the closed list of choice points ([07](07-agent-loop.md)). Must be 0 |
-| **accidental**: the language picks one, and nothing anyone wrote or was told picked it | which of two refusals wins; what a retry does after a partial write | probes, below. Must be 0 |
+| **open**: the language allows two behaviours | a derived body with two solutions; a tie in a promised order; a retried step that is not safe to repeat | `E-OPEN`, from the closed list of choice points ([07](07-agent-loop.md)). Must be 0 |
+| **accidental**: the language picks one, and nothing anyone wrote or was told picked it | who else may call it; what happens to runs in flight at a release | probes, below. Must be 0 |
 
 The second matters most. Any deterministic language scores 0 on the first. "One behaviour" is not "a decided behaviour".
 

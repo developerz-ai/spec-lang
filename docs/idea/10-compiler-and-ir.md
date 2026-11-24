@@ -21,7 +21,7 @@ source .slg
 | Layer | Still knows | Passes that live here |
 |---|---|---|
 | SIR-D | what must hold: `entity Note` with `@access` is one typed node | policy defaults, vocabulary rewrites, pagination and filter pushdown, derived tests |
-| SIR-F | algorithms as pure functions over effects; vocabulary kinds as opaque calls with laws; each `task` cut into steps at its rule calls and outside calls, every step with a stable key | fusion, unit erasure, effect commutation, guard ordering |
+| SIR-F | algorithms as pure functions over effects; vocabulary kinds as opaque calls with laws; each rule's read set (point and predicate reads); each `task` cut into steps at its rule calls, outside calls and effect reads, keyed by position | fusion, unit erasure, effect commutation, guard ordering |
 | SIR-M | bytes, lifetimes, calling convention, interrupt context | layout, inlining, `@alloc` and `@within` checks |
 | target trees | one toolchain's idiom, plus provenance ids | printing only |
 
@@ -56,6 +56,7 @@ Every `@post`, `@guard`, `@within`, `@alloc`, `@access`, label and `law` becomes
 | Nothing is dropped | a pass may discharge a row, restate it in the lower layer's terms, or forward it to a backend claim; a pass that loses a row is rejected |
 | Evidence is the triple | static level, monitored or not, trust set, as defined in [04-evidence](04-evidence.md) |
 | Backends are trusted by name | a row carried by a backend adds `backend:name@hash` to its trust set; that token has its own evidence, earned by parity |
+| Start worlds | a trace claim is checked from `@given`, or from any world the types, flows and laws allow; a counterexample starting where no rule can reach is reported as such, with the law that would exclude it |
 | Policy decides | `release` fails when any row is below the project's policy; `sketch` fails only on type errors and refutations |
 
 The compiler reports "proven of the meaning, trusting `backend:ultimate@31e0`, which is `sampled`". It never shortens that to "proven".

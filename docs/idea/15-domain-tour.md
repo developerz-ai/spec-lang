@@ -2,7 +2,7 @@
 
 > **Design.** Nothing here runs yet. One short program per domain, to show what one declaration shape covers and where it stops.
 
-Every program is rules over state, plus tasks where it must wait on the outside ([card](01-language-card.md)). A domain adds kinds, notes and effects through `use`; it never adds grammar. Each program below parses. Kinds, notes and library names that are not on the card (`bucket`, `plant`, `@sync`, `lidar`) are **proposals** for that vocabulary; their rules live in [09](09-vocabularies.md).
+Every program is rules over state, plus tasks where it must wait on the outside ([card](01-language-card.md)). A domain adds kinds, notes and effects through `use`; it never adds grammar. Each program below parses. Kinds, notes and library names that are not on the card (`database`, `plant`, `@sync`, `@connect`) are **proposals** for that vocabulary; their rules live in [09](09-vocabularies.md).
 
 Three questions per domain: what is **derived** (never written), what stays **foreign** (reached by contract, evidence `assumed`), and what is **hard**. No backend exists yet.
 
@@ -14,7 +14,7 @@ Eight longer programs are in [24](24-examples.md): [seats](24-examples.md#seats-
 use web;
 use payments;
 
-type Status = Open | Paying | Paid | Refused;
+type Status = Open | Paying | Paid | Refused | Unsettled;
 
 @access(owner -> read)
 entity Order(owner: Id[User], total: Money[USD] where self > 0USD, status: Status = Open);
@@ -24,10 +24,11 @@ event paying(order: Id[Order]);
 @edge(Open -> Paying, via: pay, by: owner)
 @edge(Paying -> Paid, via: settle)
 @edge(Paying -> Refused, via: settle)
+@edge(Paying -> Unsettled, via: give_up)
 flow OrderLife(at: Order.status);
 
 @on(http.post("/orders/pay"))
-@access(owner -> call)
+@access(Order[id].owner == by)
 @uses(Order.write, paying.emit)
 @guard(Order[id].status == Open else Closed)
 pub rule pay(by: Id[User], id: Id[Order]) = {
@@ -38,8 +39,11 @@ pub rule pay(by: Id[User], id: Id[Order]) = {
 @guard(Order[id].status == Paying else Closed)
 rule settle(id: Id[Order], ok: Bool) = { Order[id].status = if ok then Paid else Refused; }
 
+@guard(Order[id].status == Paying else Closed)
+rule give_up(id: Id[Order]) = { Order[id].status = Unsettled; }
+
 @on(paying)
-@retry(5, backoff: 2s, on: Unreachable)
+@retry(5, backoff: 2s, on: Unreachable, exhausted: give_up)
 @idempotent(order)
 task charge(order: Id[Order]) = {
   let o = Order[order];
@@ -52,7 +56,7 @@ task charge(order: Id[Order]) = {
 |---|---|
 | Derived | table, migration, route, client, outbox, resumable task, contract tests |
 | Foreign | the payment provider |
-| Hard | exactly once is `assumed`: it rests on the provider honouring `key`. After five failures the order stays `Paying`; the program above does not say what then, and a liveness law would refute it |
+| Hard | exactly once is `assumed`: it rests on the provider honouring `key`. `Unsettled` is honest: after the last try nobody knows whether money moved, and a person must ask |
 
 ## Mobile: record a run offline
 
@@ -70,9 +74,8 @@ fn merge(a: Run, b: Run) -> Run = a.with(points: crdt.union(a.points, b.points))
 
 @on(location.update(every: 5s))
 @permission(location, why: "draw your route")
-@access(owner -> call)
 @uses(Run.write)
-pub rule record(by: Id[User], id: Id[Run], p: Point) = { Run[id].points.insert(p); }
+pub rule record(id: Id[Run], p: Point) = { Run[id].points.insert(p); }
 
 law merge_commutes(a: Run, b: Run) = merge(a, b).points == merge(b, a).points;
 ```
@@ -122,11 +125,10 @@ law undo_restores(t: Text, e: Edit) =
 ```slg
 use infra;
 
-@target(terraform.aws)
 @region(eu)
 @encrypted
 @backup(every: 1h, keep: 30d)
-@access(Api -> (read, write))
+@connect(Api -> (read, write))
 database Orders(engine: Engine = postgres, disk: Bytes = 100GiB);
 
 @on(every(7d))
@@ -140,11 +142,14 @@ task restore_drill() = {
 
 @given(cloud.sim(), Orders.backups -> [])
 test drill_fails_without_backups = { restore_drill() -> fail RestoreFailed; }
+
+@target(terraform.aws)
+app Storage(databases: [Orders], rules: [restore_drill]);
 ```
 
 | | |
 |---|---|
-| Derived | Terraform, network rules from `@access`, the schedule, a plan to review |
+| Derived | Terraform, network rules from `@connect`, the schedule, a plan to review |
 | Foreign | the cloud provider |
 | Hard | a simulated cloud proves the logic, not the account. Drift and quotas appear only in the real one |
 
@@ -156,7 +161,6 @@ use embedded;
 state last: Time = 0s;
 state presses: 0..=255 = 0;
 
-@target(cortex_m0)
 @on(irq(5))
 @alloc(none)
 @within(10us)
@@ -173,6 +177,9 @@ test bounce_counts_once = {
   button();
   assert presses == 1;
 }
+
+@target(cortex_m0)
+app Panel(rules: [button]);
 ```
 
 | | |
@@ -191,13 +198,15 @@ type Drive(speed: Float[m/s], turn: Float[rad/s]);
 fn speed(clear: Float[m]) -> Float[m/s] =
   if clear < 0.5m then 0[m/s] else if clear < 2m then 0.3[m/s] else 1[m/s];
 
-@target(ros2)
 @on(every(20ms))
 @within(5ms)
 controller Follow(clear: Float[m], bearing: Float[rad]) -> Drive =
   Drive(speed(clear), turn: bearing.clamp(-1rad, 1rad) / 1s);
 
 law closer_is_never_faster(a: 0m..=10m, b: 0m..=10m) = a <= b implies speed(a) <= speed(b);
+
+@target(ros2)
+app Rover(rules: [Follow]);
 ```
 
 | | |
