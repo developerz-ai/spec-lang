@@ -24,7 +24,7 @@ Coding agents should work on logic. Most of their time and machine goes to the e
 - Checking a rule means running lint, types, builds, test suites and CI. Well-tuned projects on good frameworks still wait.
 - Agents rebuild the same wheels: another retry, another permission check, another invite flow, another way to page a list.
 
-**spec-lang virtualises the world.** A virtual machine stands in for hardware; here the engine stands in for the database, disk, network, clock and everyone else, in memory. Logic is written and checked there, and meets the real world once, on the way to production:
+**Theory, compiled for the real world.** **spec-lang virtualises the world.** A virtual machine stands in for hardware; here the engine stands in for the database, disk, network, clock and everyone else, in memory. Logic is written and checked there, and meets the real world once, on the way to production:
 
 ```text
 idea (human or AI) -> logic in spec-lang, checked in memory -> CI compiles it and tests the real thing -> production
