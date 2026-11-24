@@ -235,6 +235,8 @@ A module names no language, framework, database, operating system or chip. Integ
 | `foreign` | one symbol in one language, behind a contract |
 | `machine` | layout, memory order, registers |
 
+The same goes for the author's machine: macOS, Linux or Windows, one binary and the source. Tests use no real files or clock, so paths, line endings and time zones cannot change a result. Building for a platform still needs that platform's tools, such as a Mac for iOS, and those live in the build pool. The interpreter's own suite has to pass on all three systems from its first release for this to hold.
+
 Independent meaning does not promise equal speed or equal reach: a backend that cannot keep a guarantee refuses to build, and a phone screen is still not a console screen.
 
 ## The ideas
