@@ -352,6 +352,38 @@ Over a year of simulated time, no waiting.
 
 A failing case found by any core is the same case on every core, because results do not depend on which finished first: the smallest by a fixed order is reported.
 
+## The whole world is a value
+
+State, clock, random source, disk, network and queues live in memory. The interpreter has no way to open a real file or socket.
+
+| Because it is a value | You get |
+|---|---|
+| copy | try several bodies from the same moment, and see where they differ |
+| rewind | step back to before the failure and change one thing |
+| fork | `@given(other_test)` starts from where another test ended |
+| save | a failure is a small file that replays the same anywhere |
+| no reach | running logic an agent has just written cannot touch the machine |
+| faults are data | a full disk, a torn write or a lost reply is one line, at every step |
+
+```slg
+law survives_power_loss(t: Trace[put | commit | crash]) =
+  t.states.all(s => s.acked.all(it in recover(s.disk)));
+```
+
+A program that uses files still says so: `@uses(disk.write)`. While testing, a handler answers; after compiling, the real disk does. A fake disk that never fails would make everything look safe, so a handler states its faults, and what real hardware shows in CI goes back into it ([22](22-lifecycle.md)).
+
+## Small machines
+
+Agents need big machines today mostly for the tools around the logic: compilers, databases, browsers, containers, package folders, build caches. Writing and testing logic needs none of them.
+
+| Where | Runs | Needs |
+|---|---|---|
+| the agent's machine | interpreter, tests, checker | memory for the program and its worlds; no services |
+| a shared build pool | generate, compile, parity | the heavy tools, once, for everyone |
+| CI | the same pool | as today |
+
+So many agents can share one small machine, and the heavy tools are provisioned for landings and not for every agent. Solvers and deep searches are the exception: they use all the memory and cores they get, so they run in the pool, under a counted budget.
+
 ## Run almost nothing
 
 Goal, unmeasured: verdicts in milliseconds for a module. The mechanism is not a fast evaluator:
@@ -380,6 +412,7 @@ A test yields an observation: replies plus effects. It is lowered to each target
 
 ## Limits
 
+- **Small machines are a design argument.** No interpreter exists to weigh. Worlds with much data cost memory, and a model running locally would dwarf all of this.
 - **Fast checks do not make the model faster.** Most of an agent's time is its own turns ([07](07-agent-loop.md)). Instant tests help by allowing more tries per turn and by never queueing agents behind one another; how much is unmeasured.
 - **What is simulated can be wrong.** A real database locks, a real disk lies, a real network stalls. Those bugs wait for the parity stage, which keeps its database, files and browser, and stays slow.
 - **Search grows faster than cores.** Interleavings multiply; twelve cores buy about one more step of depth, not a different class of answer.
