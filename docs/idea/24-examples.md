@@ -92,10 +92,11 @@ pub query mine(by: Id[User]) -> List[Task] =
   Task.filter(it.owner == by and not it.done).sort(it.due);
 
 @at("/")
-page Dashboard(me: Id[User], tasks: Live[List[Task]] = mine(me)) = column(
+@access(by in User)
+page Dashboard(by: Id[User], tasks: Live[List[Task]] = mine(by)) = column(
   heading("Today"),
   form(create, fields: (title, due)),
-  list(tasks, empty: text("Nothing due"), row: check(it.title, on: it.done, toggle: complete(me, it.id))),
+  list(tasks, empty: text("Nothing due"), row: check(it.title, on: it.done, toggle: complete(by, it.id))),
 );
 
 const ana: Id[User] = Id(1);
@@ -193,7 +194,7 @@ fn screen(url: Url, local: Bool) -> Url = {
 @fails(UrlRefused)
 @reveals(secret)
 pub rule add(by: Id[orgs.Member], org: Id[orgs.Org], url: Url) -> Issued = {
-  let ok = try screen(url, local: env.local);
+  let ok = screen(url, local: env.local);
   let id = Id.fresh();
   let secret = random.token();
   Endpoint.insert(Endpoint(id, org: org, url: ok, secret: secret, created: clock.instant()));
@@ -512,7 +513,7 @@ state cache: Map[PageId, Page];
 @post(cache[id].lsn == result, cache[id].get(key) == Some(value))
 pub rule put(tx: TxId, id: PageId, key: Bytes, value: Bytes) -> Lsn = {
   wal.push(Put(tx, id, key, value));
-  let lsn = wal.end;
+  let lsn = wal.size;
   cache[id].insert(key, value);
   cache[id].lsn = lsn;
   return lsn;
@@ -523,8 +524,8 @@ pub rule put(tx: TxId, id: PageId, key: Bytes, value: Bytes) -> Lsn = {
 @post(wal.durable >= result)
 pub rule commit(tx: TxId) -> Lsn = {
   wal.push(Commit(tx));
-  let lsn = wal.end;
-  try wal.sync(lsn);
+  let lsn = wal.size;
+  wal.sync();
   return lsn;
 }
 

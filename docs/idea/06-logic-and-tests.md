@@ -73,8 +73,9 @@ From `@given`, or from **any world its types, flows and laws allow**. So `Trace[
 `reached` above names calls that lead from the initial world to the start. When search finds none, the counterexample says so and offers the missing law:
 
 ```slg
-state held: Int = 0;
-state sold: Int = 0;
+type Count = Int where self >= 0;
+state held: Count = 0;
+state sold: Count = 0;
 
 @guard(held + sold < 200 else Full)
 rule hold() = { held = held + 1; }
@@ -295,7 +296,7 @@ test duplicate_trigger = {
 | crash between two rules | the state between them is visible to other rules | no law forbids that state |
 | `all` or `race` in a task | every completion order | no reply depends on which finished first |
 
-In a trace, `capture` is a whole run, retries included. Crash points are enumerated up to a small trace, so this is `bounded(k)`. The `@assume` stays `assumed`, listed in every report. Without `exhausted: give_up` the law is refuted by six unreachable replies: an order that is neither received nor failed.
+In a trace, `capture` is a whole run, retries included. Crash points are enumerated up to a small trace, so this is `bounded(k)`. The `@assume` stays `assumed`, listed in every report. Without `exhausted: give_up` the law is refuted by five unreachable replies: an order that is neither received nor failed.
 
 ## Holes run
 
@@ -328,12 +329,12 @@ A logic test touches no database, file, network, browser, port or real clock. Th
 | compile and link first | the interpreter reads source |
 
 ```slg
-@given(invited)
+@given(clock.at(0s), invites[t1] -> Pending(7d))
 test a_week_passes = {
   clock.advance(7d);
-  accept(bob, id: i1) -> fail Gone;
+  accept(bob, t: t1) -> fail Gone;
   clock.advance(400d);
-  assert invites[i1].state == Expired;
+  accept(bob, t: t1) -> fail Gone;
 }
 ```
 
@@ -367,7 +368,7 @@ State, clock, random source, disk, network and queues live in memory. The interp
 
 ```slg
 law survives_power_loss(t: Trace[put | commit | crash]) =
-  t.states.all(s => s.acked.all(it in recover(s.disk)));
+  t.states.all(s => s.acked.all(tx => recover(s.wal.disk).contains(Commit(tx))));
 ```
 
 A program that uses files still says so: `@uses(disk.write)`. While testing, a handler answers; after compiling, the real disk does. A fake disk that never fails would make everything look safe, so a handler states its faults, and what real hardware shows in CI goes back into it ([22](22-lifecycle.md)).
@@ -400,7 +401,7 @@ So many agents can share one small machine, and the heavy tools are provisioned 
 Prolog runs a rule backwards: given the answer, it finds what would produce it. That is too unpredictable for program code and exactly right for checking. So the language has no backtracking, and the tools do.
 
 ```text
-$ spec-lang test --find "hold(a, n) and hold(b, n) both succeed, a != b"
+$ spec-lang test --find "buy(a, n) and buy(b, n) both succeed, a != b"
 none in 4 steps from any allowed world        bounded(4)
 
 $ spec-lang test --find "buy(u, n) fails NotHeld after hold(u, n) succeeded"

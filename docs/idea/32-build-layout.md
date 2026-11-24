@@ -26,7 +26,7 @@ shop/
     mobile-ios/             a SwiftUI project
     mobile-android/         a Compose project
     db/                     schema and migrations
-    map.json                declaration <-> emitted spans
+    provenance.json         declaration <-> emitted spans
 ```
 
 Each project under `out/` opens in its own tools and builds with them. Nothing in it imports spec-lang.
@@ -36,7 +36,7 @@ Each project under `out/` opens in its own tools and builds with them. Nothing i
 | TypeScript | spec-lang |
 |---|---|
 | `tsc` | `spec-lang build` |
-| `a.ts` to `a.js` | a declaration to every place it lands, listed in `map.json` |
+| `a.ts` to `a.js` | a declaration to every place it lands, listed in `provenance.json` ([10](10-compiler-and-ir.md)) |
 | `.d.ts` | a generated typed client per consumer language |
 | `tsconfig.json` | the `app` declaration; no second config language |
 | `outDir` | `out/<app>/`, fixed |

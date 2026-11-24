@@ -16,9 +16,9 @@ The spec-lang version is the [webhooks example](24-examples.md#webhooks-tasks-re
 | Registration lines in four shared files | 27 | 258 |
 | TypeScript tests, 3 files, comments stripped | 252 | 2,863 |
 | **TypeScript total** | **631** | **6,705** |
-| `webhooks.slg`: types, errors, rules, one task, eight `@why` lines | 161 | 1,678 |
+| `webhooks.slg`: types, errors, rules, one task, eight `@why` lines | 161 | 1,677 |
 | `webhooks.slg`: two laws, seven tests | 67 | 832 |
-| **spec-lang total** | **228** | **2,510** |
+| **spec-lang total** | **228** | **2,509** |
 
 **Ratio: 2.7x tokens, 2.8x lines.** Source and wiring alone are 2.3x. Tests are 3.4x.
 

@@ -40,14 +40,19 @@ Read [`00-thesis.md`](00-thesis.md), then [`01-language-card.md`](01-language-ca
 | [`31-dropping-down.md`](31-dropping-down.md) | A little backend code behind a contract, as C keeps a little assembly. |
 | [`32-build-layout.md`](32-build-layout.md) | Where generated software goes, compared with TypeScript. |
 | [`33-data-structures-and-algorithms.md`](33-data-structures-and-algorithms.md) | The collection is meaning, its storage is a plan; cost as a tested claim; what is taken from Haskell. |
+| [`34-hygiene.md`](34-hygiene.md) | RAII and the other habits of healthy programs: impossible to break, checked, derived, or still yours. |
 
 ## Reading paths
 
 | You are | Read |
 |---|---|
 | Deciding if this is worth it | `00`, `16`, `18`, `19`, `21` |
-| A model about to write it | `01`, then [24](24-examples.md) |
-| Building the interpreter | `01`, `06`, `03`, `10` |
-| Building a backend | `11`, `12`, `09` |
-| Using it in an Ultimate app | `12`, `22`, `07` |
-| Here for the OS and database | `14`, `03`, `04` |
+| A model about to write it | `01`, [24](24-examples.md), `28`, `26` |
+| Here for the dev cycle | `06`, `22`, `32` |
+| Building the interpreter | `01`, `25`, `30`, `28`, `06` |
+| Building a backend | `11`, `10`, `29`, `32` |
+| Using it in an Ultimate app | `12`, `26`, `31`, `22` |
+| Here for security | `27`, `05`, `08` |
+| Here for games | `13`, `33`, `31` |
+| Here for the OS and database | `14`, `03`, `23`, `04` |
+| Working on the language | `17`, `18`, `02`, [decisions](../decisions/README.md) |

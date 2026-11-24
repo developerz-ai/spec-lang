@@ -253,7 +253,7 @@ One context holding private data, untrusted text and an outward effect does not 
 
 | Layer | Size | Loaded |
 |---|---|---|
-| [language card](01-language-card.md) | 4,868 tokens on 2026-11-24 (`o200k_base`), still changing | always |
+| [language card](01-language-card.md) | 4,884 tokens on 2026-11-24 (`o200k_base`), still changing | always |
 | one vocabulary's card | goal 600 | on `use` |
 | slice | measured per call | per edit |
 | lessons | one form per error class | on error |

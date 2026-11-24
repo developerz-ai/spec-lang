@@ -65,7 +65,7 @@ Callers never change when the body does.
 | `@given(state -> value, handler, other_test)` | starting world of a test; a test name starts from its end state |
 | `@retry(n, on: E, exhausted: rule)` `@idempotent(key)` | delivery policy; `exhausted` runs when the last try fails |
 | `@pii` `@secret` `@tenant(x)` | information-flow labels, also on parameters |
-| `@access(p else Err)` | may this caller call at all: a Bool over `by` and the parameters, default `NotFound`. On an entity: `@access(owner -> all, admin -> read)`. Absent where there is a caller: **denied**. Whether the call is legal now is a `@guard` |
+| `@access(p else Err)` | may this caller call at all: a Bool over `by` and the parameters, default `NotFound`. On an entity: `@access(owner -> all, admin -> read)`. Absent where someone can call in: **denied**. Whether the call is legal now is a `@guard` |
 | `@edge(A -> B, via: rule, by: who, after: t)` | one legal move of a `flow`; any other fails `IllegalMove`; a self-move restarts `after`; `by` names a subject `fn` and adds to `@access` |
 | `@assume("reason")` | admits a claim unproven; always listed in reports |
 | `@target(x)` | choose a backend |
@@ -112,7 +112,7 @@ rule pay(id: Id[Account], n: Cents) = {
 1. **A rule is atomic**: all its writes happen or none; a failure leaves the world unchanged. A store that cannot order it within its retry bound fails it with `Contended`. A rule called inside a rule joins it.
 2. Rules interleave; traces explore every order the triggers allow. A trace starts from `@given`, or from any world its types, flows and laws allow; a counterexample that starts where no rule can reach says so and offers the missing law.
 3. Guards run first, top to bottom. The first that fails gives the error. Names a guard pattern binds are in scope after it.
-   `x else fail E` propagates; `match try_call(f) { Ok(v) => ...; Err(e) => ...; }` handles a failure here.
+   A failing call fails its caller and shows in `@fails`; `x else fail E` replaces the error; `match try_call(f) { Ok(v) => ...; Err(e) => ...; }` handles a failure here.
 4. `by` is the caller; a test passes it as an ordinary argument. `@access` is required where someone can call in (http, client, agent tool), as `@access(true)` if there is no `by`. Timers, events, interrupts and the local user of a script have no caller. A direct call in a test checks it too.
 5. Replies may be omitted; `return;` leaves early.
 6. `@idempotent(key)`: same key and payload replays the first reply; same key, different payload is `fail KeyReused`.
@@ -188,7 +188,7 @@ test retries_then_stops(n: 1..=3) = {
 rule uart_rx() = machine {
   let h = ring.head.load(relaxed);
   if h - ring.tail.load(acquire) < 64 {
-    ring.slots[h band 63] = uart.data.read();
+    ring.slots[h band 63] = Uart.data.read();
     ring.head.store(h + 1, release);
   }
 }
@@ -208,7 +208,7 @@ app Site(rules: [deliver, sweep]);
 | Lambda | `it` for one unnested argument, else `x => ...` |
 | Choice | `if c then a else if d then b else e` as a value; `if c { } else { }` as a statement; `match x { A => 1; B(n) => n; }`; an arm with statements is a block: `A => { assert ok; }` |
 | Test a variant | `x.is(Held(by, _))`: in a pattern, a name already in scope compares, a new one binds (nothing shadows, so never both) |
-| Fail | `fail Err`; `x else fail Err`; propagate with `try` |
+| Fail | `fail Err`; `x else fail Err`; a failure passes up by itself |
 | Logic | `and or not implies`; `a <= b <= c` means both; a guard's clauses `@guard(p else X, q else Y)` run in order; `s.all(p)`, `s.any(p)`, `s.sum()`, `s.sum(f)` |
 | Modulo, bits | `mod`, `band bor bxor shl shr` (`%` is only percent) |
 | Units | `10ms 60Hz 4KiB 80°C 70% 19.99USD 5u64`; compound `9.81[m/s²]`; `5m ± 0.1m` |

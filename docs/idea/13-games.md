@@ -92,7 +92,7 @@ pub rule extend(by: Id[Owner], from: Id[Station], work: Fixed[s]) -> Id[Station]
 }
 
 law books_explain_cash(t: Trace[extend | advance | settle], c: Id[Owner]) =
-  t.states.all(s => s.cash[c] == s.ledger.filter(it.owner == c).map(it.amount).sum);
+  t.states.all(s => s.cash[c] == s.ledger.filter(it.owner == c).map(it.amount).sum());
 
 @given(world.seed(42), scenario.two_shops)
 test same_seed_same_world = {

@@ -8,12 +8,12 @@
 
 | Word, and where | Expands to | Default | Law |
 |---|---|---|---|
-| `entity Name(fields)` in a module | a record `type`, `state Name: Map[Id[Name], Name]`, owned by the module | not readable from outside until `@access` says so | what is read back equals what was written; no path reads it without `@access` |
+| `entity Name(fields)` in a module | a record `type`, `state Name: Map[Id[Name], Name]`, owned by the module; `Name.insert(row)` is the statement that adds a row under its own id | not readable from outside until `@access` says so | what is read back equals what was written; no path reads it without `@access` |
 | `@access(owner -> all, admin -> read)` on an entity | the same Bool on every derived read and write | absent: denied | every surface evaluates the same predicate |
 | `@tenant(field)` on an entity | that field added to every filter and every insert | none; cross-tenant reads need a listed declassification ([05](05-effects-and-trust.md)) | no reply carries a row of another tenant |
 | `@unique(fields)` on an entity | a law, and an insert that fails `Taken` | none | no two rows agree on the fields, in any interleaving |
 | `@append` on an entity | no rule may assign into or remove a row | rows are mutable | a row once written never changes |
-| `@cascade` on an `Id[X]` field | removing the `X` removes these rows in the same commit | removing a referenced row fails `InUse` | no dangling id after any commit |
+| `@cascade` on an `Id[X]` field | removing the `X` removes these rows in the same commit | none: a rule that removes a referenced `X` is `E-OPEN` (cascade, keep or refuse) | no dangling id after any commit |
 | `@index(fields)` on an entity | nothing: meaning is unchanged | derived from the filters and sorts of the module's queries | none; it is a cost pin, shown in `view --as policy` |
 | `query name(params) -> T = expr` in a module | a `fn` with `@uses(X.read)` over committed state | private; `pub` plus `@access` to expose | it never sees half a commit |
 | `@live` on a query | result type `Live[T]`; each commit that changes the answer is pushed | not live | once changes stop, the client's value equals the query; `@access` is re-evaluated per subscriber |
@@ -42,11 +42,11 @@ pub rule write(by: Id[User], text: Text[1..=500]) -> Id[Note] = {
 @access(by in User)
 @live
 @page(20)
-pub query mine(by: Id[User]) -> List[Note] = Note.filter(it.owner == by).sort(it.at).reversed;
+pub query mine(by: Id[User]) -> List[Note] = Note.filter(it.owner == by).sort(it.at).reversed();
 
 @at("/notes")
-@access(me in User)
-page Notes(me: Id[User], notes: Live[List[Note]] = mine(me)) = column(
+@access(by in User)
+page Notes(by: Id[User], notes: Live[List[Note]] = mine(by)) = column(
   form(write, fields: (text)),
   list(notes, empty: text("No notes yet"), row: text(it.text)),
 );
@@ -117,7 +117,7 @@ Core already has `task`, `event`, `@on(every(d))`, `@retry(n, on:, exhausted:)` 
 | `run.attempt`, `run.due`, `run.key` in a task body | read-only facts of this run | `attempt` is 1 on the first try | `attempt` rises by one per `@retry` and is the same after a crash within an attempt |
 | `@retain(d, by: field)` on an entity or a `Map` state | a private `rule purge(n)` and an `@on(every(...)) task` that calls it until nothing is due | batches of 500; period `d / 10`, clamped to 1h..=1d | nothing younger than `d` is removed; everything older goes within one period |
 | `@queue(name)`, `@concurrency(n, per: key)`, `@rate(n, per: d)` on a task | the worker pool; a run over a limit waits | queue `default`, unlimited | never more than `n` at once per key; a waiting run is never dropped |
-| `tasks.drain()` in a test | runs every started task and delivered event to rest, moving the clock across backoff waits. It does not fire schedules; `clock.advance` does | a test that ends with started tasks still pending fails | the order is start order, so a test replays |
+| `tasks.drain()`, and the read `tasks.dead`, in a test | runs every started task and delivered event to rest, moving the clock across backoff waits. It does not fire schedules; `clock.advance` does | a test that ends with started tasks still pending fails | the order is start order, so a test replays |
 
 Derived: the queue rows, the step journal, the dead-letter list, operator commands to retry or cancel a run, and the crash test at every step boundary.
 
@@ -172,7 +172,7 @@ test old_lines_go = {
 | `tick(hz)` inside `@on` | a fixed step; `dt` is exactly `1 / hz`; `world.tick` counts | none | a slow frame runs more steps, never a longer one |
 | `@after(x)`, `@before(x)` on a system | an order between systems in one tick | a system that writes a component runs before those that read it; a tie is `E-OPEN` | the order is total and the same on every machine |
 | a `pub rule` in a `use game` module | a command: queued, then applied at the start of the next tick in (tick, player, sequence) order | the authority decides; `@access` is checked there | peers that apply the same commands reach the same state |
-| `world.get`, `world.set`, `world.spawn`, `world.each`; in a test `world.seed(n)`, `world.run(ticks)`, `world.hash` | reads and writes of component state; a seeded world, stepped, then one number for all of it | | same seed and commands give the same hash |
+| `world.get`, `world.set`, `world.spawn`, `world.each`; in a test `world.seed(n)`, `world.with(id, components)`, `world.run(ticks)`, `world.replay(start, commands)`, `world.hash` | reads and writes of component state; a seeded world, stepped, then one number for all of it | | same seed and commands give the same hash |
 
 Inside a module that `use`s `game`, `clock.read`, unseeded `random` and `Float` are type errors, so determinism is checked where the code is written. Derived: save and load, the command codec, replication messages, the replay log, the tick schedule.
 
@@ -196,12 +196,12 @@ pub rule steer(by: Id[Player], unit: Id[Entity], v: Fixed[m/s]) = {
 test a_command_applies_on_the_next_tick = {
   steer(ana, unit: u1, v: 3[m/s]);
   world.run(30);
-  world.get(Pos, id: u1).x -> 3m;
+  world.get(Pos, id: u1).x -> 3m ± 1mm;
   steer(bob, unit: u1, v: 9[m/s]) -> fail NotFound;
 }
 
-law same_seed_same_world(seed: Int, t: Trace[steer | move]) =
-  world.replay(seed, t.steps.map(it.event)).hash == t.states.last.hash;
+law same_commands_same_world(t: Trace[steer | move]) =
+  world.replay(t.states.first, t.steps.map(it.event)).hash == t.states.last.hash;
 ```
 
 **Outside `game`:** rendering, audio, input devices, assets and animation, which are engine modules reached through `app`. The netcode model (lockstep, rollback, server authority), chosen in `app`. Physics, which is its own vocabulary with its own laws. See [13](13-games.md).
@@ -212,7 +212,7 @@ law same_seed_same_world(seed: Int, t: Trace[steer | move]) =
 |---|---|---|---|
 | `layout Name(fields) { laws }` in a module | a record `type` plus `encode` and `decode` between it and exactly `@size` bytes | no implicit padding: every byte is a named field | `decode(encode(x)) == x`, and `encode` fills the size exactly |
 | `@size(n)`, `@endian(little)` on a layout; `@at(offset)` on a field; field types `Bytes[n]`, `Array[T, n]`, `Rest` | the byte picture | little endian, fields in order | fields do not overlap and fit |
-| `Log[T]` as a state type | an append-only sequence with `append`, `sync`, and the reads `size`, `durable`, `disk` | an append is not durable until `sync` | after `sync` returns, `durable == size`; the durable prefix survives a crash |
+| `Log[T]` as a state type | an append-only sequence with `push`, `sync`, and the reads `size`, `durable`, `disk` | a `push` is not durable until `sync` | after `sync` returns, `durable == size`; the durable prefix survives a crash |
 | `Pages[P]` as a state type | fixed-size slots with `read(id)`, `write(id, p)`, `sync()` | a write is not durable until `sync` | a torn write is seen as a failed check, never as a valid page |
 | `crash` in a `Trace[...]` | an event that drops everything not yet durable | absent from traces unless listed | |
 | `@durable(expr)` on a rule | a `@post` over the durable part of the state | none | it holds after any crash that follows the reply |
@@ -226,26 +226,30 @@ use storage;
 @endian(little)
 layout Slot(crc: u32, lsn: u64, len: u16, _pad: Bytes[2], data: Bytes[48]) {
   law codec(s: Slot) = decode(encode(s)) == s;
-  law honest(s: Slot) = s.crc == crc32(s.data.take(s.len));
+  law honest(s: Slot) = s.crc == crc32(s.data.take(s.len.int));
 }
 
-type Put(key: u64, value: Bytes[48]);
+type Value = Bytes[0..=48];
+type Put(key: u64, value: Value);
 state log: Log[Put];
-state table: Map[u64, Bytes[48]];
+state table: Map[u64, Value];
 
 @uses(log.write, table.write)
-pub rule put(key: u64, value: Bytes[48]) = {
-  log.append(Put(key, value: value));
+pub rule put(key: u64, value: Value) = {
+  log.push(Put(key, value: value));
   table[key] = value;
 }
 
 @uses(log.sync)
 @fails(DiskError)
 @durable(log.durable == log.size)
-pub rule flush() = { try log.sync(); }
+pub rule flush() = { log.sync(); }
 
-fn replay(puts: List[Put]) -> Map[u64, Bytes[48]] =
-  puts.fold(Map(), (m, p) => m.with(p.key -> p.value));
+fn replay(puts: List[Put]) -> Map[u64, Value] = {
+  var m: Map[u64, Value] = Map();
+  for p in puts { m[p.key] = p.value; }
+  return m;
+}
 
 law flushed_survives(t: Trace[put | flush | crash]) =
   t.states.all(s => replay(s.log.disk) == replay(s.log.take(s.log.durable)));
@@ -269,5 +273,6 @@ test unflushed_is_lost = {
 - **`web` leans on the backend for atomicity.** `@unique` and a counted `@guard` are one line here and a constraint, a lock or a refusal on a real database ([12](12-frameworks.md)).
 - **`@live` with per-subscriber `@access`** needs a cheap predicate. One that reads another entity per row per subscriber is a cost the vocabulary can report and not remove.
 - **`game` order against speed.** Entity id order makes results reproducible and may forbid the storage layouts that make an entity store fast.
-- **A library name never both changes a place and returns.** `log.append` therefore returns nothing, and a rule that needs the new position reads `log.size` after it. The B-tree example in [24](24-examples.md) still writes `let lsn = wal.append(...)`, which conflicts with that card rule.
+- **A library name never both changes a place and returns.** `log.push` therefore returns nothing, and a rule that needs the new position reads `log.size` after it, as the B-tree example in [24](24-examples.md) does.
+- **`dt` against `Time`.** A tick's `dt` is `1 / hz`, which is not a whole number of nanoseconds at 30 or 60 Hz, and `Time` in [28](28-standard-library.md) is a nanosecond count. Unresolved; the movement test therefore compares within a tolerance.
 - **`@reveals` is the only declassification here.** Wider ones belong to [05](05-effects-and-trust.md) and are not specified.

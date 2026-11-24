@@ -56,7 +56,7 @@ Order of evaluation for a call that arrives from outside:
 
 - Steps 3 to 6 read one consistent state: the check and the write are in the same commit, so there is no gap between them.
 - A denied call changes nothing and emits nothing.
-- **A guard that mentions `by` is not access.** It is legal (`@guard(votes[by] == none else AlreadyVoted)`), but a declaration with a caller and no `@access` is denied whatever its guards say. The split is what lets a reviewer read one note to learn who may call.
+- **A guard that mentions `by` is not access.** It is legal (`@guard(votes[by] == none else AlreadyVoted)`), but a declaration someone can call in to (a calling trigger, or a place on an `app` surface) and no `@access` is denied whatever its guards say: it gets no route, tool or client. A declaration nobody can call in to, like the card's `hold`, needs none, and a direct call then has no access to check. The split is what lets a reviewer read one note to learn who may call.
 - A private rule called by another rule joins its caller. If it has a `by` parameter and its own `@access`, that is checked with the `by` it is given. Access is part of what the rule means, not part of the transport.
 
 ## Access on entities and fields
@@ -154,9 +154,10 @@ use web;
 type Status = Draft | Published | Archived;
 
 fn shared(by: Id[User], d: Doc) -> Bool = by in d.readers;
+fn agent(by: Id[User], d: Doc) -> Bool = acts_for(by, d.owner);
 
 @tenant(org)
-@access(owner -> all, shared -> read, admin -> read)
+@access(owner -> all, agent -> update, shared -> read, admin -> (read, update))
 entity Doc(
   id: Id[Doc],
   org: Id[Org],
@@ -214,8 +215,8 @@ test who_may = {
 }
 
 law only_readers_see(t: Trace[share | publish | visible], by: Id[User]) =
-  t.steps.all(s => s.event.is(visible(by)) implies
-    s.reply.all(d => d.owner == by or by in d.readers or s.before.users[by].admin));
+  t.steps.all(s => s.event.is(visible(by)) and s.reply.is(Ok(docs)) implies
+    docs.all(d => d.owner == by or by in d.readers or s.before.users[by].admin));
 ```
 
 | Line of the test | Why |
@@ -223,7 +224,7 @@ law only_readers_see(t: Trace[share | publish | visible], by: Id[User]) =
 | `visible(eve) -> []` | Eve is a member, so the call is allowed; the row is not readable by her, so it is absent |
 | `publish(eve, d1)` fails `NotFound` | Eve does not act for Ana; she learns nothing about `d1` |
 | `share(bot, ...)` fails `NotFound` | the agent acts for Ana, but `share` demands a person |
-| `publish(bot, d1)` succeeds | delegation, stated in that rule's `@access` |
+| `publish(bot, d1)` succeeds | delegation, stated in that rule's `@access`; the entity's `agent -> update` lets the write through, and gives the agent no read |
 | `archive(ana, d1)` fails `Forbidden` | Ana passes the rule's access; the `Published -> Archived` edge needs `admin` |
 | the 365-day edge | no caller, no access; it is a deadline of the flow |
 
@@ -242,6 +243,7 @@ What the author did not write: a route guard, a query filter, a serializer field
 
 ## Limits: threats this does not cover
 
+- **Entity clauses and a rule's own `@access` are and-ed.** Safe by default, but an entity clause has to be wide enough for every hand-written rule, so `admin -> update` also opens derived updates. The other choice, a rule's clause deciding its own writes, is open.
 - **Authentication.** Credential theft, weak sessions, token replay, cross-site request forgery and key storage belong to the backend and its framework.
 - **The wrong predicate.** A correctly enforced bad policy is still bad. The access matrix makes it reviewable; it does not make it right.
 - **Timing and size channels.** `NotFound` from access and from a missing row may take different time. Counts after filtering can still leak through pagination behaviour under load.

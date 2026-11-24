@@ -1,6 +1,6 @@
 # Data structures and algorithms
 
-> **Design.** Nothing here runs yet. How to write algorithms, who picks the data structure, how cost is claimed, and what is taken from Haskell. The programs parse; the logic of binary search, merge sort, tree insert, shortest paths, union-find and three-way merge was checked as Python transliterations against naive versions on 4,000 random inputs each.
+> **Design.** Nothing here runs yet. How to write algorithms, who picks the data structure, how cost is claimed, and what is taken from Haskell. The programs parse; the logic of binary search, merge sort, tree insert, shortest paths and three-way merge was checked as Python transliterations against naive versions on 4,000 random inputs each.
 
 **Say what the collection means; let the compiler pick how it is stored; write the algorithm when it is yours.** Databases have done this for decades: a query says which rows, an index decides how.
 
@@ -20,7 +20,7 @@
 | `filter(it.owner == by).sort(it.due)` on stored data | an index on `(owner, due)` |
 | a record list read one field at a time | columns instead of rows |
 
-The result must be identical, order included ([28](28-standard-library.md)). Only cost may change. Override with a pin: `@store(heap)` on the `var` or `state`.
+The result must be identical, order included ([28](28-standard-library.md)). Only cost may change. Override with a pin: `@store(heap)` on the `state`, or on the declaration that holds the `var` (a statement takes no note).
 
 ## Recursive types
 
@@ -50,7 +50,7 @@ Values never change, so `insert` shares the parts it does not touch. Recursion m
 
 ```slg
 @pre(xs == xs.sort())
-@steps(xs.size.log2() + 1)
+@steps((xs.size + 1).log2() + 1)
 fn lower(xs: List[Int], x: Int) -> Int = {
   var lo = 0;
   var hi = xs.size;
@@ -122,7 +122,7 @@ fn dist(g: Map[Int, List[Edge]], start: Int) -> Map[Int, Int] = {
     let n = todo.min(it.far);
     todo.remove(todo.position(it == n) else 0);
     if not (n.at in best) {
-      best.insert(n.at, n.far);
+      best[n.at] = n.far;
       for e in g.get(n.at) else [] {
         if not (e.to in best) { todo.push(Stop(n.far + e.cost, at: e.to)); }
       }
@@ -132,8 +132,8 @@ fn dist(g: Map[Int, List[Edge]], start: Int) -> Map[Int, Int] = {
 }
 
 law no_shortcut(g: Map[Int, List[Edge]], s: Int) =
-  dist(g, start: s).entries().all((u, d) =>
-    (g.get(u) else []).all(e => dist(g, start: s)[e.to] <= d + e.cost));
+  dist(g, start: s).entries.all(n =>
+    (g.get(n.key) else []).all(e => dist(g, start: s)[e.to] <= n.value + e.cost));
 ```
 
 The reading is the textbook one. `min` then `remove` is what lets a backend use a heap.
@@ -144,8 +144,8 @@ A monad is one shape for "do this, then that, with something extra carried along
 
 | Haskell | Carries | Here |
 |---|---|---|
-| `Maybe` | might be absent | `Option`, `else`, `try` |
-| `Either e` | might fail | `fail`, `else`, `try`, `@fails` |
+| `Maybe` | might be absent | `Option`, `else` |
+| `Either e` | might fail | `fail`, `else`, `try_call`, `@fails` |
 | `List` | many results | `flat_map`, `filter` |
 | `State` | changing state | `rule`, or `var` inside a `fn` |
 | `Reader` | an environment | handlers named by `app` |
@@ -197,7 +197,7 @@ The second law matters: `max` with an empty of 0 looks right and fails it at the
 |---|---|---|---|
 | Elixir | pipelines read in order of work | `xs.filter(...).sort(...)`: one call syntax | a second spelling for the same call |
 | | function heads that match | `match`, with every case covered | several heads spread over a file |
-| | `with`: a chain of steps that may fail | `else fail Err` on each step; `try` | - |
+| | `with`: a chain of steps that may fail | `else fail Err` on each step, or nothing: it passes up | - |
 | | changesets: valid or a list of reasons | types with claims, guards with named errors | a separate validation object |
 | | doctests | `@cases`, `test` beside the logic | - |
 | Erlang | isolated state, messages, let it fail | module-owned state, events, tasks that resume | untyped mailboxes, hot code loading |
