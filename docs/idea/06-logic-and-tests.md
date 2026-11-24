@@ -395,6 +395,29 @@ The exception is work that needs eyes or hardware: screens, games, devices. Then
 
 So many agents can share one small machine, and the heavy tools are provisioned for landings and not for every agent. Solvers and deep searches are the exception: they use all the memory and cores they get, so they run in the pool, under a counted budget.
 
+## Ask the logic
+
+Prolog runs a rule backwards: given the answer, it finds what would produce it. That is too unpredictable for program code and exactly right for checking. So the language has no backtracking, and the tools do.
+
+```text
+$ spec-lang test --find "hold(a, n) and hold(b, n) both succeed, a != b"
+none in 4 steps from any allowed world        bounded(4)
+
+$ spec-lang test --find "buy(u, n) fails NotHeld after hold(u, n) succeeded"
+found   hold(ana, 1) at 0s;  clock.advance(10min);  buy(ana, 1)
+        keep as test?   edit: add test hold_can_lapse
+```
+
+| Question | Answered by |
+|---|---|
+| how can this state be reached | search over traces |
+| which input makes this true | the solver, else generated cases |
+| which value at `?hole` passes these tests | the same, from the failing side |
+| who can call this, and why | `@access` as rules over facts, in the manner of Datalog: it always finishes |
+| what else fits the laws | two worlds the laws allow and the author may not have meant ([08](08-approval-and-anti-cheating.md)) |
+
+"None" always says how far it looked. The question is written in the language's own expressions; the sentences above are its rendering. `--find` is a proposal.
+
 ## Run almost nothing
 
 Goal, unmeasured: verdicts in milliseconds for a module. The mechanism is not a fast evaluator:
