@@ -11,7 +11,7 @@ spec-lang-ir.workspace = true
 spec-lang-syntax.workspace = true
 spec-lang-diag.workspace = true
 spec-lang-lir.workspace = true
-syn = { version = "2", default-features = false, features = ["full", "parsing", "printing"] }
+syn = { version = "3", default-features = false, features = ["full", "parsing", "printing"] }
 proc-macro2 = { version = "1", default-features = false, features = ["span-locations"] }
 prettyplease = { version = "0.2", features = ["verbatim"] }
 
